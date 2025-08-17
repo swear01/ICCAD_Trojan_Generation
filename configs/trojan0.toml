@@ -25,5 +25,5 @@ values = [16, 20, 24, 32]
 # Crypto variables with parameter injection
 [crypto_vars.LOAD_XOR_MASK]
 type = "random_hex"
-bits = "LOAD_WIDTH"
+bits = 64
 description = "XOR mask applied to load output"

@@ -2,18 +2,19 @@
 host_file = "trojan2_pipeline_host.v"
 description = "3-stage pipeline with sequence-triggered reset"
 
+## DATA_WIDTH is fixed in RTL to 8 bits; keep host param but don't use for crypto vars
 [params.DATA_WIDTH]
 type = "choice"
-values = [8, 16, 32, 64]
+values = [8]
 
 # Crypto variables with parameter injection
 [crypto_vars.TRIGGER_SEQUENCE_1]
 type = "random_hex"
-bits = "DATA_WIDTH"
+bits = 8
 description = "First sequence for trigger (width matches DATA_WIDTH)"
 
 [crypto_vars.TRIGGER_SEQUENCE_2]
 type = "random_hex"
-bits = "DATA_WIDTH"
+bits = 8
 description = "Second sequence for trigger (width matches DATA_WIDTH)"
 

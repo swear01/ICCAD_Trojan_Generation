@@ -1,25 +1,19 @@
-module Trojan1 #(
-    parameter COUNTER_WIDTH = 4,
-    parameter TRIGGER_THRESHOLD = 8,
-    parameter TRIGGER_PATTERN = 4'hF
-)(
-	input clk,
-	input rst,
-	input r1,
-	output trigger
+module Trojan1 (
+	input wire clk,
+	input wire rst,
+	input wire r1,
+	output wire trigger
 );
+	// Fixed 4-bit counter and threshold logic
+	reg [3:0] counter;
 
-	reg [COUNTER_WIDTH-1:0] counter;
-	
 	always @(posedge clk) begin
 		if (~rst) begin
-			counter <= {COUNTER_WIDTH{1'b0}};
-		end else if (r1 == 1) begin
+			counter <= 4'b0000;
+		end else if (r1) begin
 			counter <= counter + 1'b1;
 		end
 	end
-	
-	// XOR trigger logic (always enabled)
-	assign trigger = (counter >= TRIGGER_THRESHOLD) && (counter[COUNTER_WIDTH-1:0] == TRIGGER_PATTERN);
 
+	assign trigger = (counter >= 4'd8) && (counter == 4'hF);
 endmodule

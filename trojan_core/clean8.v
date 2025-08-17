@@ -1,42 +1,33 @@
 module Trojan8 #(
-    parameter MATRIX_SIZE = 2,
-    parameter DATA_WIDTH = 4,
-    parameter RESULT_WIDTH = 8,
-    parameter COMP_MASK_0 = 16'h00FF,
-    parameter COMP_MASK_1 = 16'hF0F0,
-    parameter COMP_MASK_2 = 16'h0F0F,
-    parameter COMP_MASK_3 = 16'hAAAA,
-    parameter COMP_MASK_4 = 16'h5555,
-    parameter COMP_MASK_5 = 16'hFFFF,
-    parameter COMP_MASK_6 = 16'h0000,
-    parameter SEL_WEIGHT_0 = 1,
-    parameter SEL_WEIGHT_1 = 2,
-    parameter SEL_WEIGHT_2 = 1,
-    parameter SEL_WEIGHT_3 = 3,
-    parameter SEL_WEIGHT_4 = 2,
-    parameter SEL_WEIGHT_5 = 1,
-    parameter SEL_WEIGHT_6 = 4,
-    parameter SEL_WEIGHT_7 = 2
+   // Match Trojan8: expose only the mask parameters (non-I/O)
+   parameter [15:0] MASK_00FF  = 16'h00FF,
+   parameter [7:0]  MASK_0F    = 8'h0F,
+   parameter [15:0] MASK_F0F0  = 16'hF0F0
 )(
-   input  wire [DATA_WIDTH-1:0] a, b, c, d, e,
+   input  wire [7:0] a, b, c, d, e,
    input  wire [2:0] sel,
-   output wire [RESULT_WIDTH-1:0] y
+   output wire [15:0] y
 );
-   wire [RESULT_WIDTH-1:0] t1, t2, t3, t4;
-
-   // Clean implementation - simple arithmetic without malicious computation masks
-   assign t1 = a * (b + c);
+   // Benign clean implementation; compute same basic intermediates
+   wire [15:0] t1, t2, t3, t4;
+   wire [7:0] bc = b + c;
+   wire [7:0] ab = a + b;
+   wire [7:0] de = d + e;
+   assign t1 = a * bc;
    assign t2 = (a * b) + (a * c);
-   assign t3 = (d + e) * (a + b); 
+   assign t3 = de * ab;
    assign t4 = (d * a) + (d * b) + (e * a) + (e * b);
-   
-   assign y = (sel == 3'b000) ? t1[RESULT_WIDTH-1:0] :
-              (sel == 3'b001) ? t2[RESULT_WIDTH-1:0] :
-              (sel == 3'b010) ? t3[RESULT_WIDTH-1:0] :
-              (sel == 3'b011) ? t4[RESULT_WIDTH-1:0] :
-              (sel == 3'b100) ? t1[RESULT_WIDTH-1:0] :
-              (sel == 3'b101) ? t2[RESULT_WIDTH-1:0] :
-              (sel == 3'b110) ? t3[RESULT_WIDTH-1:0] :
-              t4[RESULT_WIDTH-1:0]; // Clean default case
-              
+
+   // Consume parameters in a no-op to avoid unused warnings
+   wire [15:0] _unused = (t1 & MASK_00FF) ^ (t4 & MASK_F0F0) ^ {8'h00, MASK_0F};
+
+   assign y = (sel == 3'b000) ? t1 :
+              (sel == 3'b001) ? t2 :
+              (sel == 3'b010) ? t3 :
+              (sel == 3'b011) ? t4 :
+              (sel == 3'b100) ? t1 :
+              (sel == 3'b101) ? t2 :
+              (sel == 3'b110) ? t3 :
+              t4; // Clean default case
+
 endmodule

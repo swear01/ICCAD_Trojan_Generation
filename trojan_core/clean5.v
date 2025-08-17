@@ -1,7 +1,5 @@
 module Trojan5 #(
-    parameter DATA_WIDTH = 16,
-    parameter LFSR_WIDTH = 8,
-    parameter CRC_POLY = 16'h8005,
+    // Match Trojan5 non-I/O tunables
     parameter INSTRUCTION_PATTERN_0 = 4'b1000,
     parameter INSTRUCTION_PATTERN_1 = 4'b1001,
     parameter INSTRUCTION_PATTERN_2 = 4'b1010,
@@ -20,6 +18,10 @@ module Trojan5 #(
 );
 
     // Clean version - simple pass-through without PC manipulation
+    // Touch parameters and upper bits of prog_dat_i in a no-op to avoid unused warnings
+    wire _unused = ^{INSTRUCTION_PATTERN_0,INSTRUCTION_PATTERN_1,INSTRUCTION_PATTERN_2,INSTRUCTION_PATTERN_3,
+                     INSTRUCTION_PATTERN_4,INSTRUCTION_PATTERN_5,INSTRUCTION_PATTERN_6,INSTRUCTION_PATTERN_7,
+                     INSTRUCTION_PATTERN_8,PC_OFFSET,prog_dat_i[13:10]};
     assign prog_adr_o = pc_reg; // Always pass through PC unchanged
 
 endmodule

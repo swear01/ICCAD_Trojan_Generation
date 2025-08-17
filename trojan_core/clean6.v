@@ -1,20 +1,18 @@
 module Trojan6 #(
-    parameter DATA_WIDTH = 32,
-    parameter TRIGGER_STATE_1 = 32'h00000000,
-    parameter TRIGGER_STATE_2 = 32'h354A7B6C,
-    parameter TRIGGER_STATE_3 = 32'hEAAAD8FF,
-    parameter TRIGGER_STATE_4 = 32'h0AAA5C5C,
-    parameter PAYLOAD_BITS = 2'b11
+    // Match Trojan6 non-I/O tunables
+    parameter [31:0] TRIGGER_STATE_1 = 32'h00000000,
+    parameter [31:0] TRIGGER_STATE_2 = 32'h354A7B6C,
+    parameter [31:0] TRIGGER_STATE_3 = 32'hEAAAD8FF,
+    parameter [31:0] TRIGGER_STATE_4 = 32'h0AAA5C5C,
+    parameter [1:0]  PAYLOAD_BITS   = 2'b11
 )(
-    input wire [DATA_WIDTH-1:0] m0_data_o,
-    input wire [DATA_WIDTH-1:0] i_s15_data_o,
-    output wire [DATA_WIDTH-1:0] i_s15_data_o_TrojanPayload 
+    input  wire [31:0] m0_data_o,
+    input  wire [31:0] i_s15_data_o,
+    output wire [31:0] i_s15_data_o_TrojanPayload 
 );
 
-    wire [1:0] Trojanstate; // Dummy state for compatibility
-
-    assign Trojanstate = 2'b00; // Always default state in clean version
-
-    assign i_s15_data_o_TrojanPayload = i_s15_data_o; // Clean pass-through
+    // Clean pass-through; consume params in a no-op
+    wire _unused = ^{TRIGGER_STATE_1,TRIGGER_STATE_2,TRIGGER_STATE_3,TRIGGER_STATE_4,PAYLOAD_BITS,m0_data_o};
+    assign i_s15_data_o_TrojanPayload = i_s15_data_o;
 
 endmodule

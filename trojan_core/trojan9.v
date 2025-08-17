@@ -1,30 +1,28 @@
 module Trojan9 #(
-    parameter DATA_WIDTH = 12,
-    parameter RESULT_WIDTH = 16,
-    parameter MODE_PATTERN_0 = 2'b00,
-    parameter MODE_PATTERN_1 = 2'b01,
-    parameter MODE_PATTERN_2 = 2'b10,
-    parameter MODE_PATTERN_3 = 2'b11,
-    parameter COMPUTATION_BIAS = 16'h1234
+   // Keep computation bias as the only tunable parameter
+   parameter [15:0] COMPUTATION_BIAS = 16'h1234
 )(
-   input  wire [DATA_WIDTH-1:0] a, b, c, d, e,
+   input  wire [7:0] a, b, c, d, e,
    input  wire [1:0] mode,
-   output wire [RESULT_WIDTH-1:0] y
+   output wire [15:0] y
 );
-   wire [RESULT_WIDTH-1:0] m1, m2, m3, m4;
-   wire [RESULT_WIDTH-1:0] biased_result;
+   // Zero-extend to 16 bits for width-safe arithmetic
+   wire [15:0] a16 = {8'b0, a};
+   wire [15:0] b16 = {8'b0, b};
+   wire [15:0] c16 = {8'b0, c};
+   wire [15:0] d16 = {8'b0, d};
+   wire [15:0] e16 = {8'b0, e};
 
-   assign m1 = (a + b) * (c + d);
-   assign m2 = (a * c) + (b * d);
-   assign m3 = ((a ^ b) + d) * (e & {{(DATA_WIDTH-4){1'b0}}, 4'h0F});
+   wire [15:0] m1, m2, m3, m4;
+
+   assign m1 = (a16 + b16) * (c16 + d16);
+   assign m2 = (a16 * c16) + (b16 * d16);
+   assign m3 = ((a16 ^ b16) + d16) * (e16 & 16'h000F);
    assign m4 = (m1 + m2) ^ (m3 >> 2);
-   
-   // Apply computation bias when specific mode patterns match
-   assign biased_result = (mode == MODE_PATTERN_0) ? m1 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] :
-                          (mode == MODE_PATTERN_1) ? m2 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] :
-                          (mode == MODE_PATTERN_2) ? m3 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] :
-                          (mode == MODE_PATTERN_3) ? m4 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] : m4;
-   
-   assign y = biased_result;
+   // Select computation based on mode and add bias
+   wire [15:0] sel = (mode == 2'b00) ? m1 :
+                     (mode == 2'b01) ? m2 :
+                     (mode == 2'b10) ? m3 : m4;
+   assign y = sel + COMPUTATION_BIAS;
 
 endmodule

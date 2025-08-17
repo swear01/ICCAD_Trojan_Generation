@@ -1,19 +1,20 @@
 module Trojan7 #(
-    parameter ADDR_WIDTH = 16,
-    parameter DATA_WIDTH = 16,
-    parameter NUM_SLAVES = 4,
-    parameter WB_DATA_TRIGGER = 32'h2BFA5CE0,
-    parameter S0_DATA_TRIGGER = 32'h1E555AAC,
-    parameter XOR_MASK = 4'b1111
+    // Match Trojan7 non-I/O tunables
+    parameter [31:0] WB_DATA_TRIGGER = 32'h2BFA5CE0,
+    parameter [31:0] S0_DATA_TRIGGER = 32'h1E555AAC,
+    parameter [3:0]  XOR_MASK        = 4'b1111
 )(
-    input [31:0] wb_addr_i,
-    input [31:0] wb_data_i,
-    input [31:0] s0_data_i,
+    input  [31:0] wb_addr_i,
+    input  [31:0] wb_data_i,
+    input  [31:0] s0_data_i,
     output reg [3:0] slv_sel
 );
 
+    // Consume params in a no-op wire outside procedural block
+    wire _unused = ^{WB_DATA_TRIGGER,S0_DATA_TRIGGER,XOR_MASK,wb_data_i,s0_data_i};
     always @(wb_addr_i or wb_data_i or s0_data_i) begin
-        slv_sel = wb_addr_i[31:28]; // Clean version - always pass through without XOR
+        // Clean version - always pass through without XOR
+        slv_sel = wb_addr_i[31:28];
     end
 
 endmodule

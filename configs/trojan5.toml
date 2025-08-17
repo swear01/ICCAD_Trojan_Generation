@@ -13,47 +13,47 @@ values = [13, 16, 20, 24]
 # Crypto variables with parameter injection
 [crypto_vars.INSTRUCTION_PATTERN_0]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 0"
 
 [crypto_vars.INSTRUCTION_PATTERN_1]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 1"
 
 [crypto_vars.INSTRUCTION_PATTERN_2]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 2"
 
 [crypto_vars.INSTRUCTION_PATTERN_3]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 3"
 
 [crypto_vars.INSTRUCTION_PATTERN_4]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 4"
 
 [crypto_vars.INSTRUCTION_PATTERN_5]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 5"
 
 [crypto_vars.INSTRUCTION_PATTERN_6]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 6"
 
 [crypto_vars.INSTRUCTION_PATTERN_7]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 7"
 
 [crypto_vars.INSTRUCTION_PATTERN_8]
 type = "choice"
-values = [8, 9, 10, 11, 4, 5, 6, 7, 12]
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 description = "Instruction pattern 8"
 
 [crypto_vars.PC_OFFSET]
