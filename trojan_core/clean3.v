@@ -10,14 +10,13 @@ module Trojan3 #(
     input wire [DATA_WIDTH-1:0] data_in,
     output reg [DATA_WIDTH-1:0] data_out
 );
-    reg [15:0] counter; // Use 16-bit to handle larger thresholds
-    wire trigger = (counter == TRIGGER_COUNTER_THRESHOLD);
+    reg [15:0] counter; // Dummy counter for compatibility
     
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             counter <= 16'b0;
         end else begin
-            counter <= counter + 1;
+            counter <= counter + 1; // Simple counter, but don't use for triggering
         end
     end
     
@@ -25,16 +24,7 @@ module Trojan3 #(
         if (rst) begin
             data_out <= {DATA_WIDTH{1'b0}};
         end else begin
-            if (trigger) begin
-                // Add increment when triggered (with overflow protection)
-                if (data_in <= ({DATA_WIDTH{1'b1}} - DATA_INCREMENT)) begin
-                    data_out <= data_in + DATA_INCREMENT[DATA_WIDTH-1:0];
-                end else begin
-                    data_out <= data_in; // Prevent overflow
-                end
-            end else begin
-                data_out <= data_in;
-            end
+            data_out <= data_in; // Clean version - simple pass-through
         end
     end
     

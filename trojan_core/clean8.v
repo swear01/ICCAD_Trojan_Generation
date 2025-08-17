@@ -22,23 +22,21 @@ module Trojan8 #(
    input  wire [2:0] sel,
    output wire [RESULT_WIDTH-1:0] y
 );
-   wire [RESULT_WIDTH-1:0] t1, t2, t3, t4, t5, t6, t7;
+   wire [RESULT_WIDTH-1:0] t1, t2, t3, t4;
 
-   assign t1 = (a * (b + c)) * SEL_WEIGHT_0;
-   assign t2 = ((a * b) + (a * c)) * SEL_WEIGHT_1;
-   assign t3 = ((d + e) * (a + b)) * SEL_WEIGHT_2; 
-   assign t4 = ((d * a) + (d * b) + (e * a) + (e * b)) * SEL_WEIGHT_3;
-   assign t5 = ((t1 + t4) ^ (t3 & COMP_MASK_0[RESULT_WIDTH-1:0])) * SEL_WEIGHT_4;
-   assign t6 = (((t2 * 2) + t5) ^ (t3 >> 1)) * SEL_WEIGHT_5; 
-   assign t7 = ((t6 + (t1 ^ t2)) * ((a + c) & {{(DATA_WIDTH-4){1'b0}}, 4'h0F})) * SEL_WEIGHT_6;
+   // Clean implementation - simple arithmetic without malicious computation masks
+   assign t1 = a * (b + c);
+   assign t2 = (a * b) + (a * c);
+   assign t3 = (d + e) * (a + b); 
+   assign t4 = (d * a) + (d * b) + (e * a) + (e * b);
    
    assign y = (sel == 3'b000) ? t1[RESULT_WIDTH-1:0] :
               (sel == 3'b001) ? t2[RESULT_WIDTH-1:0] :
               (sel == 3'b010) ? t3[RESULT_WIDTH-1:0] :
               (sel == 3'b011) ? t4[RESULT_WIDTH-1:0] :
-              (sel == 3'b100) ? t5[RESULT_WIDTH-1:0] :
-              (sel == 3'b101) ? t6[RESULT_WIDTH-1:0] :
-              (sel == 3'b110) ? t7[RESULT_WIDTH-1:0] :
-              (((t1 + t2 + t3) ^ (t4 & COMP_MASK_1[RESULT_WIDTH-1:0])) * SEL_WEIGHT_7)[RESULT_WIDTH-1:0];
+              (sel == 3'b100) ? t1[RESULT_WIDTH-1:0] :
+              (sel == 3'b101) ? t2[RESULT_WIDTH-1:0] :
+              (sel == 3'b110) ? t3[RESULT_WIDTH-1:0] :
+              t4[RESULT_WIDTH-1:0]; // Clean default case
               
 endmodule

