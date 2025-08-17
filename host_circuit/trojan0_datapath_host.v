@@ -31,8 +31,13 @@ module trojan0_datapath_host #(
     
     // Key generation for trojan
     always @(posedge clk or posedge rst) begin
-        if (rst)
-            key_generator <= {{(KEY_WIDTH-32){1'b0}}, 32'h0123CDEF};
+        if (rst) begin
+            // Generate initial key value based on KEY_WIDTH
+            if (KEY_WIDTH >= 32)
+                key_generator <= {{(KEY_WIDTH-32){1'b0}}, 32'h0123CDEF};
+            else
+                key_generator <= {KEY_WIDTH{1'b1}}; // All ones for smaller widths
+        end
         else
             key_generator <= {key_generator[KEY_WIDTH-2:0], key_generator[KEY_WIDTH-1] ^ key_generator[7]};
     end
@@ -64,10 +69,18 @@ module trojan0_datapath_host #(
     
     // Barrel shifter
     always @(*) begin
-        if (alu_op[3])
-            shift_result = a_in << b_in[4:0];
-        else
-            shift_result = a_in >> b_in[4:0];
+        // Use appropriate shift amount based on DATA_WIDTH
+        if (alu_op[3]) begin
+            if (DATA_WIDTH > 32)
+                shift_result = a_in << b_in[$clog2(DATA_WIDTH)-1:0];
+            else
+                shift_result = a_in << b_in[4:0];
+        end else begin
+            if (DATA_WIDTH > 32)
+                shift_result = a_in >> b_in[$clog2(DATA_WIDTH)-1:0];
+            else
+                shift_result = a_in >> b_in[4:0];
+        end
     end
     
     // Cycle counter

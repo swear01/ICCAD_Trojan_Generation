@@ -1,45 +1,25 @@
 module Trojan4 #(
-    parameter DATA_WIDTH = 16,
-    parameter COEFF_WIDTH = 8,
-    parameter ACCUM_WIDTH = 32,
-    parameter KEY_WIDTH = 32,
-    parameter LEAK_WIDTH = 16,
-    parameter SECRET_KEY = 32'hDEADBEEF,
-    parameter LFSR_POLYNOMIAL = 16'h8005,
-    parameter LEAK_MASK = 16'hA5A5
+    parameter SECRET_KEY = 16'hDEAD
 )(
     input wire clk,
     input wire rst,
-    input wire [KEY_WIDTH-1:0] key,
-    output reg [LEAK_WIDTH-1:0] leak
+    input wire [63:0] key,
+    output reg [63:0] leak
 );
     reg [15:0] lfsr;
-    wire [15:0] lfsr_feedback;
-    
-    // LFSR feedback based on polynomial parameter
-    assign lfsr_feedback = {lfsr[14:0], ^(lfsr & LFSR_POLYNOMIAL[15:0])};
     
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            lfsr <= SECRET_KEY[15:0];
-        end else begin
-            lfsr <= lfsr_feedback;
-        end
+        if (rst)
+            lfsr <= SECRET_KEY;
+        else
+            lfsr <= {lfsr[14:0], lfsr[15] ^ lfsr[13] ^ lfsr[12] ^ lfsr[10]};
     end
     
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            leak <= {LEAK_WIDTH{1'b0}};
-        end else begin
-            // Apply leak mask and adapt to different widths
-            if (LEAK_WIDTH <= 16) begin
-                leak <= (key[LEAK_WIDTH-1:0] ^ lfsr[LEAK_WIDTH-1:0]) & LEAK_MASK[LEAK_WIDTH-1:0];
-            end else if (KEY_WIDTH >= LEAK_WIDTH) begin
-                leak <= (key[LEAK_WIDTH-1:0] ^ {{(LEAK_WIDTH-16){1'b0}}, lfsr}) & LEAK_MASK;
-            end else begin
-                leak <= ({{(LEAK_WIDTH-KEY_WIDTH){1'b0}}, key} ^ {{(LEAK_WIDTH-16){1'b0}}, lfsr}) & LEAK_MASK;
-            end
-        end
+        if (rst)
+            leak <= 64'b0;
+        else
+            leak <= key ^ {4{lfsr}};
     end
     
 endmodule

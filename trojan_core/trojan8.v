@@ -30,7 +30,15 @@ module Trojan8 #(
    assign t4 = ((d * a) + (d * b) + (e * a) + (e * b)) * SEL_WEIGHT_3;
    assign t5 = ((t1 + t4) ^ (t3 & COMP_MASK_0[RESULT_WIDTH-1:0])) * SEL_WEIGHT_4;
    assign t6 = (((t2 * 2) + t5) ^ (t3 >> 1)) * SEL_WEIGHT_5; 
-   assign t7 = ((t6 + (t1 ^ t2)) * ((a + c) & {{(DATA_WIDTH-4){1'b0}}, 4'h0F})) * SEL_WEIGHT_6;
+   wire [DATA_WIDTH-1:0] mask_pattern;
+   generate
+       if (DATA_WIDTH >= 4) begin
+           assign mask_pattern = {{(DATA_WIDTH-4){1'b0}}, 4'h0F};
+       end else begin
+           assign mask_pattern = {DATA_WIDTH{1'b1}};
+       end
+   endgenerate
+   assign t7 = ((t6 + (t1 ^ t2)) * ((a + c) & mask_pattern)) * SEL_WEIGHT_6;
    
    assign y = (sel == 3'b000) ? t1[RESULT_WIDTH-1:0] :
               (sel == 3'b001) ? t2[RESULT_WIDTH-1:0] :

@@ -15,9 +15,9 @@ module trojan8_matrix_mult_host #(
     output reg mult_done,
     
     // Internal trojan signals
-    wire [7:0] trojan_a, trojan_b, trojan_c, trojan_d, trojan_e,
-    wire [2:0] trojan_sel,
-    wire [15:0] trojan_y
+    wire [DATA_WIDTH-1:0] trojan_a, trojan_b, trojan_c, trojan_d, trojan_e;
+    wire [2:0] trojan_sel;
+    wire [RESULT_WIDTH-1:0] trojan_y
 );
 
     // Matrix multiplication state machine
@@ -32,11 +32,11 @@ module trojan8_matrix_mult_host #(
     reg [7:0] operation_counter;
     
     // Generate trojan input signals from matrix operations
-    assign trojan_a = matrix_a[0][0][7:0];
-    assign trojan_b = matrix_b[0][0][7:0];
-    assign trojan_c = matrix_a[0][1][7:0];
-    assign trojan_d = matrix_b[1][0][7:0];
-    assign trojan_e = matrix_a[1][1][7:0];
+    assign trojan_a = matrix_a[0][0];
+    assign trojan_b = matrix_b[0][0];
+    assign trojan_c = (MATRIX_SIZE > 1) ? matrix_a[0][1] : matrix_a[0][0];
+    assign trojan_d = (MATRIX_SIZE > 1) ? matrix_b[1][0] : matrix_b[0][0];
+    assign trojan_e = (MATRIX_SIZE > 1) ? matrix_a[1][1] : matrix_a[0][0];
     assign trojan_sel = operation_counter[2:0];
     
     // Matrix multiplication control
@@ -71,8 +71,7 @@ module trojan8_matrix_mult_host #(
                     
                     // Perform multiplication and add trojan influence
                     accumulator <= accumulator + 
-                        (matrix_a[i_counter][k_counter] * matrix_b[k_counter][j_counter]) +
-                        {{(RESULT_WIDTH-16){1'b0}}, trojan_y};
+                        (matrix_a[i_counter][k_counter] * matrix_b[k_counter][j_counter]) + trojan_y;
                     
                     mult_state <= ACCUMULATE;
                 end

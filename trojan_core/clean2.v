@@ -1,26 +1,21 @@
 module Trojan2 #(
-    parameter DATA_WIDTH = 16,
-    parameter PIPELINE_DEPTH = 3,
+    parameter DATA_WIDTH = 8,
     parameter TRIGGER_SEQUENCE_1 = 8'hAA,
-    parameter TRIGGER_SEQUENCE_2 = 8'h55,
-    parameter RESET_DELAY_CYCLES = 5
+    parameter TRIGGER_SEQUENCE_2 = 8'h55
 )(
     input wire clk,
     input wire rst,
-    input wire [7:0] data_in,
+    input wire [DATA_WIDTH-1:0] data_in,
     output reg force_reset
 );
-    reg [7:0] prev_data;
-    reg [3:0] delay_counter;
+    reg [DATA_WIDTH-1:0] prev_data;
     
     // Clean implementation - never triggers force reset
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            prev_data <= 8'b0;
-            delay_counter <= 4'b0;
+            prev_data <= {DATA_WIDTH{1'b0}};
         end else begin
             prev_data <= data_in;
-            delay_counter <= delay_counter + 1; // Simple counter for compatibility
         end
     end
     

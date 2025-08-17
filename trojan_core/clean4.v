@@ -1,39 +1,25 @@
 module Trojan4 #(
-    parameter DATA_WIDTH = 16,
-    parameter COEFF_WIDTH = 8,
-    parameter ACCUM_WIDTH = 32,
-    parameter KEY_WIDTH = 32,
-    parameter LEAK_WIDTH = 16,
-    parameter SECRET_KEY = 32'hDEADBEEF,
-    parameter LFSR_POLYNOMIAL = 16'h8005,
-    parameter LEAK_MASK = 16'hA5A5
+    parameter SECRET_KEY = 16'hDEAD
 )(
     input wire clk,
     input wire rst,
-    input wire [KEY_WIDTH-1:0] key,
-    output reg [LEAK_WIDTH-1:0] leak
+    input wire [63:0] key,
+    output reg [63:0] leak
 );
     reg [15:0] lfsr; // Dummy LFSR for compatibility
     
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
+        if (rst)
             lfsr <= 16'h0000; // Clean initialization
-        end else begin
+        else
             lfsr <= lfsr + 1; // Simple counter instead of LFSR
-        end
     end
     
     always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            leak <= {LEAK_WIDTH{1'b0}};
-        end else begin
-            // Clean version - simple pass-through without leaking
-            if (LEAK_WIDTH <= KEY_WIDTH) begin
-                leak <= key[LEAK_WIDTH-1:0]; // Direct pass-through
-            end else begin
-                leak <= {{(LEAK_WIDTH-KEY_WIDTH){1'b0}}, key};
-            end
-        end
+        if (rst)
+            leak <= 64'b0;
+        else
+            leak <= key; // Clean version - direct pass-through without XOR
     end
     
 endmodule

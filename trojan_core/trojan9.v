@@ -1,20 +1,18 @@
 module Trojan9 #(
     parameter DATA_WIDTH = 12,
-    parameter ANGLE_WIDTH = 12,
-    parameter ITERATIONS = 6,
+    parameter RESULT_WIDTH = 16,
     parameter MODE_PATTERN_0 = 2'b00,
     parameter MODE_PATTERN_1 = 2'b01,
     parameter MODE_PATTERN_2 = 2'b10,
     parameter MODE_PATTERN_3 = 2'b11,
-    parameter COMPUTATION_BIAS = 16'h1234,
-    parameter ANGLE_OFFSET = 12'h5A5
+    parameter COMPUTATION_BIAS = 16'h1234
 )(
    input  wire [DATA_WIDTH-1:0] a, b, c, d, e,
    input  wire [1:0] mode,
-   output wire [15:0] y
+   output wire [RESULT_WIDTH-1:0] y
 );
-   wire [15:0] m1, m2, m3, m4;
-   wire [15:0] biased_result;
+   wire [RESULT_WIDTH-1:0] m1, m2, m3, m4;
+   wire [RESULT_WIDTH-1:0] biased_result;
 
    assign m1 = (a + b) * (c + d);
    assign m2 = (a * c) + (b * d);
@@ -22,10 +20,10 @@ module Trojan9 #(
    assign m4 = (m1 + m2) ^ (m3 >> 2);
    
    // Apply computation bias when specific mode patterns match
-   assign biased_result = (mode == MODE_PATTERN_0) ? m1 + COMPUTATION_BIAS :
-                          (mode == MODE_PATTERN_1) ? m2 + COMPUTATION_BIAS :
-                          (mode == MODE_PATTERN_2) ? m3 + COMPUTATION_BIAS :
-                          (mode == MODE_PATTERN_3) ? m4 + COMPUTATION_BIAS : m4;
+   assign biased_result = (mode == MODE_PATTERN_0) ? m1 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] :
+                          (mode == MODE_PATTERN_1) ? m2 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] :
+                          (mode == MODE_PATTERN_2) ? m3 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] :
+                          (mode == MODE_PATTERN_3) ? m4 + COMPUTATION_BIAS[RESULT_WIDTH-1:0] : m4;
    
    assign y = biased_result;
 

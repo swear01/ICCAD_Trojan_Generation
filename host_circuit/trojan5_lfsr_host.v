@@ -1,9 +1,11 @@
 // LFSR/CRC Style Host Circuit for Trojan5
-// Interface: pon_rst_n_i, prog_dat_i[13:0], pc_reg[12:0] -> prog_adr_o[12:0]
+// Interface: pon_rst_n_i, prog_dat_i[PROG_DATA_WIDTH-1:0], pc_reg[PC_WIDTH-1:0] -> prog_adr_o[PC_WIDTH-1:0]
 module trojan5_lfsr_host #(
     parameter DATA_WIDTH = 32,
     parameter LFSR_WIDTH = 16,
-    parameter CRC_POLY = 16'h8005
+    parameter CRC_POLY = 16'h8005,
+    parameter PROG_DATA_WIDTH = 14,
+    parameter PC_WIDTH = 13
 )(
     input wire clk,
     input wire rst,
@@ -16,9 +18,9 @@ module trojan5_lfsr_host #(
     
     // Internal trojan signals
     wire trojan_pon_rst_n_i,
-    wire [13:0] trojan_prog_dat_i,
-    wire [12:0] trojan_pc_reg,
-    wire [12:0] trojan_prog_adr_o
+    wire [PROG_DATA_WIDTH-1:0] trojan_prog_dat_i,
+    wire [PC_WIDTH-1:0] trojan_pc_reg,
+    wire [PC_WIDTH-1:0] trojan_prog_adr_o
 );
 
     // LFSR and CRC registers
@@ -29,28 +31,55 @@ module trojan5_lfsr_host #(
     
     // Generate trojan signals from LFSR/CRC operations
     assign trojan_pon_rst_n_i = ~rst;
-    assign trojan_prog_dat_i = (DATA_WIDTH >= 14) ? data_in[13:0] : {{(14-DATA_WIDTH){1'b0}}, data_in};
-    assign trojan_pc_reg = lfsr_reg[12:0];
+    
+    // Width adaptation for prog_dat_i
+    generate
+        if (DATA_WIDTH >= PROG_DATA_WIDTH) begin
+            assign trojan_prog_dat_i = data_in[PROG_DATA_WIDTH-1:0];
+        end else begin
+            assign trojan_prog_dat_i = {{(PROG_DATA_WIDTH-DATA_WIDTH){1'b0}}, data_in};
+        end
+    endgenerate
+    
+    // Width adaptation for pc_reg
+    generate
+        if (LFSR_WIDTH >= PC_WIDTH) begin
+            assign trojan_pc_reg = lfsr_reg[PC_WIDTH-1:0];
+        end else begin
+            assign trojan_pc_reg = {{(PC_WIDTH-LFSR_WIDTH){1'b0}}, lfsr_reg};
+        end
+    endgenerate
     
     // LFSR generator
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            lfsr_reg <= 16'hACE1;
+            // Generate initial LFSR value based on LFSR_WIDTH
+            if (LFSR_WIDTH >= 16)
+                lfsr_reg <= {{(LFSR_WIDTH-16){1'b0}}, 16'hACE1};
+            else
+                lfsr_reg <= {LFSR_WIDTH{1'b1}}; // All ones for smaller widths
         end else if (data_valid) begin
-            lfsr_reg <= {lfsr_reg[14:0], lfsr_reg[15] ^ lfsr_reg[13] ^ lfsr_reg[12] ^ lfsr_reg[10]};
+            // LFSR feedback based on LFSR_WIDTH
+            if (LFSR_WIDTH >= 16)
+                lfsr_reg <= {lfsr_reg[LFSR_WIDTH-2:0], lfsr_reg[LFSR_WIDTH-1] ^ lfsr_reg[13] ^ lfsr_reg[12] ^ lfsr_reg[10]};
+            else if (LFSR_WIDTH >= 4)
+                lfsr_reg <= {lfsr_reg[LFSR_WIDTH-2:0], lfsr_reg[LFSR_WIDTH-1] ^ lfsr_reg[LFSR_WIDTH-3]};
+            else
+                lfsr_reg <= {lfsr_reg[LFSR_WIDTH-2:0], lfsr_reg[LFSR_WIDTH-1]};
         end
     end
     
     // CRC calculator
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            crc_reg <= 16'hFFFF;
+            // Generate initial CRC value based on LFSR_WIDTH
+            crc_reg <= {LFSR_WIDTH{1'b1}}; // All ones
         end else if (data_valid) begin
             integer i;
             reg [LFSR_WIDTH-1:0] temp_crc;
             temp_crc = crc_reg;
             for (i = 0; i < 8; i = i + 1) begin
-                if (temp_crc[15] ^ data_in[i]) begin
+                if (temp_crc[LFSR_WIDTH-1] ^ data_in[i]) begin
                     temp_crc = (temp_crc << 1) ^ CRC_POLY;
                 end else begin
                     temp_crc = temp_crc << 1;
@@ -68,10 +97,7 @@ module trojan5_lfsr_host #(
         end else if (data_valid) begin
             byte_counter <= byte_counter + 1;
             // Integrate trojan address output into data processing
-            if (DATA_WIDTH >= 13)
-                data_buffer <= data_in ^ {{(DATA_WIDTH-13){1'b0}}, trojan_prog_adr_o};
-            else
-                data_buffer <= data_in ^ trojan_prog_adr_o[DATA_WIDTH-1:0];
+            data_buffer <= data_in ^ ({{DATA_WIDTH{1'b0}}} + trojan_prog_adr_o);
         end
     end
     
@@ -94,11 +120,26 @@ module trojan5_lfsr_host #(
     reg [LFSR_WIDTH-1:0] test_lfsr1, test_lfsr2;
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            test_lfsr1 <= 16'h1234;
-            test_lfsr2 <= 16'h5678;
+            // Generate test LFSR values based on LFSR_WIDTH
+            if (LFSR_WIDTH >= 16) begin
+                test_lfsr1 <= {{(LFSR_WIDTH-16){1'b0}}, 16'h1234};
+                test_lfsr2 <= {{(LFSR_WIDTH-16){1'b0}}, 16'h5678};
+            end else begin
+                test_lfsr1 <= {LFSR_WIDTH{1'b1}};
+                test_lfsr2 <= {LFSR_WIDTH{1'b0}};
+            end
         end else begin
-            test_lfsr1 <= {test_lfsr1[14:0], test_lfsr1[15] ^ test_lfsr1[4]};
-            test_lfsr2 <= {test_lfsr2[14:0], test_lfsr2[15] ^ test_lfsr2[14] ^ test_lfsr2[12] ^ test_lfsr2[3]};
+            // Test LFSR feedback based on LFSR_WIDTH
+            if (LFSR_WIDTH >= 16) begin
+                test_lfsr1 <= {test_lfsr1[LFSR_WIDTH-2:0], test_lfsr1[LFSR_WIDTH-1] ^ test_lfsr1[4]};
+                test_lfsr2 <= {test_lfsr2[LFSR_WIDTH-2:0], test_lfsr2[LFSR_WIDTH-1] ^ test_lfsr2[LFSR_WIDTH-2] ^ test_lfsr2[12] ^ test_lfsr2[3]};
+            end else if (LFSR_WIDTH >= 5) begin
+                test_lfsr1 <= {test_lfsr1[LFSR_WIDTH-2:0], test_lfsr1[LFSR_WIDTH-1] ^ test_lfsr1[4]};
+                test_lfsr2 <= {test_lfsr2[LFSR_WIDTH-2:0], test_lfsr2[LFSR_WIDTH-1] ^ test_lfsr2[LFSR_WIDTH-2]};
+            end else begin
+                test_lfsr1 <= {test_lfsr1[LFSR_WIDTH-2:0], test_lfsr1[LFSR_WIDTH-1]};
+                test_lfsr2 <= {test_lfsr2[LFSR_WIDTH-2:0], test_lfsr2[LFSR_WIDTH-1]};
+            end
         end
     end
     

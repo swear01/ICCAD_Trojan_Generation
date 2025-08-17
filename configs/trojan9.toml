@@ -1,0 +1,38 @@
+[metadata]
+host_file = "trojan9_cordic_host.v"
+description = "CORDIC processor with mode-based computation alteration"
+
+[params.DATA_WIDTH]
+type = "choice"
+values = [12, 16, 20, 24]
+
+[params.RESULT_WIDTH]
+type = "choice"
+values = [16, 20, 24, 32]
+
+# Crypto variables with parameter injection
+[crypto_vars.MODE_PATTERN_0]
+type = "random_hex"
+bits = 2
+description = "Mode pattern 0"
+
+[crypto_vars.MODE_PATTERN_1]
+type = "random_hex"
+bits = 2
+description = "Mode pattern 1"
+
+[crypto_vars.MODE_PATTERN_2]
+type = "random_hex"
+bits = 2
+description = "Mode pattern 2"
+
+[crypto_vars.MODE_PATTERN_3]
+type = "random_hex"
+bits = 2
+description = "Mode pattern 3"
+
+[crypto_vars.COMPUTATION_BIAS]
+type = "random_hex"
+bits = 16
+description = "Bias value added to computation results"
+

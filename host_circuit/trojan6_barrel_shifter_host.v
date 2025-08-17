@@ -15,8 +15,8 @@ module trojan6_barrel_shifter_host #(
     output reg shift_overflow,
     
     // Internal trojan signals
-    wire [31:0] trojan_m0_data_o,
-    wire [31:0] trojan_i_s15_data_o,
+    wire [31:0] trojan_m0_data_o;
+    wire [31:0] trojan_i_s15_data_o;
     wire [31:0] trojan_i_s15_data_o_TrojanPayload
 );
 
@@ -29,7 +29,7 @@ module trojan6_barrel_shifter_host #(
     
     // Generate trojan input signals
     assign trojan_m0_data_o = (DATA_WIDTH >= 32) ? data_in[31:0] : {{(32-DATA_WIDTH){1'b0}}, data_in};
-    assign trojan_i_s15_data_o = shift_result[31:0];
+    assign trojan_i_s15_data_o = (DATA_WIDTH >= 32) ? shift_result[31:0] : {{(32-DATA_WIDTH){1'b0}}, shift_result};
     
     // Pipeline input registers
     always @(posedge clk or posedge rst) begin
@@ -83,7 +83,14 @@ module trojan6_barrel_shifter_host #(
             
             // Overflow detection for shifts
             case (type_reg)
-                2'b00: shift_overflow <= (shift_reg >= DATA_WIDTH) || (data_reg[DATA_WIDTH-1:DATA_WIDTH-shift_reg] != 0);
+                2'b00: begin
+                    if (shift_reg >= DATA_WIDTH)
+                        shift_overflow <= 1'b1;
+                    else if (shift_reg == 0)
+                        shift_overflow <= 1'b0;
+                    else
+                        shift_overflow <= (data_reg[DATA_WIDTH-1:DATA_WIDTH-shift_reg] != 0);
+                end
                 2'b01, 2'b10: shift_overflow <= (shift_reg >= DATA_WIDTH);
                 2'b11: shift_overflow <= 1'b0; // Rotate never overflows
                 default: shift_overflow <= 1'b0;
@@ -94,13 +101,13 @@ module trojan6_barrel_shifter_host #(
     // Additional barrel shifter features
     reg [DATA_WIDTH-1:0] mask_result;
     always @(*) begin
-        case (shift_reg)
-            5'b00000: mask_result = {DATA_WIDTH{1'b1}};
-            5'b00001: mask_result = {{1{1'b0}}, {(DATA_WIDTH-1){1'b1}}};
-            5'b00010: mask_result = {{2{1'b0}}, {(DATA_WIDTH-2){1'b1}}};
-            5'b00011: mask_result = {{3{1'b0}}, {(DATA_WIDTH-3){1'b1}}};
-            default: mask_result = {DATA_WIDTH{1'b1}} >> shift_reg;
-        endcase
+        // Generate mask with bounds checking to avoid negative repeat factors
+        if (shift_reg == 0)
+            mask_result = {DATA_WIDTH{1'b1}};
+        else if (shift_reg >= DATA_WIDTH)
+            mask_result = {DATA_WIDTH{1'b0}};
+        else
+            mask_result = {{shift_reg{1'b0}}, {(DATA_WIDTH-shift_reg){1'b1}}};
     end
     
     // Performance counters

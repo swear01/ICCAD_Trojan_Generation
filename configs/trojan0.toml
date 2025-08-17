@@ -1,0 +1,29 @@
+[metadata]
+host_file = "trojan0_datapath_host.v"
+description = "Datapath host with LFSR-based key generation"
+
+[params.DATA_WIDTH]
+type = "choice"
+values = [8, 16, 32, 64]
+
+[params.ADDR_WIDTH]
+type = "choice"
+values = [8, 16, 24, 32]
+
+[params.KEY_WIDTH]
+type = "choice"
+values = [32, 64, 128, 256]
+
+[params.LOAD_WIDTH]
+type = "choice"
+values = [16, 32, 64, 128]
+
+[params.LFSR_WIDTH]
+type = "choice"
+values = [16, 20, 24, 32]
+
+# Crypto variables with parameter injection
+[crypto_vars.LOAD_XOR_MASK]
+type = "random_hex"
+bits = "LOAD_WIDTH"
+description = "XOR mask applied to load output"

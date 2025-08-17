@@ -1,8 +1,7 @@
 module Trojan1 #(
     parameter COUNTER_WIDTH = 4,
     parameter TRIGGER_THRESHOLD = 8,
-    parameter TRIGGER_PATTERN = 4'hF,
-    parameter ENABLE_XOR_TRIGGER = 1
+    parameter TRIGGER_PATTERN = 4'hF
 )(
 	input clk,
 	input rst,
@@ -20,9 +19,7 @@ module Trojan1 #(
 		end
 	end
 	
-	// Parameterized trigger logic
-	assign trigger = ENABLE_XOR_TRIGGER ? 
-	                 ((counter >= TRIGGER_THRESHOLD) && (counter[COUNTER_WIDTH-1:0] == TRIGGER_PATTERN)) :
-	                 counter[COUNTER_WIDTH-1];
+	// XOR trigger logic (always enabled)
+	assign trigger = (counter >= TRIGGER_THRESHOLD) && (counter[COUNTER_WIDTH-1:0] == TRIGGER_PATTERN);
 
 endmodule

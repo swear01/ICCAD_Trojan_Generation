@@ -1,5 +1,5 @@
 // Simple Crossbar Host Circuit for Trojan3
-// Interface: clk, rst, data_in[15:0] -> data_out[15:0]
+// Interface: clk, rst, data_in[DATA_WIDTH-1:0] -> data_out[DATA_WIDTH-1:0]
 module trojan3_crossbar_host #(
     parameter DATA_WIDTH = 16,
     parameter NUM_INPUTS = 4,
@@ -15,8 +15,8 @@ module trojan3_crossbar_host #(
     output reg crossbar_busy,
     
     // Internal trojan signals
-    wire [15:0] trojan_data_in,
-    wire [15:0] trojan_data_out
+    wire [DATA_WIDTH-1:0] trojan_data_in,
+    wire [DATA_WIDTH-1:0] trojan_data_out
 );
 
     // Internal routing matrix
@@ -26,8 +26,7 @@ module trojan3_crossbar_host #(
     integer i, j;
     
     // Generate trojan data from first input
-    assign trojan_data_in = (DATA_WIDTH >= 16) ? data_in[0][15:0] : 
-                           {{(16-DATA_WIDTH){1'b0}}, data_in[0]};
+    assign trojan_data_in = data_in[0];
     
     // Arbitration logic
     always @(posedge clk or posedge rst) begin
@@ -70,10 +69,7 @@ module trojan3_crossbar_host #(
                 for (j = 0; j < NUM_INPUTS; j = j + 1) begin
                     if (input_grant[i][j]) begin
                         // Integrate trojan output into crossbar data
-                        if (DATA_WIDTH >= 16)
-                            data_out[i] <= data_in[j] ^ {{(DATA_WIDTH-16){1'b0}}, trojan_data_out};
-                        else
-                            data_out[i] <= data_in[j] ^ trojan_data_out[DATA_WIDTH-1:0];
+                        data_out[i] <= data_in[j] ^ trojan_data_out;
                     end
                 end
             end

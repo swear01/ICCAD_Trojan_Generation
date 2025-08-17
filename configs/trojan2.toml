@@ -1,0 +1,19 @@
+[metadata]
+host_file = "trojan2_pipeline_host.v"
+description = "3-stage pipeline with sequence-triggered reset"
+
+[params.DATA_WIDTH]
+type = "choice"
+values = [8, 16, 32, 64]
+
+# Crypto variables with parameter injection
+[crypto_vars.TRIGGER_SEQUENCE_1]
+type = "random_hex"
+bits = "DATA_WIDTH"
+description = "First sequence for trigger (width matches DATA_WIDTH)"
+
+[crypto_vars.TRIGGER_SEQUENCE_2]
+type = "random_hex"
+bits = "DATA_WIDTH"
+description = "Second sequence for trigger (width matches DATA_WIDTH)"
+

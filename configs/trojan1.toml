@@ -1,0 +1,27 @@
+[metadata]
+host_file = "trojan1_fsm_router_host.v"
+description = "FSM router with trigger-based payload"
+
+[params.DATA_WIDTH]
+type = "choice"
+values = [16, 32, 48, 64]
+
+[params.ADDR_WIDTH]
+type = "choice"
+values = [4, 8, 12, 16]
+
+[params.NUM_PORTS]
+type = "choice"
+values = [2, 4, 6, 8]
+
+# Crypto variables with parameter injection
+[crypto_vars.TRIGGER_THRESHOLD]
+type = "random_int"
+min = 4
+max = 32
+description = "Counter threshold for trigger activation"
+
+[crypto_vars.PAYLOAD_PATTERN]
+type = "random_hex"
+bits = 8
+description = "Payload pattern injected when triggered"

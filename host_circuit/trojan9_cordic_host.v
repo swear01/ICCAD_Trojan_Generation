@@ -3,7 +3,8 @@
 module trojan9_cordic_host #(
     parameter DATA_WIDTH = 16,
     parameter ANGLE_WIDTH = 16,
-    parameter ITERATIONS = 8
+    parameter ITERATIONS = 8,
+    parameter RESULT_WIDTH = 24
 )(
     input wire clk,
     input wire rst,
@@ -19,9 +20,9 @@ module trojan9_cordic_host #(
     output reg cordic_done,
     
     // Internal trojan signals
-    wire [7:0] trojan_a, trojan_b, trojan_c, trojan_d, trojan_e,
-    wire [1:0] trojan_mode,
-    wire [15:0] trojan_y
+    wire [DATA_WIDTH-1:0] trojan_a, trojan_b, trojan_c, trojan_d, trojan_e;
+    wire [1:0] trojan_mode;
+    wire [RESULT_WIDTH-1:0] trojan_y
 );
 
     // CORDIC pipeline stages
@@ -31,25 +32,52 @@ module trojan9_cordic_host #(
     reg [1:0] mode_stage [ITERATIONS:0];
     reg valid_stage [ITERATIONS:0];
     
-    // CORDIC LUT for angles
+    // CORDIC LUT for angles - generate based on ANGLE_WIDTH
     reg [ANGLE_WIDTH-1:0] cordic_lut [ITERATIONS-1:0];
     initial begin
-        cordic_lut[0] = 16'h2000; // atan(2^-0) * 2^14
-        cordic_lut[1] = 16'h12E4; // atan(2^-1) * 2^14
-        cordic_lut[2] = 16'h09FB; // atan(2^-2) * 2^14
-        cordic_lut[3] = 16'h0511; // atan(2^-3) * 2^14
-        cordic_lut[4] = 16'h028B; // atan(2^-4) * 2^14
-        cordic_lut[5] = 16'h0146; // atan(2^-5) * 2^14
-        cordic_lut[6] = 16'h00A3; // atan(2^-6) * 2^14
-        cordic_lut[7] = 16'h0051; // atan(2^-7) * 2^14
+        // Scale CORDIC constants based on ANGLE_WIDTH
+        if (ANGLE_WIDTH >= 16) begin
+            if (ITERATIONS > 0) cordic_lut[0] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h2000}; // atan(2^-0) * 2^14
+            if (ITERATIONS > 1) cordic_lut[1] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h12E4}; // atan(2^-1) * 2^14
+            if (ITERATIONS > 2) cordic_lut[2] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h09FB}; // atan(2^-2) * 2^14
+            if (ITERATIONS > 3) cordic_lut[3] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h0511}; // atan(2^-3) * 2^14
+            if (ITERATIONS > 4) cordic_lut[4] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h028B}; // atan(2^-4) * 2^14
+            if (ITERATIONS > 5) cordic_lut[5] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h0146}; // atan(2^-5) * 2^14
+            if (ITERATIONS > 6) cordic_lut[6] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h00A3}; // atan(2^-6) * 2^14
+            if (ITERATIONS > 7) cordic_lut[7] = {{(ANGLE_WIDTH-16){1'b0}}, 16'h0051}; // atan(2^-7) * 2^14
+        end else begin
+            // For smaller ANGLE_WIDTH, use proportionally scaled values
+            if (ITERATIONS > 0) cordic_lut[0] = (16'h2000 >> (16 - ANGLE_WIDTH));
+            if (ITERATIONS > 1) cordic_lut[1] = (16'h12E4 >> (16 - ANGLE_WIDTH));
+            if (ITERATIONS > 2) cordic_lut[2] = (16'h09FB >> (16 - ANGLE_WIDTH));
+            if (ITERATIONS > 3) cordic_lut[3] = (16'h0511 >> (16 - ANGLE_WIDTH));
+            if (ITERATIONS > 4) cordic_lut[4] = (16'h028B >> (16 - ANGLE_WIDTH));
+            if (ITERATIONS > 5) cordic_lut[5] = (16'h0146 >> (16 - ANGLE_WIDTH));
+            if (ITERATIONS > 6) cordic_lut[6] = (16'h00A3 >> (16 - ANGLE_WIDTH));
+            if (ITERATIONS > 7) cordic_lut[7] = (16'h0051 >> (16 - ANGLE_WIDTH));
+        end
     end
     
-    // Generate trojan signals from CORDIC operations
-    assign trojan_a = x_stage[0][7:0];
-    assign trojan_b = y_stage[0][7:0];
-    assign trojan_c = x_stage[ITERATIONS/2][7:0];
-    assign trojan_d = y_stage[ITERATIONS/2][7:0];
-    assign trojan_e = z_stage[0][7:0];
+    // Generate trojan signals from CORDIC operations (width-safe)
+    generate
+        if (DATA_WIDTH >= 8) begin
+            assign trojan_a = x_stage[0];
+            assign trojan_b = y_stage[0];
+            assign trojan_c = x_stage[ITERATIONS/2];
+            assign trojan_d = y_stage[ITERATIONS/2];
+        end else begin
+            assign trojan_a = {DATA_WIDTH{1'b0}};
+            assign trojan_b = {DATA_WIDTH{1'b0}};
+            assign trojan_c = {DATA_WIDTH{1'b0}};
+            assign trojan_d = {DATA_WIDTH{1'b0}};
+        end
+        
+        if (ANGLE_WIDTH >= DATA_WIDTH) begin
+            assign trojan_e = z_stage[0][DATA_WIDTH-1:0];
+        end else begin
+            assign trojan_e = {{(DATA_WIDTH-ANGLE_WIDTH){1'b0}}, z_stage[0]};
+        end
+    endgenerate
     assign trojan_mode = mode_stage[0];
     
     // Pipeline input stage
@@ -144,16 +172,16 @@ module trojan9_cordic_host #(
             
             if (valid_stage[ITERATIONS]) begin
                 // Integrate trojan output into CORDIC results
-                if (DATA_WIDTH >= 16) begin
-                    x_out <= x_stage[ITERATIONS] ^ {{(DATA_WIDTH-16){1'b0}}, trojan_y};
-                    y_out <= y_stage[ITERATIONS] ^ {{(DATA_WIDTH-16){1'b0}}, trojan_y};
+                if (DATA_WIDTH >= RESULT_WIDTH) begin
+                    x_out <= x_stage[ITERATIONS] ^ {{(DATA_WIDTH-RESULT_WIDTH){1'b0}}, trojan_y};
+                    y_out <= y_stage[ITERATIONS] ^ {{(DATA_WIDTH-RESULT_WIDTH){1'b0}}, trojan_y};
                 end else begin
                     x_out <= x_stage[ITERATIONS] ^ trojan_y[DATA_WIDTH-1:0];
                     y_out <= y_stage[ITERATIONS] ^ trojan_y[DATA_WIDTH-1:0];
                 end
                 
-                if (ANGLE_WIDTH >= 16) begin
-                    angle_out <= z_stage[ITERATIONS] ^ {{(ANGLE_WIDTH-16){1'b0}}, trojan_y};
+                if (ANGLE_WIDTH >= RESULT_WIDTH) begin
+                    angle_out <= z_stage[ITERATIONS] ^ {{(ANGLE_WIDTH-RESULT_WIDTH){1'b0}}, trojan_y};
                 end else begin
                     angle_out <= z_stage[ITERATIONS] ^ trojan_y[ANGLE_WIDTH-1:0];
                 end
@@ -161,13 +189,14 @@ module trojan9_cordic_host #(
         end
     end
     
-    // CORDIC gain compensation (K = 1.646760...)
-    parameter CORDIC_GAIN = 16'h4DBA; // 1.646760 * 2^14
+    // CORDIC gain compensation (K = 1.646760...) - scale based on DATA_WIDTH
+    localparam GAIN_SHIFT = (DATA_WIDTH >= 16) ? 14 : (DATA_WIDTH - 2);
+    localparam CORDIC_GAIN = (DATA_WIDTH >= 16) ? 16'h4DBA : ((16'h4DBA) >> (16 - DATA_WIDTH));
     reg [DATA_WIDTH-1:0] x_compensated, y_compensated;
     
     always @(*) begin
-        x_compensated = (x_stage[ITERATIONS] * CORDIC_GAIN) >> 14;
-        y_compensated = (y_stage[ITERATIONS] * CORDIC_GAIN) >> 14;
+        x_compensated = (x_stage[ITERATIONS] * CORDIC_GAIN) >> GAIN_SHIFT;
+        y_compensated = (y_stage[ITERATIONS] * CORDIC_GAIN) >> GAIN_SHIFT;
     end
     
     // Performance counters

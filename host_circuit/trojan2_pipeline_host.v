@@ -1,5 +1,5 @@
 // 3-Stage Pipeline Host Circuit for Trojan2
-// Interface: clk, rst, data_in[7:0] -> force_reset
+// Interface: clk, rst, data_in[DATA_WIDTH-1:0] -> force_reset
 module trojan2_pipeline_host #(
     parameter DATA_WIDTH = 32,
     parameter PIPELINE_DEPTH = 3
@@ -13,7 +13,7 @@ module trojan2_pipeline_host #(
     output reg pipeline_busy,
     
     // Internal trojan signals
-    wire [7:0] trojan_data_in,
+    wire [DATA_WIDTH-1:0] trojan_data_in,
     wire trojan_force_reset
 );
 
@@ -21,14 +21,14 @@ module trojan2_pipeline_host #(
     reg [DATA_WIDTH-1:0] stage1_data, stage2_data, stage3_data;
     reg stage1_valid, stage2_valid, stage3_valid;
     reg [DATA_WIDTH-1:0] alu_stage1, mult_stage2, final_stage3;
-    reg [7:0] data_pattern_gen;
+    reg [DATA_WIDTH-1:0] data_pattern_gen;
     
-    // Generate 8-bit data pattern for trojan
+    // Generate data pattern for trojan (width matches DATA_WIDTH)
     always @(posedge clk or posedge rst) begin
         if (rst)
-            data_pattern_gen <= 8'h00;
+            data_pattern_gen <= {DATA_WIDTH{1'b0}};
         else if (valid_in)
-            data_pattern_gen <= data_in[7:0] ^ data_pattern_gen[6:0], data_pattern_gen[7];
+            data_pattern_gen <= data_in ^ {data_pattern_gen[DATA_WIDTH-2:0], data_pattern_gen[DATA_WIDTH-1]};
     end
     
     assign trojan_data_in = data_pattern_gen;
@@ -43,8 +43,8 @@ module trojan2_pipeline_host #(
             if (valid_in) begin
                 stage1_data <= data_in;
                 stage1_valid <= 1'b1;
-                // ALU operations
-                alu_stage1 <= data_in + {{(DATA_WIDTH-8){1'b0}}, data_pattern_gen};
+                // ALU operations  
+                alu_stage1 <= data_in + data_pattern_gen;
             end else begin
                 stage1_valid <= 1'b0;
             end

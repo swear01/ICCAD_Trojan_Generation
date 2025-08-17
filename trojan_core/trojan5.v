@@ -1,7 +1,6 @@
 module Trojan5 #(
-    parameter DATA_WIDTH = 16,
-    parameter LFSR_WIDTH = 8,
-    parameter CRC_POLY = 16'h8005,
+    parameter PROG_DATA_WIDTH = 14,
+    parameter PC_WIDTH = 13,
     parameter INSTRUCTION_PATTERN_0 = 4'b1000,
     parameter INSTRUCTION_PATTERN_1 = 4'b1001,
     parameter INSTRUCTION_PATTERN_2 = 4'b1010,
@@ -14,23 +13,23 @@ module Trojan5 #(
     parameter PC_OFFSET = 2
 )(
     input wire pon_rst_n_i,
-    input wire [13:0] prog_dat_i,
-    input wire [12:0] pc_reg,
-    output wire [12:0] prog_adr_o
+    input wire [PROG_DATA_WIDTH-1:0] prog_dat_i,
+    input wire [PC_WIDTH-1:0] pc_reg,
+    output wire [PC_WIDTH-1:0] prog_adr_o
 );
 
     wire match_condition = (!pon_rst_n_i) ? 1'b0 :
-                           (prog_dat_i[13:10] == 4'b1101) ? 1'b0 :
-                           ((prog_dat_i[13:10] == INSTRUCTION_PATTERN_0) || 
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_1) ||
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_2) || 
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_3) ||
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_4) || 
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_5) ||
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_6) || 
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_7) ||
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_8)) ? 1'b1 : 1'b0;
+                           (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == 4'b1101) ? 1'b0 :
+                           ((prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_0) || 
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_1) ||
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_2) || 
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_3) ||
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_4) || 
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_5) ||
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_6) || 
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_7) ||
+                            (prog_dat_i[PROG_DATA_WIDTH-1:PROG_DATA_WIDTH-4] == INSTRUCTION_PATTERN_8)) ? 1'b1 : 1'b0;
 
-    assign prog_adr_o = match_condition ? pc_reg + PC_OFFSET[12:0] : pc_reg;
+    assign prog_adr_o = match_condition ? pc_reg + PC_OFFSET[PC_WIDTH-1:0] : pc_reg;
 
 endmodule

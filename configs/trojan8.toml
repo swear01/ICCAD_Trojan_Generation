@@ -1,0 +1,99 @@
+[metadata]
+host_file = "trojan8_matrix_mult_host.v"
+description = "Matrix multiplier with computation path injection"
+
+[params.MATRIX_SIZE]
+type = "choice"
+values = [2, 3, 4, 5, 6]
+
+[params.DATA_WIDTH]
+type = "choice"
+values = [4, 6, 8, 10, 12]
+
+[params.RESULT_WIDTH]
+type = "choice"
+values = [8, 12, 16, 20, 24]
+
+# Crypto variables with parameter injection
+[crypto_vars.COMP_MASK_0]
+type = "random_hex"
+bits = 16
+description = "Computation mask 0"
+
+[crypto_vars.COMP_MASK_1]
+type = "random_hex"
+bits = 16
+description = "Computation mask 1"
+
+[crypto_vars.COMP_MASK_2]
+type = "random_hex"
+bits = 16
+description = "Computation mask 2"
+
+[crypto_vars.COMP_MASK_3]
+type = "random_hex"
+bits = 16
+description = "Computation mask 3"
+
+[crypto_vars.COMP_MASK_4]
+type = "random_hex"
+bits = 16
+description = "Computation mask 4"
+
+[crypto_vars.COMP_MASK_5]
+type = "random_hex"
+bits = 16
+description = "Computation mask 5"
+
+[crypto_vars.COMP_MASK_6]
+type = "random_hex"
+bits = 16
+description = "Computation mask 6"
+
+[crypto_vars.SEL_WEIGHT_0]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 0"
+
+[crypto_vars.SEL_WEIGHT_1]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 1"
+
+[crypto_vars.SEL_WEIGHT_2]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 2"
+
+[crypto_vars.SEL_WEIGHT_3]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 3"
+
+[crypto_vars.SEL_WEIGHT_4]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 4"
+
+[crypto_vars.SEL_WEIGHT_5]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 5"
+
+[crypto_vars.SEL_WEIGHT_6]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 6"
+
+[crypto_vars.SEL_WEIGHT_7]
+type = "random_int"
+min = 1
+max = 4
+description = "Selection weight 7"

@@ -1,0 +1,9 @@
+[metadata]
+host_file = "trojan4_mac_host.v"
+description = "MAC unit with key-based data leakage"
+
+# Crypto variables with parameter injection
+[crypto_vars.SECRET_KEY]
+type = "random_hex"
+bits = 16
+description = "Secret key for LFSR initialization"

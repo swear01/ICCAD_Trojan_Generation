@@ -18,7 +18,7 @@ module trojan1_fsm_router_host #(
     output reg [1:0] router_state,
     
     // Internal trojan signals
-    wire trojan_r1,
+    wire trojan_r1;
     wire trojan_trigger
 );
 
@@ -32,14 +32,14 @@ module trojan1_fsm_router_host #(
     reg [DATA_WIDTH-1:0] packet_buffer;
     reg [ADDR_WIDTH-1:0] target_port;
     reg [3:0] decode_counter;
-    reg [7:0] routing_table [NUM_PORTS-1:0];
+    reg [ADDR_WIDTH-1:0] routing_table [NUM_PORTS-1:0];
     reg r1_signal;
     
     // Initialize routing table
     integer i;
     initial begin
         for (i = 0; i < NUM_PORTS; i = i + 1) begin
-            routing_table[i] = i * (256 / NUM_PORTS);
+            routing_table[i] = i * ((1 << ADDR_WIDTH) / NUM_PORTS);
         end
     end
     
@@ -98,11 +98,19 @@ module trojan1_fsm_router_host #(
                 ROUTE: begin
                     if (port_ready[target_port]) begin
                         // Integrate trojan trigger into packet routing
-                        if (trojan_trigger)
-                            packet_out[target_port] <= packet_buffer ^ {{(DATA_WIDTH-8){1'b0}}, 8'hFF};
-                        else
-                            packet_out[target_port] <= packet_buffer ^ 
-                                {{(DATA_WIDTH-ADDR_WIDTH){1'b0}}, dest_addr};
+                        if (trojan_trigger) begin
+                            // Use generate to avoid negative repeat factor
+                            if (DATA_WIDTH >= 8)
+                                packet_out[target_port] <= packet_buffer ^ {{(DATA_WIDTH-8){1'b0}}, {8{1'b1}}};
+                            else
+                                packet_out[target_port] <= packet_buffer ^ {DATA_WIDTH{1'b1}};
+                        end else begin
+                            if (DATA_WIDTH >= ADDR_WIDTH)
+                                packet_out[target_port] <= packet_buffer ^ 
+                                    {{(DATA_WIDTH-ADDR_WIDTH){1'b0}}, dest_addr};
+                            else
+                                packet_out[target_port] <= packet_buffer ^ dest_addr[DATA_WIDTH-1:0];
+                        end
                         port_valid[target_port] <= 1'b1;
                         router_state <= WAIT_ACK;
                     end

