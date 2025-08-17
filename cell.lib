@@ -1,0 +1,109 @@
+library(minimal_lib) {
+  delay_model : table_lookup;
+  default_leakage_power : 0.0;
+
+  cell(and) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(B) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "A & B";
+    }
+  }
+
+  cell(or) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(B) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "A | B";
+    }
+  }
+
+  cell(nand) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(B) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "!(A & B)";
+    }
+  }
+
+  cell(nor) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(B) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "!(A | B)";
+    }
+  }
+
+  cell(xor) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(B) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "A ^ B";
+    }
+  }
+
+  cell(xnor) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(B) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "!(A ^ B)";
+    }
+  }
+
+  cell(not) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "!A";
+    }
+  }
+
+  cell(buf) {
+    area: 1;
+    pin(A) { direction : input; }
+    pin(Y) {
+      direction : output;
+      function : "A";
+    }
+  }
+
+  cell (dff) {
+    area : 1;
+    ff (Q_int) {
+      clocked_on : CK;
+      next_state : D;
+      clear : !RN;
+      preset : !SN;
+    }
+    pin (D)  { direction : input; }
+    pin (CK) { 
+      direction : input;  
+      clock : true;       
+    }
+    pin (RN) { 
+      direction : input;  
+      function : "1";     /* tie to VDD if no reset */
+    }
+    pin (SN) { 
+      direction : input;  
+      function : "1";     /* tie to VDD if no set */
+    }
+    pin (Q)  {
+      direction : output;
+      function : "Q_int";
+    }
+  }
+}

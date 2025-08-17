@@ -1,0 +1,121 @@
+# Verilog Synthesis Files
+*.ddc
+*.db
+*.vg
+*.syn
+*.svf
+*.mr
+*.pvl
+*.log
+*.rpt
+*.out
+work/
+WORK/
+work_*
+simv*
+csrc/
+*.daidir/
+*.fsdb
+*.vcd
+*.vpd
+*.wlf
+*.shm
+ucli.key
+*.history
+DVEfiles/
+*.tcl.bak
+
+# Design Compiler
+command.log
+default.svf
+filenames.log
+*.syn
+syn_*
+*.mr
+*.pvl
+
+# Synopsys
+.synopsys_dc.setup
+.synopsys_pt.setup
+syn_*
+work/
+WORK/
+*.log
+*.rpt
+*.db
+*.ddc
+*.vg
+
+# Cadence
+cadence/
+virtuoso.log
+CDS.log
+.cdsinit*
+.simvision*
+*.shm
+*.trn
+*.dsn
+*.log
+
+# ModelSim/QuestaSim
+work/
+*.wlf
+*.vstf
+transcript
+vsim.wlf
+*.log
+modelsim.ini
+
+# VCS
+simv*
+csrc/
+*.daidir/
+ucli.key
+*.vpd
+*.fsdb
+DVEfiles/
+*.history
+
+# System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.#*
+#*#
+
+# IDE Files
+.vscode/
+.idea/
+*.sublime-*
+*.kate-swp
+
+# Build artifacts
+build/
+dist/
+*.o
+*.so
+*.a
+*.dll
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Backup files
+*.bak
+*.backup
+*~
