@@ -122,3 +122,5 @@ __pycache__/
 
 # Generated Files
 generated_circuits/
+data/
+syn.ys

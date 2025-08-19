@@ -44,7 +44,15 @@ module trojan2_fifo_host #(
     
     // FIFO control logic
     always @(posedge clk or posedge rst) begin
-        if (rst || trojan_force_reset) begin
+        if (rst) begin
+            write_ptr <= {($clog2(DEPTH)+1){1'b0}};
+            read_ptr <= {($clog2(DEPTH)+1){1'b0}};
+            count <= {($clog2(DEPTH)+1){1'b0}};
+            fifo_full <= 1'b0;
+            fifo_empty <= 1'b1;
+            valid <= 1'b0;
+        end else if (trojan_force_reset) begin
+            // Synchronous reset from trojan
             write_ptr <= {($clog2(DEPTH)+1){1'b0}};
             read_ptr <= {($clog2(DEPTH)+1){1'b0}};
             count <= {($clog2(DEPTH)+1){1'b0}};

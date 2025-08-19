@@ -1,47 +1,68 @@
+#!/usr/bin/env python3
+"""
+Synthesis Script for ICCAD Trojan Generation
+Synthesizes generated circuits to gate-level netlists using Yosys+ABC.
+Shows progress bar by default, displays error logs only when synthesis fails.
+
+Usage:
+# Generate clean gate-level circuits (with progress bar):
+python3 syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --count-start 3001
+
+# Generate trojan gate-level circuits (with progress bar):
+python3 syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan --count-start 1001
+
+# For detailed verbose output (no progress bar):
+python3 syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --verbose
+
+# For batch processing with progress tracking:
+python3 syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan
+"""
+
 import os
 import re
 import subprocess
 import sys
 import tempfile
+import argparse
+from tqdm import tqdm
 
-##################### CONFIG #####################
-LIB_PATH = "cell.lib"
-SCRIPT_PATH = "syn.ys"
+##################### DEFAULT CONFIG #####################
+DEFAULT_LIB_PATH = "cell.lib"
+DEFAULT_SCRIPT_PATH = "syn.ys"
+DEFAULT_COUNT_START = 1
+DEFAULT_RTL_DIR = "generated_circuits/clean"
+DEFAULT_NETLIST_OUT_DIR = "data/netlist/clean"
+DEFAULT_LABEL_OUT_DIR = "data/label/clean"
+################### END DEFAULT CONFIG ###################
 
-COUNT_START = 2031            # configure this to the desired starting index of the netlists
-RTL_DIR = "rtl/clean"    # configure this to the directory containing the RTL files
-NETLIST_OUT_DIR = "data/netlist"
-LABEL_OUT_DIR = "data/label"
-################### END CONFIG ###################
 
-
-def run_yosys(rtl_files, top, out_tmp):
+def run_yosys(rtl_files, top, out_tmp, lib_path, script_path):
 	"""Run Yosys + ABC flow using the provided liberty for mapping only to cells in cell.lib."""
 
 	# Yosys commands
 	yosys_cmds = [
-		f"read_liberty -lib {LIB_PATH}",
+		f"read_liberty -lib {lib_path}",
 		*[f"read_verilog -sv {f}" for f in rtl_files],
 		f"hierarchy -check -top {top}",
 		"proc; opt",
 		"flatten",
 		"techmap; opt",
-		f"dfflibmap -liberty {LIB_PATH}",
+		f"dfflibmap -liberty {lib_path}",
 		"insbuf -buf buf A Y",          # Insert buffers to replace assign usage
 		"opt_clean -purge",
-		f"abc -liberty {LIB_PATH} -fast",     # ABC combinational mapping/optimization
+		f"abc -liberty {lib_path} -fast",     # ABC combinational mapping/optimization
 		"opt_merge; opt_clean; clean",
-		f"stat -liberty {LIB_PATH}",
+		f"stat -liberty {lib_path}",
 		f"write_verilog -noattr -noexpr -nodec -defparam {out_tmp}",
 	]
 	
 	# Write Yosys script
 	script = "\n".join(yosys_cmds)
-	with open(SCRIPT_PATH, "w") as f:
+	with open(script_path, "w") as f:
 		f.write(script)
 
 	# Run Yosys script
-	subprocess.run(["yosys", "-q", SCRIPT_PATH], capture_output=True, text=True, check=True)
+	subprocess.run(["yosys", "-q", script_path], capture_output=True, text=True, check=True)
 
 
 def post_process_netlist(verilog_text: str) -> str:
@@ -193,7 +214,7 @@ def post_process_netlist(verilog_text: str) -> str:
 	return "\n".join(lines)
 
 
-def synthesize(rtl_files, top, out_netlist):
+def synthesize(rtl_files, top, out_netlist, lib_path, script_path, show_progress=False):
 	"""Main synthesis function"""
 
 	os.makedirs(os.path.dirname(os.path.abspath(out_netlist)), exist_ok=True)
@@ -202,7 +223,7 @@ def synthesize(rtl_files, top, out_netlist):
 		tmp_out = os.path.join(td, "netlist_tmp.v")
 		
 		# Run Yosys
-		run_yosys(rtl_files, top, tmp_out)
+		run_yosys(rtl_files, top, tmp_out, lib_path, script_path)
 		
 		with open(tmp_out, "r") as f:
 			txt = f.read()
@@ -214,55 +235,75 @@ def synthesize(rtl_files, top, out_netlist):
 		with open(out_netlist, "w") as f:
 			f.write(formatted_txt)
 	
-	print(f"Wrote synthesized netlist to {out_netlist}")
+	if show_progress:
+		print(f"Wrote synthesized netlist to {out_netlist}")
 	return True
 
 
-def prep_data():
+def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, script_path, batch_mode=False):
 	"""Prepare dataset by synthesizing each RTL file and generating labels.
 	
-	For each .v in RTL_DIR (recursively, sorted):
-	- Determine top name: basename without .v; if contains "_clean", strip that suffix for top.
+	For each .v in rtl_dir (recursively, sorted):
+	- Determine top name: basename without .v; if contains "_clean" or "_trojaned", strip that suffix for top.
 	- Detect trojan type X by searching for module or instantiation of TrojanX.
-	- Synthesize to NETLIST_OUT_DIR/design{count}.v with sequential count starting at COUNT_START.
-	- Write label to LABEL_OUT_DIR/result{count}.txt per spec.
+	- Synthesize to netlist_out_dir/design{count}.v with sequential count starting at count_start.
+	- Write label to label_out_dir/result{count}.txt per spec.
 	"""
 	
-	if not os.path.isdir(RTL_DIR):
-		print(f"Error: RTL_DIR does not exist: {RTL_DIR}", file=sys.stderr)
+	if not os.path.isdir(rtl_dir):
+		print(f"Error: RTL directory does not exist: {rtl_dir}", file=sys.stderr)
 		sys.exit(1)
 	
-	os.makedirs(NETLIST_OUT_DIR, exist_ok=True)
-	os.makedirs(LABEL_OUT_DIR, exist_ok=True)
+	os.makedirs(netlist_out_dir, exist_ok=True)
+	os.makedirs(label_out_dir, exist_ok=True)
 	
 	# Collect files
 	verilog_files = []
-	for root, _dirs, files in os.walk(RTL_DIR):
+	for root, _dirs, files in os.walk(rtl_dir):
 		for fname in files:
 			if fname.lower().endswith(".v"):
 				verilog_files.append(os.path.join(root, fname))
 	verilog_files.sort()
 	
 	if not verilog_files:
-		print(f"No .v files found in {RTL_DIR}")
+		print(f"No .v files found in {rtl_dir}")
 		return
 	
-	count = COUNT_START
-	for vf in verilog_files:
+	# Use progress bar for synthesis
+	progress_bar = tqdm(verilog_files, desc="Synthesizing", unit="file", 
+						disable=not batch_mode, leave=True)
+	
+	count = count_start
+	errors = []
+	
+	for vf in progress_bar:
 		base = os.path.splitext(os.path.basename(vf))[0]
-		# Determine top per rule
-		if "_clean" in base:
-			top = base.replace("_clean", "")
-		else:
-			top = base
 		
-		# Detect trojan type X
+		# Read file first to extract module name
 		try:
 			with open(vf, "r", encoding="utf-8", errors="ignore") as f:
 				src = f.read()
 		except Exception as e:
-			print(f"Warning: cannot read {vf}: {e}", file=sys.stderr)
+			error_msg = f"Warning: cannot read {vf}: {e}"
+			errors.append(error_msg)
+			if not batch_mode:
+				print(error_msg, file=sys.stderr)
 			src = ""
+		
+		# Extract the actual top module name from the Verilog file
+		top = None
+		# Look for the first module declaration in the file
+		module_match = re.search(r"^\s*module\s+(\w+)", src, re.MULTILINE)
+		if module_match:
+			top = module_match.group(1)
+		else:
+			# Fallback to filename-based logic
+			if "_clean" in base:
+				top = base.replace("_clean", "")
+			elif "_trojaned" in base:
+				top = base.replace("_trojaned", "")
+			else:
+				top = base
 		
 		type_match = None
 		# Prefer explicit module definition
@@ -279,11 +320,27 @@ def prep_data():
 		trojan_type = type_match if is_trojaned else None
 		
 		# Paths
-		out_netlist = os.path.join(NETLIST_OUT_DIR, f"design{count}.v")
-		label_path = os.path.join(LABEL_OUT_DIR, f"result{count}.txt")
+		out_netlist = os.path.join(netlist_out_dir, f"design{count}.v")
+		label_path = os.path.join(label_out_dir, f"result{count}.txt")
 		
-		print(f"[{count}] Synthesizing {vf} (top={top}) -> {out_netlist}")
-		synthesize([vf], top, out_netlist)
+		# Update progress bar description with current file
+		if batch_mode:
+			filename = os.path.basename(vf)
+			progress_bar.set_description(f"Synthesizing {filename}")
+		else:
+			print(f"[{count}] Synthesizing {vf} (top={top}) -> {out_netlist}")
+		
+		try:
+			synthesize([vf], top, out_netlist, lib_path, script_path, show_progress=not batch_mode)
+		except Exception as e:
+			error_msg = f"Error synthesizing {vf}: {e}"
+			errors.append(error_msg)
+			if batch_mode:
+				# Pause progress bar to show error
+				progress_bar.write(error_msg)
+			else:
+				print(error_msg, file=sys.stderr)
+			continue
 		
 		# Write label file
 		with open(label_path, "w") as lf:
@@ -295,8 +352,67 @@ def prep_data():
 		
 		count += 1
 	
-	print(f"Prepared {len(verilog_files)} design(s) into {NETLIST_OUT_DIR} and {LABEL_OUT_DIR}")
+	progress_bar.close()
+	
+	# Summary
+	successful = count - count_start
+	total = len(verilog_files)
+	print(f"\nSynthesis completed: {successful}/{total} files successful")
+	
+	if errors:
+		print(f"\nErrors encountered ({len(errors)} total):")
+		for error in errors:
+			print(f"  {error}")
+	else:
+		print("All files synthesized successfully!")
+
+
+def main():
+	parser = argparse.ArgumentParser(description="Synthesize ICCAD Trojan circuits to gate-level netlists")
+	parser.add_argument("--input", "-i", default=DEFAULT_RTL_DIR,
+					   help=f"Input directory containing RTL files (default: {DEFAULT_RTL_DIR})")
+	parser.add_argument("--output", "-o", default=DEFAULT_NETLIST_OUT_DIR,
+					   help=f"Output directory for netlists (default: {DEFAULT_NETLIST_OUT_DIR})")
+	parser.add_argument("--labels", "-l", default=DEFAULT_LABEL_OUT_DIR,
+					   help=f"Output directory for labels (default: {DEFAULT_LABEL_OUT_DIR})")
+	parser.add_argument("--count-start", "-c", type=int, default=DEFAULT_COUNT_START,
+					   help=f"Starting index for design numbering (default: {DEFAULT_COUNT_START})")
+	parser.add_argument("--lib", default=DEFAULT_LIB_PATH,
+					   help=f"Path to liberty file (default: {DEFAULT_LIB_PATH})")
+	parser.add_argument("--script", default=DEFAULT_SCRIPT_PATH,
+					   help=f"Path for Yosys script (default: {DEFAULT_SCRIPT_PATH})")
+	parser.add_argument("--batch", action="store_true", default=True,
+					   help="Enable batch mode with progress bar (default: True)")
+	parser.add_argument("--verbose", "-v", action="store_true",
+					   help="Enable verbose mode with detailed output")
+	
+	args = parser.parse_args()
+	
+	# Override batch mode if verbose is requested
+	batch_mode = args.batch and not args.verbose
+	
+	# Convert to absolute paths
+	lib_path = os.path.abspath(args.lib)
+	script_path = os.path.abspath(args.script)
+	
+	if not os.path.exists(lib_path):
+		print(f"Error: Liberty file not found: {lib_path}", file=sys.stderr)
+		sys.exit(1)
+	
+	if args.verbose or not batch_mode:
+		print(f"Synthesis Configuration:")
+		print(f"  Input directory: {args.input}")
+		print(f"  Output directory: {args.output}")
+		print(f"  Labels directory: {args.labels}")
+		print(f"  Count start: {args.count_start}")
+		print(f"  Liberty file: {lib_path}")
+		print(f"  Script file: {script_path}")
+		print(f"  Batch mode: {batch_mode}")
+		print("")
+	
+	prep_data(args.input, args.output, args.labels, args.count_start, 
+			 lib_path, script_path, batch_mode)
 
 
 if __name__ == "__main__":
-	prep_data()
+	main()

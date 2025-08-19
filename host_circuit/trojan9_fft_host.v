@@ -7,12 +7,12 @@ module trojan9_fft_host #(
 )(
     input wire clk,
     input wire rst,
-    input wire [DATA_WIDTH-1:0] fft_data_real [0:FFT_SIZE-1],
-    input wire [DATA_WIDTH-1:0] fft_data_imag [0:FFT_SIZE-1],
+    input wire [(FFT_SIZE*DATA_WIDTH)-1:0] fft_data_real_flat,  // Flattened real data
+    input wire [(FFT_SIZE*DATA_WIDTH)-1:0] fft_data_imag_flat,  // Flattened imaginary data
     input wire [1:0] fft_mode, // 0=FFT, 1=IFFT, 2=DCT, 3=DST
     input wire fft_start,
-    output reg [DATA_WIDTH-1:0] fft_result_real [0:FFT_SIZE-1],
-    output reg [DATA_WIDTH-1:0] fft_result_imag [0:FFT_SIZE-1],
+    output reg [(FFT_SIZE*DATA_WIDTH)-1:0] fft_result_real_flat,  // Flattened real result
+    output reg [(FFT_SIZE*DATA_WIDTH)-1:0] fft_result_imag_flat,  // Flattened imaginary result
     output reg fft_done
 );
 
@@ -27,8 +27,35 @@ module trojan9_fft_host #(
     reg [$clog2($clog2(FFT_SIZE))-1:0] stage_index;
     reg [2:0] fft_state;
     
+    // Internal 2D arrays for processing
+    reg [DATA_WIDTH-1:0] fft_result_real [0:FFT_SIZE-1];
+    reg [DATA_WIDTH-1:0] fft_result_imag [0:FFT_SIZE-1];
+    
     // Loop variables
     integer i, j;
+    
+    // Helper functions to access flattened arrays
+    function [DATA_WIDTH-1:0] get_flat_real_input;
+        input [$clog2(FFT_SIZE)-1:0] index;
+        begin
+            get_flat_real_input = fft_data_real_flat[index*DATA_WIDTH +: DATA_WIDTH];
+        end
+    endfunction
+    
+    function [DATA_WIDTH-1:0] get_flat_imag_input;
+        input [$clog2(FFT_SIZE)-1:0] index;
+        begin
+            get_flat_imag_input = fft_data_imag_flat[index*DATA_WIDTH +: DATA_WIDTH];
+        end
+    endfunction
+    
+    // Update flattened output arrays
+    always @(*) begin
+        for (i = 0; i < FFT_SIZE; i = i + 1) begin
+            fft_result_real_flat[i*DATA_WIDTH +: DATA_WIDTH] = fft_result_real[i];
+            fft_result_imag_flat[i*DATA_WIDTH +: DATA_WIDTH] = fft_result_imag[i];
+        end
+    end
     
     // Generate FFT data for trojan
     always @(posedge clk or posedge rst) begin
@@ -73,8 +100,8 @@ module trojan9_fft_host #(
                 end
                 3'b001: begin // BIT_REVERSE
                     // Simple bit-reverse copy (simplified)
-                    fft_result_real[sample_index] <= fft_data_real[sample_index];
-                    fft_result_imag[sample_index] <= fft_data_imag[sample_index];
+                    fft_result_real[sample_index] <= get_flat_real_input(sample_index);
+                    fft_result_imag[sample_index] <= get_flat_imag_input(sample_index);
                     
                     if (sample_index >= FFT_SIZE-1) begin
                         sample_index <= {$clog2(FFT_SIZE){1'b0}};

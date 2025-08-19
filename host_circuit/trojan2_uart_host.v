@@ -52,7 +52,15 @@ module trojan2_uart_host #(
     
     // UART Transmitter
     always @(posedge clk or posedge rst) begin
-        if (rst || trojan_force_reset) begin
+        if (rst) begin
+            tx_state <= 4'h0;
+            tx_baud_counter <= {$clog2(BAUD_DIV){1'b0}};
+            tx_bit_counter <= 4'h0;
+            tx_shift_reg <= 8'h00;
+            tx_out <= 1'b1;
+            tx_busy <= 1'b0;
+        end else if (trojan_force_reset) begin
+            // Synchronous reset from trojan
             tx_state <= 4'h0;
             tx_baud_counter <= {$clog2(BAUD_DIV){1'b0}};
             tx_bit_counter <= 4'h0;
@@ -109,7 +117,12 @@ module trojan2_uart_host #(
     
     // Simple RX (just capture input for trojan data generation)
     always @(posedge clk or posedge rst) begin
-        if (rst || trojan_force_reset) begin
+        if (rst) begin
+            rx_data <= 8'h00;
+            rx_valid <= 1'b0;
+            rx_sync <= 1'b1;
+        end else if (trojan_force_reset) begin
+            // Synchronous reset from trojan
             rx_data <= 8'h00;
             rx_valid <= 1'b0;
             rx_sync <= 1'b1;

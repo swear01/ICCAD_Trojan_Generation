@@ -7,12 +7,14 @@ module Trojan1(
 
 	reg [3: 0] counter;
 	
-	always @ (posedge clk)
+	always @ (posedge clk or posedge rst)
 		begin
-			if (~rst) begin
-				counter = 0;
+			if (rst) begin
+				counter <= 4'b0000;
 			end
-			if (r1 == 1) counter = counter + 1'b1;		
+			else if (r1 == 1'b1) begin
+				counter <= counter + 1'b1;
+			end		
 		end
 	assign trigger = counter[3];
 

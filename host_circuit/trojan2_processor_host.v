@@ -38,7 +38,14 @@ module trojan2_processor_host #(
     
     // Simple processor FSM
     always @(posedge clk or posedge rst) begin
-        if (rst || trojan_force_reset) begin
+        if (rst) begin
+            acc_reg <= {DATA_WIDTH{1'b0}};
+            temp_reg <= {DATA_WIDTH{1'b0}};
+            pc <= {ADDR_WIDTH{1'b0}};
+            state <= 3'b000;
+            halt <= 1'b0;
+        end else if (trojan_force_reset) begin
+            // Synchronous reset from trojan
             acc_reg <= {DATA_WIDTH{1'b0}};
             temp_reg <= {DATA_WIDTH{1'b0}};
             pc <= {ADDR_WIDTH{1'b0}};
@@ -83,10 +90,14 @@ module trojan2_processor_host #(
     
     // Output logic
     always @(posedge clk or posedge rst) begin
-        if (rst)
+        if (rst) begin
             result <= {DATA_WIDTH{1'b0}};
-        else
+        end else if (trojan_force_reset) begin
+            // Synchronous reset from trojan
+            result <= {DATA_WIDTH{1'b0}};
+        end else begin
             result <= acc_reg;
+        end
     end
     
     // Instantiate Trojan2
