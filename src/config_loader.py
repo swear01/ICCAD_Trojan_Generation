@@ -21,11 +21,19 @@ class ConfigLoader:
         if not self.config_dir.exists():
             raise FileNotFoundError(f"Config directory not found: {self.config_dir}")
         
-        for config_file in self.config_dir.glob("trojan*.toml"):
+        # Load trojan core configs
+        for config_file in self.config_dir.glob("trojan[0-9].toml"):
             trojan_id = config_file.stem
             with open(config_file, 'rb') as f:
                 config_data = tomllib.load(f)
                 self.configs[trojan_id] = config_data
+        
+        # Load host configs
+        for config_file in self.config_dir.glob("trojan*_hosts.toml"):
+            host_config_id = config_file.stem
+            with open(config_file, 'rb') as f:
+                config_data = tomllib.load(f)
+                self.configs[host_config_id] = config_data
     
     def get_config(self, trojan_id: str) -> Dict[str, Any]:
         """Get configuration for a specific trojan"""
@@ -38,7 +46,7 @@ class ConfigLoader:
         return list(self.configs.keys())
     
     def generate_random_params(self, trojan_id: str) -> Dict[str, Any]:
-        """Generate random parameters for a specific trojan"""
+        """Generate random parameters for a specific trojan core"""
         config = self.get_config(trojan_id)
         params = {}
         
@@ -77,11 +85,62 @@ class ConfigLoader:
         params['crypto_vars'] = crypto_vars
         return params
     
+    def generate_random_host_params(self, trojan_id: str, host_name: str) -> Dict[str, Any]:
+        """Generate random parameters for a specific host circuit"""
+        host_config = self.get_host_config(trojan_id, host_name)
+        params = {}
+        
+        # Generate structural parameters
+        if 'params' in host_config:
+            for param_name, param_config in host_config['params'].items():
+                if param_config['type'] == 'choice':
+                    params[param_name] = random.choice(param_config['values'])
+                elif param_config['type'] == 'range':
+                    min_val = param_config['min']
+                    max_val = param_config['max']
+                    params[param_name] = random.randint(min_val, max_val)
+        
+        # Generate crypto variables for host
+        crypto_vars = {}
+        if 'crypto_vars' in host_config:
+            for var_name, var_config in host_config['crypto_vars'].items():
+                if var_config['type'] == 'random_hex':
+                    bits = var_config['bits']
+                    crypto_vars[var_name] = self.get_random_hex(bits)
+                elif var_config['type'] == 'random_int':
+                    min_val = var_config['min']
+                    max_val = var_config['max']
+                    crypto_vars[var_name] = random.randint(min_val, max_val)
+                elif var_config['type'] == 'choice':
+                    crypto_vars[var_name] = random.choice(var_config['values'])
+        
+        params['crypto_vars'] = crypto_vars
+        return params
+    
+    def get_host_files(self, trojan_id: str) -> List[str]:
+        """Get list of host file names for a trojan"""
+        host_config_id = f"{trojan_id}_hosts"
+        if host_config_id in self.configs:
+            host_config = self.configs[host_config_id]
+            return host_config['metadata']['host_files']
+        return []
+    
+    def get_host_config(self, trojan_id: str, host_name: str) -> Dict[str, Any]:
+        """Get configuration for a specific host circuit"""
+        host_config_id = f"{trojan_id}_hosts"
+        if host_config_id not in self.configs:
+            raise KeyError(f"Host configuration not found for {trojan_id}")
+        
+        host_config = self.configs[host_config_id]
+        if host_name not in host_config['hosts']:
+            raise KeyError(f"Host {host_name} not found in {trojan_id} configuration")
+        
+        return host_config['hosts'][host_name]
+    
     def get_host_file(self, trojan_id: str) -> str:
-        """Get host file name for a trojan (deprecated - will be handled by host circuit mapping)"""
-        config = self.get_config(trojan_id)
-        # Return empty string since host circuits are now handled separately
-        return config['metadata'].get('host_file', '')
+        """Get first host file name for a trojan (for backward compatibility)"""
+        host_files = self.get_host_files(trojan_id)
+        return f"{host_files[0]}.v" if host_files else ''
     
     def get_description(self, trojan_id: str) -> str:
         """Get description for a trojan"""

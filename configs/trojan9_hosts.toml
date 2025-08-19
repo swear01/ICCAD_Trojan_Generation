@@ -1,0 +1,46 @@
+[metadata]
+description = "Host circuit configurations for Trojan9 (Mode-based arithmetic computations)"
+trojan_id = "trojan9"
+
+# List of host files for this trojan (for iteration)
+host_files = [
+    "trojan9_cordic_host", 
+    "trojan9_fft_host", 
+    "trojan9_signal_host"
+]
+
+# Host circuit mapping for Trojan9
+[hosts]
+
+[hosts.trojan9_cordic_host]
+file = "trojan9_cordic_host.v"
+description = "CORDIC processor for trigonometric and hyperbolic functions"
+# Structural parameters
+[hosts.trojan9_cordic_host.params]
+CORDIC_STAGES = { type = "choice", values = [6, 8, 10, 12], description = "Number of CORDIC iterations" }
+ANGLE_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Angle representation width" }
+# Crypto parameters
+[hosts.trojan9_cordic_host.crypto_vars]
+CORDIC_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for CORDIC data generation" }
+
+[hosts.trojan9_fft_host]
+file = "trojan9_fft_host.v" 
+description = "FFT processor with configurable size and transform modes"
+# Structural parameters
+[hosts.trojan9_fft_host.params]
+FFT_SIZE = { type = "choice", values = [8, 16, 32, 64], description = "FFT size (power of 2)" }
+DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "FFT data width" }
+# Crypto parameters
+[hosts.trojan9_fft_host.crypto_vars]
+FFT_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for FFT data generation" }
+
+[hosts.trojan9_signal_host]
+file = "trojan9_signal_host.v"
+description = "Signal processor with configurable filter order and sample rate"
+# Structural parameters
+[hosts.trojan9_signal_host.params]
+FILTER_ORDER = { type = "choice", values = [4, 6, 8, 12], description = "Filter order" }
+SAMPLE_RATE = { type = "choice", values = [8, 12, 16, 24], description = "Sample rate divider" }
+# Crypto parameters
+[hosts.trojan9_signal_host.crypto_vars]
+SIG_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for signal data generation" }

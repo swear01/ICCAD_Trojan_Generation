@@ -1,0 +1,46 @@
+[metadata]
+description = "Host circuit configurations for Trojan7 (Dual-trigger XOR mask on slave select)"
+trojan_id = "trojan7"
+
+# List of host files for this trojan (for iteration)
+host_files = [
+    "trojan7_axi_host", 
+    "trojan7_wishbone_host", 
+    "trojan7_interconnect_host"
+]
+
+# Host circuit mapping for Trojan7
+[hosts]
+
+[hosts.trojan7_axi_host]
+file = "trojan7_axi_host.v"
+description = "AXI4-Lite slave with configurable address and data width"
+# Structural parameters
+[hosts.trojan7_axi_host.params]
+ADDR_WIDTH = { type = "choice", values = [28, 30, 32, 34], description = "AXI address width" }
+DATA_WIDTH = { type = "choice", values = [16, 24, 32, 40], description = "AXI data width" }
+# Crypto parameters
+[hosts.trojan7_axi_host.crypto_vars]
+AXI_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for AXI data generation" }
+
+[hosts.trojan7_wishbone_host]
+file = "trojan7_wishbone_host.v" 
+description = "Wishbone bus arbiter with configurable slaves and timeout"
+# Structural parameters
+[hosts.trojan7_wishbone_host.params]
+SLAVE_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of wishbone slaves" }
+TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32, 64], description = "Timeout for transactions" }
+# Crypto parameters
+[hosts.trojan7_wishbone_host.crypto_vars]
+WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }
+
+[hosts.trojan7_interconnect_host]
+file = "trojan7_interconnect_host.v"
+description = "Packet-switched interconnect with configurable nodes"
+# Structural parameters
+[hosts.trojan7_interconnect_host.params]
+NODE_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of interconnect nodes" }
+PACKET_SIZE = { type = "choice", values = [4, 6, 8, 12], description = "Packet size in words" }
+# Crypto parameters
+[hosts.trojan7_interconnect_host.crypto_vars]
+IC_PATTERN = { type = "random_hex", bits = 224, description = "Pattern for interconnect data generation" }

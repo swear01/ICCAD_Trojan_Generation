@@ -1,0 +1,46 @@
+[metadata]
+description = "Host circuit configurations for Trojan4 (LFSR-based key leakage)"
+trojan_id = "trojan4"
+
+# List of host files for this trojan (for iteration)
+host_files = [
+    "trojan4_crypto_host", 
+    "trojan4_hash_host", 
+    "trojan4_rng_host"
+]
+
+# Host circuit mapping for Trojan4
+[hosts]
+
+[hosts.trojan4_crypto_host]
+file = "trojan4_crypto_host.v"
+description = "Block cipher encryption with configurable rounds"
+# Structural parameters
+[hosts.trojan4_crypto_host.params]
+ROUND_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of encryption rounds" }
+BLOCK_SIZE = { type = "choice", values = [8, 12, 16, 20], description = "Block size in bytes" }
+# Crypto parameters
+[hosts.trojan4_crypto_host.crypto_vars]
+IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
+
+[hosts.trojan4_hash_host]
+file = "trojan4_hash_host.v" 
+description = "Hash function with configurable message blocks"
+# Structural parameters
+[hosts.trojan4_hash_host.params]
+HASH_WIDTH = { type = "choice", values = [16, 20, 24, 32], description = "Hash output width" }
+MSG_BLOCKS = { type = "choice", values = [2, 4, 6, 8], description = "Number of message blocks" }
+# Crypto parameters
+[hosts.trojan4_hash_host.crypto_vars]
+SALT_VALUE = { type = "random_hex", bits = 256, description = "Salt value for hashing" }
+
+[hosts.trojan4_rng_host]
+file = "trojan4_rng_host.v"
+description = "LFSR-based random number generator"
+# Structural parameters
+[hosts.trojan4_rng_host.params]
+SEED_WIDTH = { type = "choice", values = [16, 24, 32, 40], description = "Random seed bit width" }
+OUTPUT_WIDTH = { type = "choice", values = [8, 12, 16, 24], description = "Random output bit width" }
+# Crypto parameters
+[hosts.trojan4_rng_host.crypto_vars]
+ENTROPY_SOURCE = { type = "random_hex", bits = 96, description = "Entropy source for seeding" }

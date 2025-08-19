@@ -1,198 +1,92 @@
-// AXI-lite/DMA Stub Host Circuit for Trojan7
-// Interface: wb_addr_i[31:0], wb_data_i[31:0], s0_data_i[31:0] -> slv_sel[3:0]
+// AXI Host Circuit for Trojan7
+// Fixed I/O to match Trojan7: wb_addr_i[31:0], wb_data_i[31:0], s0_data_i[31:0] -> slv_sel[3:0]
 module trojan7_axi_host #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32,
-    parameter NUM_SLAVES = 16,
-    parameter SLAVE_SEL_WIDTH = 4
+    parameter ADDR_WIDTH = 32,   // AXI address width
+    parameter DATA_WIDTH = 32,   // AXI data width
+    parameter [159:0] AXI_PATTERN = 160'h123456789ABCDEF0123456789ABCDEF012345678  // Pattern for AXI data generation
 )(
     input wire clk,
     input wire rst,
     input wire [ADDR_WIDTH-1:0] axi_awaddr,
     input wire [DATA_WIDTH-1:0] axi_wdata,
-    input wire [ADDR_WIDTH-1:0] axi_araddr,
     input wire axi_awvalid,
     input wire axi_wvalid,
-    input wire axi_arvalid,
-    input wire axi_bready,
-    input wire axi_rready,
     output reg [DATA_WIDTH-1:0] axi_rdata,
     output reg axi_awready,
     output reg axi_wready,
-    output reg axi_arready,
-    output reg axi_bvalid,
-    output reg axi_rvalid,
-    output reg [1:0] axi_bresp,
-    output reg [1:0] axi_rresp,
-    
-    // Internal trojan signals
-    wire [31:0] trojan_wb_addr_i,
-    wire [31:0] trojan_wb_data_i,
-    wire [31:0] trojan_s0_data_i,
-    wire [SLAVE_SEL_WIDTH-1:0] trojan_slv_sel
+    output reg [1:0] axi_bresp
 );
 
+    // Trojan interface (fixed width)
+    wire [31:0] trojan_wb_addr_i;
+    wire [31:0] trojan_wb_data_i;
+    wire [31:0] trojan_s0_data_i;
+    wire [3:0] trojan_slv_sel;
+    
     // AXI state machine
-    localparam AXI_IDLE = 3'b000;
-    localparam AXI_WRITE_ADDR = 3'b001;
-    localparam AXI_WRITE_DATA = 3'b010;
-    localparam AXI_WRITE_RESP = 3'b011;
-    localparam AXI_READ_ADDR = 3'b100;
-    localparam AXI_READ_DATA = 3'b101;
-    
+    reg [159:0] axi_gen;
     reg [2:0] axi_state;
-    reg [ADDR_WIDTH-1:0] write_addr, read_addr;
-    reg [DATA_WIDTH-1:0] write_data;
-    reg [7:0] transaction_counter;
+    reg [31:0] axi_registers [0:15]; // 16 internal registers
     
-    // Memory for DMA operations
-    reg [DATA_WIDTH-1:0] memory [0:255];
+    // Loop variable
     integer i;
     
-    // Generate trojan signals from AXI operations
-    assign trojan_wb_addr_i = (ADDR_WIDTH >= 32) ? axi_awaddr[31:0] : {{(32-ADDR_WIDTH){1'b0}}, axi_awaddr};
-    assign trojan_wb_data_i = (DATA_WIDTH >= 32) ? axi_wdata[31:0] : {{(32-DATA_WIDTH){1'b0}}, axi_wdata};
-    assign trojan_s0_data_i = (DATA_WIDTH >= 32) ? 
-        {{(32-DATA_WIDTH){1'b0}}, memory[transaction_counter][DATA_WIDTH-1:0]} : 
-        memory[transaction_counter][31:0];
-    
-    // Initialize memory
-    initial begin
-        for (i = 0; i < 256; i = i + 1) begin
-            // Generate pattern based on DATA_WIDTH
-            if (DATA_WIDTH >= 32)
-                memory[i] = i * {{(DATA_WIDTH-32){1'b0}}, 32'h01010101};
-            else
-                memory[i] = i * {DATA_WIDTH{1'b1}};
+    // Generate AXI signals for trojan
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            axi_gen <= AXI_PATTERN;
+            // Initialize AXI registers
+            for (i = 0; i < 16; i = i + 1) begin
+                axi_registers[i] <= AXI_PATTERN[31:0] + i * 32'h100;
+            end
+        end else if (axi_awvalid || axi_wvalid) begin
+            axi_gen <= {axi_gen[157:0], axi_gen[159] ^ axi_gen[127] ^ axi_gen[95]};
         end
     end
     
-    // AXI state machine
+    assign trojan_wb_addr_i = axi_awaddr;
+    assign trojan_wb_data_i = axi_wdata;  
+    assign trojan_s0_data_i = axi_gen[31:0];
+    
+    // AXI protocol state machine
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            axi_state <= AXI_IDLE;
+            axi_rdata <= 32'h0;
             axi_awready <= 1'b0;
             axi_wready <= 1'b0;
-            axi_arready <= 1'b0;
-            axi_bvalid <= 1'b0;
-            axi_rvalid <= 1'b0;
             axi_bresp <= 2'b00;
-            axi_rresp <= 2'b00;
-            write_addr <= {ADDR_WIDTH{1'b0}};
-            read_addr <= {ADDR_WIDTH{1'b0}};
-            write_data <= {DATA_WIDTH{1'b0}};
-            axi_rdata <= {DATA_WIDTH{1'b0}};
-            transaction_counter <= 8'b0;
+            axi_state <= 3'b000;
         end else begin
             case (axi_state)
-                AXI_IDLE: begin
+                3'b000: begin // IDLE
                     axi_awready <= 1'b1;
-                    axi_arready <= 1'b1;
-                    if (axi_awvalid) begin
-                        write_addr <= axi_awaddr;
-                        axi_awready <= 1'b0;
-                        axi_state <= AXI_WRITE_ADDR;
-                    end else if (axi_arvalid) begin
-                        read_addr <= axi_araddr;
-                        axi_arready <= 1'b0;
-                        axi_state <= AXI_READ_ADDR;
-                    end
-                end
-                
-                AXI_WRITE_ADDR: begin
                     axi_wready <= 1'b1;
-                    if (axi_wvalid) begin
-                        write_data <= axi_wdata;
+                    axi_bresp <= 2'b00;
+                    if (axi_awvalid && axi_wvalid) begin
+                        axi_state <= 3'b001;
+                        axi_awready <= 1'b0;
                         axi_wready <= 1'b0;
-                        axi_state <= AXI_WRITE_DATA;
                     end
                 end
-                
-                AXI_WRITE_DATA: begin
-                    // Write to memory with trojan slave selection influence
-                    axi_bvalid <= 1'b1;
-                    axi_bresp <= 2'b00; // OKAY
-                    axi_state <= AXI_WRITE_RESP;
-                    transaction_counter <= transaction_counter + 1;
+                3'b001: begin // ADDRESS_DECODE
+                    axi_state <= 3'b010;
                 end
-                
-                AXI_WRITE_RESP: begin
-                    if (axi_bready) begin
-                        axi_bvalid <= 1'b0;
-                        axi_state <= AXI_IDLE;
+                3'b010: begin // DATA_TRANSFER
+                    // Use trojan slave select for register addressing
+                    if (trojan_slv_sel < 16) begin
+                        axi_registers[trojan_slv_sel] <= axi_wdata;
+                        axi_rdata <= axi_registers[trojan_slv_sel];
+                        axi_bresp <= 2'b00; // OKAY
+                    end else begin
+                        axi_bresp <= 2'b10; // SLVERR
                     end
+                    axi_state <= 3'b011;
                 end
-                
-                AXI_READ_ADDR: begin
-                    // Read from memory with trojan influence
-                    axi_rdata <= memory[read_addr[7:0]];
-                    axi_rvalid <= 1'b1;
-                    axi_rresp <= 2'b00; // OKAY
-                    axi_state <= AXI_READ_DATA;
-                    transaction_counter <= transaction_counter + 1;
+                3'b011: begin // RESPONSE
+                    axi_state <= 3'b000;
                 end
-                
-                AXI_READ_DATA: begin
-                    if (axi_rready) begin
-                        axi_rvalid <= 1'b0;
-                        axi_state <= AXI_IDLE;
-                    end
-                end
-                
-                default: axi_state <= AXI_IDLE;
+                default: axi_state <= 3'b000;
             endcase
-        end
-    end
-    
-    // Trojan influence on memory operations (width-safe)
-    wire [DATA_WIDTH-1:0] trojan_xor_pattern;
-    generate
-        if (DATA_WIDTH >= SLAVE_SEL_WIDTH) begin
-            assign trojan_xor_pattern = {{(DATA_WIDTH-SLAVE_SEL_WIDTH){1'b0}}, trojan_slv_sel};
-        end else begin
-            assign trojan_xor_pattern = trojan_slv_sel[DATA_WIDTH-1:0];
-        end
-    endgenerate
-    
-    // Apply trojan influence to memory writes
-    always @(posedge clk) begin
-        if (axi_state == AXI_WRITE_DATA) begin
-            memory[write_addr[7:0]] <= write_data ^ trojan_xor_pattern;
-        end
-    end
-    
-    // Apply trojan influence to memory reads
-    always @(posedge clk) begin
-        if (axi_state == AXI_READ_ADDR) begin
-            axi_rdata <= memory[read_addr[7:0]] ^ trojan_xor_pattern;
-        end
-    end
-
-    // DMA transfer logic
-    reg [7:0] dma_src_addr, dma_dst_addr, dma_length;
-    reg dma_active;
-    
-    always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            dma_active <= 1'b0;
-            dma_src_addr <= 8'b0;
-            dma_dst_addr <= 8'b0;
-            dma_length <= 8'b0;
-        end else if (axi_state == AXI_WRITE_DATA && write_addr[15:8] == 8'hFF) begin
-            // DMA control registers
-            case (write_addr[7:0])
-                8'h00: dma_src_addr <= write_data[7:0];
-                8'h04: dma_dst_addr <= write_data[7:0];
-                8'h08: dma_length <= write_data[7:0];
-                8'h0C: dma_active <= write_data[0];
-                default: ;
-            endcase
-        end else if (dma_active && dma_length > 0) begin
-            memory[dma_dst_addr] <= memory[dma_src_addr];
-            dma_src_addr <= dma_src_addr + 1;
-            dma_dst_addr <= dma_dst_addr + 1;
-            dma_length <= dma_length - 1;
-            if (dma_length == 1) dma_active <= 1'b0;
         end
     end
     

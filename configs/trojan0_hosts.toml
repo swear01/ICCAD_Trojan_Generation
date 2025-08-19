@@ -1,0 +1,40 @@
+[metadata]
+description = "Host circuit configurations for Trojan0 (LFSR-based trojan with XOR mask)"
+trojan_id = "trojan0"
+
+# List of host files for this trojan (for iteration)
+host_files = [
+    "trojan0_datapath_host", 
+    "trojan0_memory_host", 
+    "trojan0_counter_host"
+]
+
+# Host circuit mapping for Trojan0
+[hosts]
+
+[hosts.trojan0_datapath_host]
+file = "trojan0_datapath_host.v"
+description = "Simple datapath with ALU operations"
+# Structural parameters (adjustable circuit complexity)
+[hosts.trojan0_datapath_host.params]
+DATA_WIDTH = { type = "choice", values = [8, 16, 24, 32], description = "Data width for ALU operations" }
+
+# Crypto parameters for host circuit
+[hosts.trojan0_datapath_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "Initial key generation value" }
+
+[hosts.trojan0_memory_host]
+file = "trojan0_memory_host.v" 
+description = "Memory controller with read/write operations"
+# Structural parameters
+[hosts.trojan0_memory_host.params]
+ADDR_WIDTH = { type = "choice", values = [6, 7, 8, 9], description = "Memory address width (64-512 locations)" }
+DATA_WIDTH = { type = "choice", values = [8, 16, 32], description = "Memory data width" }
+
+[hosts.trojan0_counter_host]
+file = "trojan0_counter_host.v"
+description = "Counter circuit with overflow and pulse generation" 
+# Structural parameters
+[hosts.trojan0_counter_host.params]
+COUNT_WIDTH = { type = "choice", values = [8, 10, 12, 14], description = "Counter bit width" }
+PERIOD = { type = "range", min = 50, max = 200, description = "Pulse generation period" }

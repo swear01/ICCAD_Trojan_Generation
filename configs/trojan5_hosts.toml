@@ -1,0 +1,46 @@
+[metadata]
+description = "Host circuit configurations for Trojan5 (Instruction pattern-based address modification)"
+trojan_id = "trojan5"
+
+# List of host files for this trojan (for iteration)
+host_files = [
+    "trojan5_cpu_host", 
+    "trojan5_decoder_host", 
+    "trojan5_pipeline_host"
+]
+
+# Host circuit mapping for Trojan5
+[hosts]
+
+[hosts.trojan5_cpu_host]
+file = "trojan5_cpu_host.v"
+description = "Simple CPU with instruction decoder and registers"
+# Structural parameters
+[hosts.trojan5_cpu_host.params]
+INSTR_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Instruction width" }
+REG_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of CPU registers" }
+# Crypto parameters
+[hosts.trojan5_cpu_host.crypto_vars]
+BOOT_VECTOR = { type = "random_hex", bits = 32, description = "Boot vector for program generation" }
+
+[hosts.trojan5_decoder_host]
+file = "trojan5_decoder_host.v" 
+description = "Binary decoder with configurable output count"
+# Structural parameters
+[hosts.trojan5_decoder_host.params]
+DECODE_WIDTH = { type = "choice", values = [4, 6, 8, 10], description = "Decoder input width" }
+OUTPUT_COUNT = { type = "choice", values = [8, 16, 32, 64], description = "Number of decoded outputs" }
+# Crypto parameters
+[hosts.trojan5_decoder_host.crypto_vars]
+DECODE_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for decode data generation" }
+
+[hosts.trojan5_pipeline_host]
+file = "trojan5_pipeline_host.v"
+description = "Pipeline processor with configurable stages"
+# Structural parameters
+[hosts.trojan5_pipeline_host.params]
+STAGE_COUNT = { type = "choice", values = [3, 4, 5, 6], description = "Number of pipeline stages" }
+DATA_WIDTH = { type = "choice", values = [8, 12, 16, 20], description = "Pipeline data width" }
+# Crypto parameters
+[hosts.trojan5_pipeline_host.crypto_vars]
+STAGE_PATTERN = { type = "random_hex", bits = 80, description = "Pattern for stage data generation" }

@@ -1,0 +1,46 @@
+[metadata]
+description = "Host circuit configurations for Trojan6 (State-based payload injection)"
+trojan_id = "trojan6"
+
+# List of host files for this trojan (for iteration)
+host_files = [
+    "trojan6_router_host", 
+    "trojan6_memory_host", 
+    "trojan6_bus_host"
+]
+
+# Host circuit mapping for Trojan6
+[hosts]
+
+[hosts.trojan6_router_host]
+file = "trojan6_router_host.v"
+description = "Packet router with configurable ports and routing table"
+# Structural parameters
+[hosts.trojan6_router_host.params]
+ADDR_WIDTH = { type = "choice", values = [6, 7, 8, 10], description = "Router address width" }
+PORT_COUNT = { type = "choice", values = [2, 4, 6, 8], description = "Number of router ports" }
+# Crypto parameters
+[hosts.trojan6_router_host.crypto_vars]
+ROUTE_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for routing data generation" }
+
+[hosts.trojan6_memory_host]
+file = "trojan6_memory_host.v" 
+description = "Memory controller with configurable size and cache"
+# Structural parameters
+[hosts.trojan6_memory_host.params]
+MEM_SIZE = { type = "choice", values = [32, 64, 128, 256], description = "Memory size (number of entries)" }
+CACHE_SIZE = { type = "choice", values = [4, 8, 16, 32], description = "Cache size" }
+# Crypto parameters
+[hosts.trojan6_memory_host.crypto_vars]
+MEM_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for memory data generation" }
+
+[hosts.trojan6_bus_host]
+file = "trojan6_bus_host.v"
+description = "Bus arbiter with configurable masters and slaves"
+# Structural parameters
+[hosts.trojan6_bus_host.params]
+MASTER_COUNT = { type = "choice", values = [2, 3, 4, 6], description = "Number of bus masters" }
+SLAVE_COUNT = { type = "choice", values = [2, 4, 6, 8], description = "Number of bus slaves" }
+# Crypto parameters
+[hosts.trojan6_bus_host.crypto_vars]
+BUS_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for bus data generation" }

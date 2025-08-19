@@ -1,0 +1,47 @@
+[metadata]
+description = "Host circuit configurations for Trojan3 (Counter-based data increment)"
+trojan_id = "trojan3"
+
+# List of host files for this trojan (for iteration)
+host_files = [
+    "trojan3_arithmetic_host", 
+    "trojan3_filter_host", 
+    "trojan3_cache_host"
+]
+
+# Host circuit mapping for Trojan3
+[hosts]
+
+[hosts.trojan3_arithmetic_host]
+file = "trojan3_arithmetic_host.v"
+description = "Pipelined arithmetic unit with multiple operations"
+# Structural parameters
+[hosts.trojan3_arithmetic_host.params]
+DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Arithmetic data width" }
+PIPELINE_STAGES = { type = "choice", values = [2, 3, 4, 5], description = "Number of pipeline stages" }
+# Crypto parameters
+[hosts.trojan3_arithmetic_host.crypto_vars]
+MULT_SEED = { type = "random_hex", bits = 32, description = "Seed for data generation" }
+
+[hosts.trojan3_filter_host]
+file = "trojan3_filter_host.v" 
+description = "FIR filter with configurable taps and coefficients"
+# Structural parameters
+[hosts.trojan3_filter_host.params]
+TAP_WIDTH = { type = "choice", values = [8, 10, 12, 16], description = "Filter tap data width" }
+NUM_TAPS = { type = "choice", values = [4, 6, 8, 12], description = "Number of filter taps" }
+# Crypto parameters
+[hosts.trojan3_filter_host.crypto_vars]
+COEFF_SEED = { type = "random_hex", bits = 64, description = "Seed for coefficient generation" }
+
+[hosts.trojan3_cache_host]
+file = "trojan3_cache_host.v"
+description = "Cache memory with configurable size and associativity"
+# Structural parameters
+[hosts.trojan3_cache_host.params]
+CACHE_SIZE = { type = "choice", values = [16, 32, 64, 128], description = "Number of cache entries" }
+TAG_WIDTH = { type = "choice", values = [3, 4, 5, 6], description = "Cache tag width" }
+DATA_WIDTH = { type = "choice", values = [8, 12, 16, 20], description = "Cache data width" }
+# Crypto parameters
+[hosts.trojan3_cache_host.crypto_vars]
+ADDR_PATTERN = { type = "random_hex", bits = 48, description = "Pattern for address generation" }

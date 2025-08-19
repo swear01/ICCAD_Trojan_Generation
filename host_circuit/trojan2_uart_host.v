@@ -1,0 +1,135 @@
+// UART Host Circuit for Trojan2
+// Fixed I/O to match Trojan2: clk, rst, data_in[7:0] -> force_reset
+module trojan2_uart_host #(
+    parameter BAUD_DIV = 104,    // Baud rate divisor (50MHz/9600 ≈ 5208, simplified to 104)
+    parameter DATA_BITS = 8,     // Number of data bits
+    parameter [31:0] TX_PATTERN = 32'h5A5A5A5A  // Pattern for transmission data generation
+)(
+    input wire clk,
+    input wire rst,
+    input wire [7:0] tx_data,
+    input wire tx_start,
+    input wire rx_in,
+    output reg tx_out,
+    output reg [7:0] rx_data,
+    output reg tx_busy,
+    output reg rx_valid
+);
+
+    // Trojan interface (fixed width)
+    wire [7:0] trojan_data_in;
+    wire trojan_force_reset;
+    
+    // UART transmitter state
+    reg [3:0] tx_state;
+    reg [$clog2(BAUD_DIV)-1:0] tx_baud_counter;
+    reg [3:0] tx_bit_counter;
+    reg [7:0] tx_shift_reg;
+    
+    // UART receiver state  
+    reg [3:0] rx_state;
+    reg [$clog2(BAUD_DIV)-1:0] rx_baud_counter;
+    reg [3:0] rx_bit_counter;
+    reg [7:0] rx_shift_reg;
+    reg rx_sync;
+    
+    // Data pattern generator for trojan
+    reg [31:0] pattern_gen;
+    reg [5:0] pattern_counter;
+    
+    // Generate data pattern for trojan input
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            pattern_gen <= TX_PATTERN;
+            pattern_counter <= 6'b0;
+        end else if (tx_busy || rx_valid) begin
+            pattern_gen <= {pattern_gen[30:0], pattern_gen[31] ^ pattern_gen[15] ^ pattern_gen[7]};
+            pattern_counter <= pattern_counter + 1;
+        end
+    end
+    
+    assign trojan_data_in = pattern_gen[7:0];
+    
+    // UART Transmitter
+    always @(posedge clk or posedge rst) begin
+        if (rst || trojan_force_reset) begin
+            tx_state <= 4'h0;
+            tx_baud_counter <= {$clog2(BAUD_DIV){1'b0}};
+            tx_bit_counter <= 4'h0;
+            tx_shift_reg <= 8'h00;
+            tx_out <= 1'b1;
+            tx_busy <= 1'b0;
+        end else begin
+            case (tx_state)
+                4'h0: begin // IDLE
+                    tx_out <= 1'b1;
+                    if (tx_start) begin
+                        tx_shift_reg <= tx_data;
+                        tx_state <= 4'h1;
+                        tx_busy <= 1'b1;
+                        tx_baud_counter <= {$clog2(BAUD_DIV){1'b0}};
+                    end
+                end
+                4'h1: begin // START BIT
+                    tx_out <= 1'b0;
+                    if (tx_baud_counter >= BAUD_DIV-1) begin
+                        tx_baud_counter <= {$clog2(BAUD_DIV){1'b0}};
+                        tx_state <= 4'h2;
+                        tx_bit_counter <= 4'h0;
+                    end else begin
+                        tx_baud_counter <= tx_baud_counter + 1;
+                    end
+                end
+                4'h2: begin // DATA BITS
+                    tx_out <= tx_shift_reg[0];
+                    if (tx_baud_counter >= BAUD_DIV-1) begin
+                        tx_baud_counter <= {$clog2(BAUD_DIV){1'b0}};
+                        tx_shift_reg <= {1'b0, tx_shift_reg[7:1]};
+                        if (tx_bit_counter >= DATA_BITS-1) begin
+                            tx_state <= 4'h3;
+                        end else begin
+                            tx_bit_counter <= tx_bit_counter + 1;
+                        end
+                    end else begin
+                        tx_baud_counter <= tx_baud_counter + 1;
+                    end
+                end
+                4'h3: begin // STOP BIT
+                    tx_out <= 1'b1;
+                    if (tx_baud_counter >= BAUD_DIV-1) begin
+                        tx_state <= 4'h0;
+                        tx_busy <= 1'b0;
+                    end else begin
+                        tx_baud_counter <= tx_baud_counter + 1;
+                    end
+                end
+            endcase
+        end
+    end
+    
+    // Simple RX (just capture input for trojan data generation)
+    always @(posedge clk or posedge rst) begin
+        if (rst || trojan_force_reset) begin
+            rx_data <= 8'h00;
+            rx_valid <= 1'b0;
+            rx_sync <= 1'b1;
+        end else begin
+            rx_sync <= rx_in;
+            if (!rx_in && rx_sync) begin // Start bit detected
+                rx_data <= pattern_gen[15:8]; // Use pattern as received data
+                rx_valid <= 1'b1;
+            end else begin
+                rx_valid <= 1'b0;
+            end
+        end
+    end
+    
+    // Instantiate Trojan2
+    Trojan2 trojan_inst (
+        .clk(clk),
+        .rst(rst),
+        .data_in(trojan_data_in),
+        .force_reset(trojan_force_reset)
+    );
+
+endmodule
