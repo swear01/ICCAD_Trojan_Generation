@@ -1,28 +1,13 @@
 [metadata]
-host_file = "trojan3_crossbar_host.v"
-description = "Crossbar switch with data manipulation"
+description = "Counter-based data increment (I/O fixed: data_in[15:0], data_out[15:0])"
 
-[params.DATA_WIDTH]
-type = "choice"
-values = [8, 16, 24, 32]
+# Trojan core parameters
+[crypto_vars.COUNTER_THRESHOLD]
+type = "random_hex"
+bits = 8
+description = "Counter threshold for trigger"
 
-[params.NUM_INPUTS]
-type = "choice"
-values = [2, 3, 4, 6, 8]
-
-[params.NUM_OUTPUTS]
-type = "choice"
-values = [2, 3, 4, 6, 8]
-
-# Crypto variables with parameter injection
 [crypto_vars.DATA_INCREMENT]
-type = "random_int"
-min = 1
-max = 16
-description = "Value added to data when triggered"
-
-[crypto_vars.TRIGGER_COUNTER_THRESHOLD]
-type = "random_int"
-min = 100
-max = 500
-description = "Counter cycles before trigger"
+type = "random_hex"
+bits = 16
+description = "Data increment when triggered"

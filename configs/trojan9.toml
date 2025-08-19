@@ -1,9 +1,9 @@
 [metadata]
-host_file = "trojan9_cordic_host.v"
-description = "CORDIC processor with mode-based computation alteration"
+description = "Mode-based arithmetic computation (I/O fixed: a[7:0], b[7:0], c[7:0], d[7:0], e[7:0], mode[1:0], y[15:0])"
 
-[crypto_vars.COMPUTATION_BIAS]
+# Trojan core parameters
+[crypto_vars.MASK_0F]
 type = "random_hex"
-bits = 16
-description = "Bias value added to computation results"
+bits = 8
+description = "Mask applied to e in m3 computation"
 

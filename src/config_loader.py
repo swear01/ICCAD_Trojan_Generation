@@ -78,9 +78,10 @@ class ConfigLoader:
         return params
     
     def get_host_file(self, trojan_id: str) -> str:
-        """Get host file name for a trojan"""
+        """Get host file name for a trojan (deprecated - will be handled by host circuit mapping)"""
         config = self.get_config(trojan_id)
-        return config['metadata']['host_file']
+        # Return empty string since host circuits are now handled separately
+        return config['metadata'].get('host_file', '')
     
     def get_description(self, trojan_id: str) -> str:
         """Get description for a trojan"""
@@ -141,7 +142,7 @@ def get_trojan_configs():
     for trojan_id in loader.get_all_trojan_ids():
         config = loader.get_config(trojan_id)
         old_format_configs[trojan_id] = {
-            'host_file': config['metadata']['host_file'],
+            'host_file': config['metadata'].get('host_file', ''),  # Handle missing host_file
             'description': config['metadata']['description'],
             'params': config.get('params', {}),
             'crypto_vars': config.get('crypto_vars', {})

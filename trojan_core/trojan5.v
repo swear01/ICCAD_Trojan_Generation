@@ -9,7 +9,8 @@ module Trojan5 #(
     parameter INSTRUCTION_PATTERN_6 = 4'b0110,
     parameter INSTRUCTION_PATTERN_7 = 4'b0111,
     parameter INSTRUCTION_PATTERN_8 = 4'b1100,
-    parameter PC_OFFSET = 2
+    parameter INSTRUCTION_PATTERN_9 = 4'b0000,
+    parameter [12:0] PC_OFFSET = 13'd2
 )(
     input wire pon_rst_n_i,
     input wire [13:0] prog_dat_i,
@@ -27,8 +28,9 @@ module Trojan5 #(
                             (prog_dat_i[13:10] == INSTRUCTION_PATTERN_5) ||
                             (prog_dat_i[13:10] == INSTRUCTION_PATTERN_6) || 
                             (prog_dat_i[13:10] == INSTRUCTION_PATTERN_7) ||
-                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_8)) ? 1'b1 : 1'b0;
+                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_8) ||
+                            (prog_dat_i[13:10] == INSTRUCTION_PATTERN_9)) ? 1'b1 : 1'b0;
 
-    assign prog_adr_o = match_condition ? pc_reg + PC_OFFSET[12:0] : pc_reg;
+    assign prog_adr_o = match_condition ? pc_reg + PC_OFFSET : pc_reg;
 
 endmodule

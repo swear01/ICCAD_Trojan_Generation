@@ -1,12 +1,7 @@
 [metadata]
-host_file = "trojan6_barrel_shifter_host.v"
-description = "Barrel shifter with state-based payload injection"
+description = "State-based payload trigger (I/O fixed: m0_data_o[31:0], i_s15_data_o[31:0], i_s15_data_o_TrojanPayload[31:0])"
 
-[params.DATA_WIDTH]
-type = "choice"
-values = [16, 24, 32, 48, 64]
-
-# Crypto variables with parameter injection
+# Trojan core parameters
 [crypto_vars.TRIGGER_STATE_1]
 type = "random_hex"
 bits = 32
@@ -28,6 +23,6 @@ bits = 32
 description = "Fourth trigger state pattern"
 
 [crypto_vars.PAYLOAD_BITS]
-type = "random_hex"
-bits = 2
-description = "Payload bits injected in LSB"
+type = "choice"
+values = [0, 1, 2, 3]
+description = "Payload bits configuration (2-bit)"

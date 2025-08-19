@@ -1,6 +1,5 @@
 [metadata]
-host_file = "trojan8_matrix_mult_host.v"
-description = "Matrix multiplier with computation path injection"
+description = "Arithmetic computation with mask operations (I/O fixed: a[7:0], b[7:0], c[7:0], d[7:0], e[7:0], sel[2:0], y[15:0])"
 
 # No structural params (I/O widths fixed in RTL); only three mask crypto vars
 [crypto_vars.MASK_00FF]

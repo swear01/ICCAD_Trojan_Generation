@@ -1,16 +1,7 @@
 [metadata]
-host_file = "trojan7_axi_host.v"
-description = "AXI-lite with wishbone address/data trigger"
+description = "Data-triggered slave select XOR (I/O fixed: wb_addr_i[31:0], wb_data_i[31:0], s0_data_i[31:0], slv_sel[3:0])"
 
-[params.DATA_WIDTH]
-type = "choice"
-values = [16, 24, 32, 48, 64]
-
-[params.SLAVE_SEL_WIDTH]
-type = "choice"
-values = [4, 8, 12, 16]
-
-# Crypto variables with parameter injection
+# Trojan core parameters
 [crypto_vars.WB_DATA_TRIGGER]
 type = "random_hex"
 bits = 32

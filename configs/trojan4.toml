@@ -1,6 +1,5 @@
 [metadata]
-host_file = "trojan4_mac_host.v"
-description = "MAC unit with key-based data leakage"
+description = "LFSR-based key leakage (I/O fixed: key[63:0], leak[63:0])"
 
 # Crypto variables with parameter injection
 [crypto_vars.SECRET_KEY]

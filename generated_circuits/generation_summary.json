@@ -1,0 +1,14 @@
+[
+  {
+    "trojan_id": "trojan9",
+    "instance_id": 0,
+    "clean_file": "clean/trojan9/trojan9_clean_0000.v",
+    "trojaned_file": "trojan/trojan9/trojan9_trojaned_0000.v",
+    "parameters": {
+      "crypto_vars": {
+        "COMPUTATION_BIAS": 23550
+      }
+    },
+    "description": "CORDIC processor with mode-based computation alteration"
+  }
+]

@@ -27,28 +27,23 @@ endmodule
 
 
 module lfsr_counter #(
-	parameter integer LFSR_WIDTH = 20,
-	parameter [31:0] FEEDBACK_POLY = 32'h9A1DE644,
-	parameter [LFSR_WIDTH-1:0] INIT_VALUE = 20'b10011001100110011001
+	parameter [19:0] INIT_VALUE = 20'b10011001100110011001
 )(
-	input  wire rst,
-	input  wire clk,
-	output wire [LFSR_WIDTH-1:0] lfsr
+	input rst, clk, 
+	output [19:0] lfsr
 );
-	reg [LFSR_WIDTH-1:0] lfsr_stream;
-	wire feedback;
 
-	assign lfsr = lfsr_stream;
+	reg [19:0] lfsr_stream;
+	wire d0; 
+	
+	assign lfsr = lfsr_stream; 
+	assign d0 = lfsr_stream[15] ^ lfsr_stream[11] ^ lfsr_stream[7] ^ lfsr_stream[0]; 
 
-	// Feedback taps from polynomial masked to LFSR width
-	wire [LFSR_WIDTH-1:0] poly_masked = FEEDBACK_POLY[LFSR_WIDTH-1:0];
-	assign feedback = ^(lfsr_stream & poly_masked);
-
-	always @(posedge clk) begin
-		if (rst) begin
+	always @(posedge clk)
+		if (rst == 1) begin
 			lfsr_stream <= INIT_VALUE;
 		end else begin
-			lfsr_stream <= {feedback, lfsr_stream[LFSR_WIDTH-1:1]};
+			lfsr_stream <= {d0,lfsr_stream[19:1]}; 
 		end
-	end
+		
 endmodule
