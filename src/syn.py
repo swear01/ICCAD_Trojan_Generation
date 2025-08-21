@@ -3,19 +3,20 @@
 Synthesis Script for ICCAD Trojan Generation
 Synthesizes generated circuits to gate-level netlists using Yosys+ABC.
 Shows progress bar by default, displays error logs only when synthesis fails.
+Includes latch and large circuit (>60,000 gates) detection with warnings.
 
 Usage:
 # Generate clean gate-level circuits (with progress bar):
-python3 syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --count-start 3001
+python syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --count-start 3001
 
 # Generate trojan gate-level circuits (with progress bar):
-python3 syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan --count-start 1001
+python syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan --count-start 1001
 
 # For detailed verbose output (no progress bar):
-python3 syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --verbose
+python syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --verbose
 
 # For batch processing with progress tracking:
-python3 syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan
+python syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan
 """
 
 import os
@@ -28,6 +29,7 @@ from tqdm import tqdm
 
 ##################### DEFAULT CONFIG #####################
 DEFAULT_LIB_PATH = "cell.lib"
+DEFAULT_MAP_PATH = "map.v"  # Map file for ALDFF to DFF primitive
 DEFAULT_SCRIPT_PATH = "syn.ys"
 DEFAULT_COUNT_START = 1
 DEFAULT_RTL_DIR = "generated_circuits/clean"
@@ -36,21 +38,22 @@ DEFAULT_LABEL_OUT_DIR = "data/label/clean"
 ################### END DEFAULT CONFIG ###################
 
 
-def run_yosys(rtl_files, top, out_tmp, lib_path, script_path):
+def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 	"""Run Yosys + ABC flow using the provided liberty for mapping only to cells in cell.lib."""
 
-	# Yosys commands
+	# New Yosys commands with ALDFF mapping
 	yosys_cmds = [
 		f"read_liberty -lib {lib_path}",
 		*[f"read_verilog -sv {f}" for f in rtl_files],
 		f"hierarchy -check -top {top}",
 		"proc; opt",
-		"flatten",
+		"flatten", 
 		"techmap; opt",
+		f"techmap -map {map_path}",         # Map the ALDFF to the DFF primitive
 		f"dfflibmap -liberty {lib_path}",
-		"insbuf -buf buf A Y",          # Insert buffers to replace assign usage
+		"insbuf -buf buf A Y",             # Insert buffers to replace assign usage
 		"opt_clean -purge",
-		f"abc -liberty {lib_path} -fast",     # ABC combinational mapping/optimization
+		f"abc -liberty {lib_path} -fast",   # ABC combinational mapping/optimization
 		"opt_merge; opt_clean; clean",
 		f"stat -liberty {lib_path}",
 		f"write_verilog -noattr -noexpr -nodec -defparam {out_tmp}",
@@ -61,8 +64,62 @@ def run_yosys(rtl_files, top, out_tmp, lib_path, script_path):
 	with open(script_path, "w") as f:
 		f.write(script)
 
-	# Run Yosys script
-	subprocess.run(["yosys", "-q", script_path], capture_output=True, text=True, check=True)
+	# Run Yosys script and capture output for analysis
+	result = subprocess.run(["yosys", script_path], capture_output=True, text=True, check=True)
+	
+	# Return the captured output for analysis
+	return result.stdout, result.stderr
+
+
+def analyze_synthesis_output(stdout, stderr):
+	"""Analyze Yosys synthesis output for warnings and circuit statistics"""
+	warnings = []
+	
+	# Check for latch inference
+	latch_patterns = [
+		r"inferred latch",
+		r"creating latch",
+		r"latch for signal",
+		r"PROC_DLATCH.*created.*latch"
+	]
+	
+	full_output = stdout + stderr
+	for pattern in latch_patterns:
+		matches = re.findall(pattern, full_output, re.IGNORECASE)
+		if matches:
+			warnings.append(f"LATCH_WARNING: {len(matches)} latch(es) inferred")
+			break
+	
+	# Check circuit size - look for total cell count from stat command
+	gate_count = 0
+	# Pattern to match: "Number of cells:      12345"
+	cell_match = re.search(r"Number of cells:\s*(\d+)", full_output)
+	if cell_match:
+		gate_count = int(cell_match.group(1))
+	else:
+		# Alternative pattern - count individual gates from stat output
+		gate_patterns = [
+			r"\$_AND_\s+(\d+)",
+			r"\$_OR_\s+(\d+)",
+			r"\$_NOT_\s+(\d+)",
+			r"\$_NAND_\s+(\d+)",
+			r"\$_NOR_\s+(\d+)",
+			r"\$_XOR_\s+(\d+)",
+			r"\$_XNOR_\s+(\d+)",
+			r"\$_DFF_\w*\s+(\d+)",
+			r"\$_DFFE_\w*\s+(\d+)"
+		]
+		
+		for pattern in gate_patterns:
+			matches = re.findall(pattern, full_output)
+			for match in matches:
+				gate_count += int(match)
+	
+	# Check if circuit is too large (>60,000 gates)
+	if gate_count > 60000:
+		warnings.append(f"LARGE_CIRCUIT_WARNING: Circuit has {gate_count} gates (>60,000)")
+	
+	return warnings, gate_count
 
 
 def post_process_netlist(verilog_text: str) -> str:
@@ -214,7 +271,7 @@ def post_process_netlist(verilog_text: str) -> str:
 	return "\n".join(lines)
 
 
-def synthesize(rtl_files, top, out_netlist, lib_path, script_path, show_progress=False):
+def synthesize(rtl_files, top, out_netlist, lib_path, map_path, script_path, show_progress=False):
 	"""Main synthesis function"""
 
 	os.makedirs(os.path.dirname(os.path.abspath(out_netlist)), exist_ok=True)
@@ -222,8 +279,11 @@ def synthesize(rtl_files, top, out_netlist, lib_path, script_path, show_progress
 	with tempfile.TemporaryDirectory() as td:
 		tmp_out = os.path.join(td, "netlist_tmp.v")
 		
-		# Run Yosys
-		run_yosys(rtl_files, top, tmp_out, lib_path, script_path)
+		# Run Yosys and capture output
+		stdout, stderr = run_yosys(rtl_files, top, tmp_out, lib_path, map_path, script_path)
+		
+		# Analyze synthesis output for warnings
+		warnings, gate_count = analyze_synthesis_output(stdout, stderr)
 		
 		with open(tmp_out, "r") as f:
 			txt = f.read()
@@ -237,10 +297,14 @@ def synthesize(rtl_files, top, out_netlist, lib_path, script_path, show_progress
 	
 	if show_progress:
 		print(f"Wrote synthesized netlist to {out_netlist}")
-	return True
+		if gate_count > 0:
+			print(f"  Circuit size: {gate_count} gates")
+	
+	# Return success status and any warnings
+	return True, warnings, gate_count
 
 
-def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, script_path, batch_mode=False):
+def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, map_path, script_path, batch_mode=False):
 	"""Prepare dataset by synthesizing each RTL file and generating labels.
 	
 	For each .v in rtl_dir (recursively, sorted):
@@ -275,6 +339,8 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, sc
 	
 	count = count_start
 	errors = []
+	warnings_log = []
+	large_circuits = []
 	
 	for vf in progress_bar:
 		base = os.path.splitext(os.path.basename(vf))[0]
@@ -331,7 +397,21 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, sc
 			print(f"[{count}] Synthesizing {vf} (top={top}) -> {out_netlist}")
 		
 		try:
-			synthesize([vf], top, out_netlist, lib_path, script_path, show_progress=not batch_mode)
+			success, warnings, gate_count = synthesize([vf], top, out_netlist, lib_path, map_path, script_path, show_progress=not batch_mode)
+			
+			# Handle warnings
+			if warnings:
+				warning_msg = f"{os.path.basename(vf)}: {', '.join(warnings)}"
+				warnings_log.append(warning_msg)
+				if batch_mode:
+					progress_bar.write(f"⚠️  {warning_msg}")
+				else:
+					print(f"⚠️  Warning: {warning_msg}")
+			
+			# Track large circuits separately
+			if gate_count > 60000:
+				large_circuits.append(f"{os.path.basename(vf)}: {gate_count} gates")
+			
 		except Exception as e:
 			error_msg = f"Error synthesizing {vf}: {e}"
 			errors.append(error_msg)
@@ -359,12 +439,24 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, sc
 	total = len(verilog_files)
 	print(f"\nSynthesis completed: {successful}/{total} files successful")
 	
+	# Show warnings summary
+	if warnings_log:
+		print(f"\n⚠️  Warnings encountered ({len(warnings_log)} files):")
+		for warning in warnings_log:
+			print(f"  {warning}")
+	
+	# Show large circuits summary
+	if large_circuits:
+		print(f"\n🔍 Large circuits detected ({len(large_circuits)} files):")
+		for large_circuit in large_circuits:
+			print(f"  {large_circuit}")
+	
 	if errors:
 		print(f"\nErrors encountered ({len(errors)} total):")
 		for error in errors:
 			print(f"  {error}")
-	else:
-		print("All files synthesized successfully!")
+	elif not warnings_log and not large_circuits:
+		print("All files synthesized successfully with no warnings!")
 
 
 def main():
@@ -379,6 +471,8 @@ def main():
 					   help=f"Starting index for design numbering (default: {DEFAULT_COUNT_START})")
 	parser.add_argument("--lib", default=DEFAULT_LIB_PATH,
 					   help=f"Path to liberty file (default: {DEFAULT_LIB_PATH})")
+	parser.add_argument("--map", default=DEFAULT_MAP_PATH,
+					   help=f"Path to techmap file (default: {DEFAULT_MAP_PATH})")
 	parser.add_argument("--script", default=DEFAULT_SCRIPT_PATH,
 					   help=f"Path for Yosys script (default: {DEFAULT_SCRIPT_PATH})")
 	parser.add_argument("--batch", action="store_true", default=True,
@@ -393,10 +487,15 @@ def main():
 	
 	# Convert to absolute paths
 	lib_path = os.path.abspath(args.lib)
+	map_path = os.path.abspath(args.map)
 	script_path = os.path.abspath(args.script)
 	
 	if not os.path.exists(lib_path):
 		print(f"Error: Liberty file not found: {lib_path}", file=sys.stderr)
+		sys.exit(1)
+	
+	if not os.path.exists(map_path):
+		print(f"Error: Map file not found: {map_path}", file=sys.stderr)
 		sys.exit(1)
 	
 	if args.verbose or not batch_mode:
@@ -406,12 +505,13 @@ def main():
 		print(f"  Labels directory: {args.labels}")
 		print(f"  Count start: {args.count_start}")
 		print(f"  Liberty file: {lib_path}")
+		print(f"  Map file: {map_path}")
 		print(f"  Script file: {script_path}")
 		print(f"  Batch mode: {batch_mode}")
 		print("")
 	
 	prep_data(args.input, args.output, args.labels, args.count_start, 
-			 lib_path, script_path, batch_mode)
+			 lib_path, map_path, script_path, batch_mode)
 
 
 if __name__ == "__main__":

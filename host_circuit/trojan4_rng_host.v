@@ -26,13 +26,25 @@ module trojan4_rng_host #(
     reg [63:0] key_material;
     reg [7:0] extraction_counter;
     
+    // Synchronize enable signal to avoid async enable issues
+    reg generate_enable_sync;
+    
+    // Synchronize enable signal
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            generate_enable_sync <= 1'b0;
+        end else begin
+            generate_enable_sync <= generate_enable;
+        end
+    end
+    
     // Generate key material from RNG state and entropy
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             entropy_pool <= ENTROPY_SOURCE;
             key_material <= 64'h0;
             extraction_counter <= 8'h0;
-        end else if (generate_enable) begin
+        end else if (generate_enable_sync) begin
             entropy_pool <= {entropy_pool[93:0], entropy_pool[95] ^ entropy_pool[47] ^ entropy_pool[15]};
             key_material <= lfsr_state[31:0] ^ entropy_pool[63:0];
             extraction_counter <= extraction_counter + 1;
@@ -61,7 +73,7 @@ module trojan4_rng_host #(
             output_buffer <= {OUTPUT_WIDTH{1'b0}};
             random_valid <= 1'b0;
         end else begin
-            if (generate_enable) begin
+            if (generate_enable_sync) begin
                 lfsr_state <= lfsr_next(lfsr_state);
                 // Extract random bits from LFSR state
                 if (OUTPUT_WIDTH <= SEED_WIDTH)

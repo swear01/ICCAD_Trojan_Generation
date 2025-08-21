@@ -20,7 +20,7 @@ module trojan3_filter_host #(
     // Filter taps and coefficients
     reg signed [TAP_WIDTH-1:0] taps [0:NUM_TAPS-1];
     reg signed [TAP_WIDTH-1:0] coeffs [0:NUM_TAPS-1];
-    reg signed [TAP_WIDTH+$clog2(NUM_TAPS)-1:0] accumulator;
+    wire signed [TAP_WIDTH+$clog2(NUM_TAPS)-1:0] accumulator;
     
     // Coefficient generation for trojan data
     reg [63:0] coeff_gen;
@@ -44,6 +44,10 @@ module trojan3_filter_host #(
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             for (j = 0; j < NUM_TAPS; j = j + 1) begin
+                coeffs[j] <= COEFF_SEED[TAP_WIDTH-1:0] + j[TAP_WIDTH-1:0];
+            end
+        end else if (sample_valid) begin
+            for (j = 0; j < NUM_TAPS; j = j + 1) begin
                 coeffs[j] <= coeff_gen[TAP_WIDTH-1:0] + j[TAP_WIDTH-1:0];
             end
         end
@@ -64,14 +68,9 @@ module trojan3_filter_host #(
         end
     end
     
-    // FIR filter computation
-    integer l;
-    always @(*) begin
-        accumulator = {(TAP_WIDTH+$clog2(NUM_TAPS)){1'b0}};
-        for (l = 0; l < NUM_TAPS; l = l + 1) begin
-            accumulator = accumulator + (taps[l] * coeffs[l]);
-        end
-    end
+    // FIR filter computation - using explicit calculation to avoid latch
+    assign accumulator = (taps[0] * coeffs[0]) + (taps[1] * coeffs[1]) + 
+                        (taps[2] * coeffs[2]) + (taps[3] * coeffs[3]);
     
     // Output with trojan integration
     always @(posedge clk or posedge rst) begin

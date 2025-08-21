@@ -17,7 +17,7 @@ file = "trojan0_datapath_host.v"
 description = "Simple datapath with ALU operations"
 # Structural parameters (adjustable circuit complexity)
 [hosts.trojan0_datapath_host.params]
-DATA_WIDTH = { type = "choice", values = [8, 16, 24, 32], description = "Data width for ALU operations" }
+DATA_WIDTH = { type = "choice", values = [8, 12, 16, 20], description = "Data width for ALU operations" }
 
 # Crypto parameters for host circuit
 [hosts.trojan0_datapath_host.crypto_vars]
@@ -26,10 +26,10 @@ KEY_INIT = { type = "random_hex", bits = 128, description = "Initial key generat
 [hosts.trojan0_memory_host]
 file = "trojan0_memory_host.v" 
 description = "Memory controller with read/write operations"
-# Structural parameters
+# Structural parameters (reduced to prevent overly large circuits)
 [hosts.trojan0_memory_host.params]
-ADDR_WIDTH = { type = "choice", values = [6, 7, 8, 9], description = "Memory address width (64-512 locations)" }
-DATA_WIDTH = { type = "choice", values = [8, 16, 32], description = "Memory data width" }
+ADDR_WIDTH = { type = "choice", values = [4, 5, 6], description = "Memory address width (16-64 locations)" }
+DATA_WIDTH = { type = "choice", values = [8, 12, 16], description = "Memory data width" }
 
 [hosts.trojan0_counter_host]
 file = "trojan0_counter_host.v"
