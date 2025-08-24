@@ -6,7 +6,14 @@ trojan_id = "trojan2"
 host_files = [
     "trojan2_processor_host", 
     "trojan2_fifo_host", 
-    "trojan2_uart_host"
+    "trojan2_uart_host",
+    "trojan2_memory_host",
+    "trojan2_counter_host",
+    "trojan2_spi_host",
+    "trojan2_alu_host",
+    "trojan2_timer_host",
+    "trojan2_pwm_host",
+    "trojan2_dsp_host"
 ]
 
 # Host circuit mapping for Trojan2
@@ -44,3 +51,80 @@ DATA_BITS = { type = "choice", values = [7, 8, 9], description = "Number of data
 # Crypto parameters
 [hosts.trojan2_uart_host.crypto_vars]
 TX_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for transmission data generation" }
+
+[hosts.trojan2_memory_host]
+file = "trojan2_memory_host.v"
+description = "Memory controller with configurable address and data width"
+# Structural parameters
+[hosts.trojan2_memory_host.params]
+DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Memory data width" }
+ADDR_WIDTH = { type = "choice", values = [4, 5, 6, 7], description = "Memory address width" }
+# Crypto parameters
+[hosts.trojan2_memory_host.crypto_vars]
+MEM_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for trojan data generation" }
+
+[hosts.trojan2_counter_host]
+file = "trojan2_counter_host.v"
+description = "Configurable up/down counter with overflow detection"
+# Structural parameters
+[hosts.trojan2_counter_host.params]
+COUNTER_WIDTH = { type = "choice", values = [8, 10, 12, 16], description = "Counter bit width" }
+COUNT_MAX = { type = "range", min = 1024, max = 8192, description = "Maximum count value" }
+# Crypto parameters
+[hosts.trojan2_counter_host.crypto_vars]
+COUNT_PATTERN = { type = "random_hex", bits = 28, description = "Pattern for trojan data generation" }
+
+[hosts.trojan2_spi_host]
+file = "trojan2_spi_host.v"
+description = "SPI master controller with configurable frame width"
+# Structural parameters
+[hosts.trojan2_spi_host.params]
+DATA_WIDTH = { type = "choice", values = [8, 12, 16], description = "SPI data frame width" }
+CLK_DIV = { type = "choice", values = [8, 16, 32, 64], description = "SPI clock divider" }
+# Crypto parameters
+[hosts.trojan2_spi_host.crypto_vars]
+SPI_PATTERN = { type = "random_hex", bits = 24, description = "Pattern for trojan data generation" }
+
+[hosts.trojan2_alu_host]
+file = "trojan2_alu_host.v"
+description = "Arithmetic Logic Unit with multiple operations and flags"
+# Structural parameters
+[hosts.trojan2_alu_host.params]
+DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "ALU operand width" }
+# Crypto parameters
+[hosts.trojan2_alu_host.crypto_vars]
+ALU_SEED = { type = "random_hex", bits = 20, description = "Seed for trojan data generation" }
+
+[hosts.trojan2_timer_host]
+file = "trojan2_timer_host.v"
+description = "Configurable timer with prescaler and compare match"
+# Structural parameters
+[hosts.trojan2_timer_host.params]
+TIMER_WIDTH = { type = "choice", values = [12, 16, 20], description = "Timer counter width" }
+PRESCALER = { type = "choice", values = [64, 128, 256, 512], description = "Clock prescaler value" }
+# Crypto parameters
+[hosts.trojan2_timer_host.crypto_vars]
+TIMER_SEED = { type = "random_hex", bits = 32, description = "Seed for trojan data generation" }
+
+[hosts.trojan2_pwm_host]
+file = "trojan2_pwm_host.v"
+description = "Multi-channel PWM generator with configurable resolution"
+# Structural parameters
+[hosts.trojan2_pwm_host.params]
+PWM_WIDTH = { type = "choice", values = [10, 12, 14, 16], description = "PWM counter resolution" }
+PWM_CHANNELS = { type = "choice", values = [2, 3, 4], description = "Number of PWM channels" }
+# Crypto parameters
+[hosts.trojan2_pwm_host.crypto_vars]
+PWM_PATTERN = { type = "random_hex", bits = 26, description = "Pattern for trojan data generation" }
+
+[hosts.trojan2_dsp_host]
+file = "trojan2_dsp_host.v"
+description = "Digital signal processor with FIR filter implementation"
+# Structural parameters
+[hosts.trojan2_dsp_host.params]
+DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "DSP data width" }
+COEFF_WIDTH = { type = "choice", values = [8, 10, 12, 14], description = "Filter coefficient width" }
+TAP_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of filter taps" }
+# Crypto parameters
+[hosts.trojan2_dsp_host.crypto_vars]
+DSP_PATTERN = { type = "random_hex", bits = 30, description = "Pattern for trojan data generation" }
