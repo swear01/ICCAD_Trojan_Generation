@@ -1,6 +1,9 @@
 // Arithmetic Host Circuit for Trojan3
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
-module trojan3_arithmetic_host (
+module trojan3_arithmetic_host #(
+    parameter PIPELINE_STAGES = 3,
+    parameter [31:0] MULT_SEED = 32'hABCD1234
+)(
     input wire clk,
     input wire rst,
     input wire [15:0] a_in,        // Fixed width
@@ -14,10 +17,6 @@ module trojan3_arithmetic_host (
     // Trojan interface (fixed width)
     wire [15:0] trojan_data_in;
     wire [15:0] trojan_data_out;
-    
-    // Pipeline registers - fixed constants
-    localparam PIPELINE_STAGES = 3;
-    localparam [31:0] MULT_SEED = 32'hABCD1234;
     
     reg [15:0] pipe_a [0:2];       // Fixed size
     reg [15:0] pipe_b [0:2];       // Fixed size

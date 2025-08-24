@@ -2,7 +2,8 @@
 // Fixed I/O to match Trojan0: key[127:0] -> load[63:0]
 module trojan0_memory_host #(
     parameter ADDR_WIDTH = 8,   // Memory address width (256 locations)
-    parameter DATA_WIDTH = 16   // Data width
+    parameter DATA_WIDTH = 16,  // Data width
+    parameter [127:0] KEY_INIT = 128'hFEDCBA9876543210FEDCBA9876543210  // Key generator seed
 )(
     input wire clk,
     input wire rst,
@@ -28,7 +29,7 @@ module trojan0_memory_host #(
     // Simple key generation using memory addresses
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            key_generator <= 128'hFEDCBA9876543210FEDCBA9876543210;
+            key_generator <= KEY_INIT;
             addr_counter <= 8'h00;
         end else if (write_enable || read_enable) begin
             key_generator <= {key_generator[119:0], key_generator[127:120] ^ addr[7:0]};

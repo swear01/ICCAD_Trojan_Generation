@@ -16,11 +16,12 @@ host_files = [
 file = "trojan3_arithmetic_host.v"
 description = "Pipelined arithmetic unit with multiple operations"
 # Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# DATA_WIDTH = 16 (fixed)
-# PIPELINE_STAGES = 3 (fixed)
-# MULT_SEED = 32'hABCD1234 (fixed)
-# No configurable parameters - using fixed design
+# Structural parameters
+[hosts.trojan3_arithmetic_host.params]
+PIPELINE_STAGES = { type = "choice", values = [2, 3, 4, 5], description = "Number of pipeline stages" }
+# Crypto parameters
+[hosts.trojan3_arithmetic_host.crypto_vars]
+MULT_SEED = { type = "random_hex", bits = 32, description = "Seed for data generation" }
 
 [hosts.trojan3_filter_host]
 file = "trojan3_filter_host.v" 

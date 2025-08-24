@@ -26,18 +26,14 @@ description = "DSP processor with configurable coefficients and pipeline depth"
 file = "trojan8_vector_host.v" 
 description = "Vector processor with configurable size and parallel ALUs"
 # Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# VECTOR_SIZE = 8 (fixed)
-# ALU_COUNT = parameter-free design (fixed)
-# VEC_PATTERN = fixed constants (fixed)
-# No configurable parameters - using fixed design
+# Crypto parameters
+[hosts.trojan8_vector_host.crypto_vars]
+VEC_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for vector data generation" }
 
 [hosts.trojan8_matrix_host]
 file = "trojan8_matrix_host.v"
 description = "Matrix processor with configurable dimension and MAC units"
 # Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# MATRIX_SIZE = 4x4 (fixed)
-# MAC_UNITS = parameter-free design (fixed)
-# MAT_PATTERN = fixed constants (fixed)
-# No configurable parameters - using fixed design
+# Crypto parameters
+[hosts.trojan8_matrix_host.crypto_vars]
+MAT_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for matrix data generation" }

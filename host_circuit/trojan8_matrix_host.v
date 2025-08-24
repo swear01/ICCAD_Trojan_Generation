@@ -1,6 +1,8 @@
 // Matrix Host Circuit for Trojan8
 // Fixed I/O to match Trojan8: a,b,c,d,e[7:0], sel[2:0] -> y[15:0]
-module trojan8_matrix_host (
+module trojan8_matrix_host #(
+    parameter [95:0] MAT_PATTERN = 96'h123456789ABCDEF012345678  // Matrix data generation pattern
+)(
     input wire clk,
     input wire rst,
     input wire [127:0] matrix_a_flat,  // Fixed: 4x4x8 = 128 bits
@@ -45,7 +47,7 @@ module trojan8_matrix_host (
     // Generate matrix data for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            mat_gen <= 96'h123456789ABCDEF012345678;
+            mat_gen <= MAT_PATTERN;
             row_index <= 2'b0;
             col_index <= 2'b0;
             accumulator <= 16'h0;

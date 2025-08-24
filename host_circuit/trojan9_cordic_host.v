@@ -1,6 +1,9 @@
 // CORDIC Host Circuit for Trojan9
 // Fixed I/O to match Trojan9: a,b,c,d,e[7:0], mode[1:0] -> y[15:0]
-module trojan9_cordic_host (
+module trojan9_cordic_host #(
+    parameter [127:0] CORDIC_PATTERN = 128'h123456789ABCDEF0123456789ABCDEF0,  // CORDIC data pattern
+    parameter [15:0] ATAN_CONST = 16'h3244  // ATAN approximation constant
+)(
     input wire clk,
     input wire rst,
     input wire [15:0] angle_in,      // Fixed width
@@ -25,7 +28,7 @@ module trojan9_cordic_host (
     // Generate CORDIC data for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            cordic_gen <= 128'h123456789ABCDEF0123456789ABCDEF0;
+            cordic_gen <= CORDIC_PATTERN;
             stage_counter <= 3'b0;
         end else if (compute_start || (cordic_state != 3'b000)) begin
             cordic_gen <= {cordic_gen[126:0], cordic_gen[127] ^ cordic_gen[95] ^ cordic_gen[63]};
@@ -83,11 +86,11 @@ module trojan9_cordic_host (
                     if (z_reg[15]) begin // z < 0
                         x_reg <= x_reg + (y_reg >>> stage_counter);
                         y_reg <= y_reg - (x_reg >>> stage_counter);
-                        z_reg <= z_reg + (16'h3244 >>> stage_counter); // Approximate atan values
+                        z_reg <= z_reg + (ATAN_CONST >>> stage_counter); // Approximate atan values
                     end else begin // z >= 0
                         x_reg <= x_reg - (y_reg >>> stage_counter);
                         y_reg <= y_reg + (x_reg >>> stage_counter);
-                        z_reg <= z_reg - (16'h3244 >>> stage_counter);
+                        z_reg <= z_reg - (ATAN_CONST >>> stage_counter);
                     end
                     
                     if (stage_counter >= 3'd7) begin  // Fixed to 8 stages (0-7)

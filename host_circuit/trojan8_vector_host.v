@@ -1,6 +1,8 @@
 // Vector Host Circuit for Trojan8
 // Fixed I/O to match Trojan8: a,b,c,d,e[7:0], sel[2:0] -> y[15:0]
-module trojan8_vector_host (
+module trojan8_vector_host #(
+    parameter [63:0] VEC_PATTERN = 64'h123456789ABCDEF0  // Vector data generation pattern
+)(
     input wire clk,
     input wire rst,
     input wire [63:0] vector_a_flat,   // Fixed: 8x8 = 64 bits
@@ -39,7 +41,7 @@ module trojan8_vector_host (
     // Generate vector data for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            vec_gen <= 64'h123456789ABCDEF0;
+            vec_gen <= VEC_PATTERN;
             process_index <= 3'b0;
         end else if (compute_enable) begin
             vec_gen <= {vec_gen[62:0], vec_gen[63] ^ vec_gen[31] ^ vec_gen[15]};

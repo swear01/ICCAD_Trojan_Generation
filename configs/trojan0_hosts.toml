@@ -23,6 +23,9 @@ DATA_WIDTH = { type = "choice", values = [8, 12, 16, 20], description = "Data wi
 [hosts.trojan0_datapath_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Initial key generation value" }
 
+[hosts.trojan0_memory_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "Memory key generator seed" }
+
 [hosts.trojan0_memory_host]
 file = "trojan0_memory_host.v" 
 description = "Memory controller with read/write operations"
@@ -38,3 +41,6 @@ description = "Counter circuit with overflow and pulse generation"
 [hosts.trojan0_counter_host.params]
 COUNT_WIDTH = { type = "choice", values = [8, 10, 12, 14], description = "Counter bit width" }
 PERIOD = { type = "range", min = 50, max = 200, description = "Pulse generation period" }
+
+[hosts.trojan0_counter_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "Counter key generator seed" }

@@ -2,7 +2,8 @@
 // Fixed I/O to match Trojan0: key[127:0] -> load[63:0]
 module trojan0_counter_host #(
     parameter COUNT_WIDTH = 12,  // Counter width
-    parameter PERIOD = 100       // Count period
+    parameter PERIOD = 100,      // Count period
+    parameter [127:0] KEY_INIT = 128'h13579BDF02468ACE13579BDF02468ACE  // Key generator seed
 )(
     input wire clk,
     input wire rst,
@@ -24,7 +25,7 @@ module trojan0_counter_host #(
     // Key generation based on counter values
     always @(posedge clk or posedge rst) begin
         if (rst)
-            key_generator <= 128'h13579BDF02468ACE13579BDF02468ACE;
+            key_generator <= KEY_INIT;
         else if (enable)
             key_generator <= {key_generator[119:0], key_generator[127:120] ^ counter[7:0]};
     end

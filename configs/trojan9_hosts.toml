@@ -16,28 +16,23 @@ host_files = [
 file = "trojan9_cordic_host.v"
 description = "CORDIC processor for trigonometric and hyperbolic functions"
 # Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# CORDIC_STAGES = 8 (fixed)
-# ANGLE_WIDTH = 16 (fixed)
-# CORDIC_PATTERN = fixed constants (fixed)
-# No configurable parameters - using fixed design
+# Crypto parameters
+[hosts.trojan9_cordic_host.crypto_vars]
+CORDIC_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for CORDIC data generation" }
+ATAN_CONST = { type = "random_hex", bits = 16, description = "ATAN approximation constant" }
 
 [hosts.trojan9_fft_host]
 file = "trojan9_fft_host.v" 
 description = "FFT processor with configurable size and transform modes"
 # Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# FFT_SIZE = 8 (fixed)
-# DATA_WIDTH = 16 (fixed)
-# FFT_PATTERN = fixed constants (fixed)
-# No configurable parameters - using fixed design
+# Crypto parameters
+[hosts.trojan9_fft_host.crypto_vars]
+FFT_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for FFT data generation" }
 
 [hosts.trojan9_signal_host]
 file = "trojan9_signal_host.v"
 description = "Signal processor with configurable filter order and sample rate"
 # Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# FILTER_ORDER = 8 (fixed)
-# SAMPLE_RATE = 16 (fixed)
-# SIG_PATTERN = fixed constants (fixed)
-# No configurable parameters - using fixed design
+# Crypto parameters
+[hosts.trojan9_signal_host.crypto_vars]
+SIG_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for signal data generation" }

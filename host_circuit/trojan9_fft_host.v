@@ -1,6 +1,8 @@
 // FFT Host Circuit for Trojan9
 // Fixed I/O to match Trojan9: a,b,c,d,e[7:0], mode[1:0] -> y[15:0]
-module trojan9_fft_host (
+module trojan9_fft_host #(
+    parameter [159:0] FFT_PATTERN = 160'h123456789ABCDEF0123456789ABCDEF012345678  // FFT data generation pattern
+)(
     input wire clk,
     input wire rst,
     input wire [127:0] fft_data_real_flat,  // Fixed: 8*16 = 128 bits
@@ -65,7 +67,7 @@ module trojan9_fft_host (
     // Generate FFT data for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            fft_gen <= 160'h123456789ABCDEF0123456789ABCDEF012345678;
+            fft_gen <= FFT_PATTERN;
             sample_index <= 3'b0;
             stage_index <= 2'b0;
         end else if (fft_start || (fft_state != 3'b000)) begin

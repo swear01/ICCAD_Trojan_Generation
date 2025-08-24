@@ -1,6 +1,8 @@
 // Signal Processing Host Circuit for Trojan9
 // Fixed I/O to match Trojan9: a,b,c,d,e[7:0], mode[1:0] -> y[15:0]
-module trojan9_signal_host (
+module trojan9_signal_host #(
+    parameter [191:0] SIG_PATTERN = 192'h123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0  // Signal data pattern
+)(
     input wire clk,
     input wire rst,
     input wire [15:0] signal_in,
@@ -29,7 +31,7 @@ module trojan9_signal_host (
     // Generate signal processing data for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            sig_gen <= 192'h123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0;
+            sig_gen <= SIG_PATTERN;
             sample_counter <= 4'h0;
             // Initialize filter coefficients
             for (k = 0; k < 8; k = k + 1) begin
