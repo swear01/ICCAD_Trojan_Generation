@@ -75,3 +75,4 @@ module trojan0_datapath_host #(
     );
 
 endmodule
+

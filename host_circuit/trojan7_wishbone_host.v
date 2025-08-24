@@ -42,7 +42,7 @@ module trojan7_wishbone_host #(
                 slave_data[j] <= WB_PATTERN[31:0] + j * 32'h200;
             end
         end else if (wb_master_cyc && wb_master_stb) begin
-            wb_gen <= {wb_gen[189:0], wb_gen[191] ^ wb_gen[159] ^ wb_gen[127]};
+            wb_gen <= {wb_gen[190:0], wb_gen[191] ^ wb_gen[159] ^ wb_gen[127]};
             timeout_counter <= timeout_counter + 1;
         end else begin
             timeout_counter <= {$clog2(TIMEOUT_CYCLES){1'b0}};
@@ -77,10 +77,10 @@ module trojan7_wishbone_host #(
                     if (trojan_slv_sel < SLAVE_COUNT) begin
                         if (wb_master_we) begin
                             // Write operation
-                            slave_data[trojan_slv_sel] <= wb_master_dat_w;
+                            slave_data[trojan_slv_sel[2:0]] <= wb_master_dat_w;
                         end else begin
                             // Read operation
-                            wb_master_dat_r <= slave_data[trojan_slv_sel];
+                            wb_master_dat_r <= slave_data[trojan_slv_sel[2:0]];
                         end
                         wb_master_ack <= 1'b1;
                         wb_state <= 3'b011;
@@ -98,7 +98,7 @@ module trojan7_wishbone_host #(
             endcase
             
             // Timeout handling
-            if (timeout_counter >= TIMEOUT_CYCLES-1) begin
+            if (timeout_counter >= $clog2(TIMEOUT_CYCLES)'(TIMEOUT_CYCLES-1)) begin
                 wb_master_err <= 1'b1;
                 wb_state <= 3'b011;
             end

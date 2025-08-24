@@ -34,7 +34,7 @@ module trojan4_crypto_host #(
             iv_gen <= IV_SEED;
             derived_key <= 64'h0;
         end else if (encrypt_start || encrypting) begin
-            iv_gen <= {iv_gen[125:0], iv_gen[127] ^ iv_gen[95] ^ iv_gen[31]};
+            iv_gen <= {iv_gen[126:0], iv_gen[127] ^ iv_gen[95] ^ iv_gen[31]};
             derived_key <= cipher_key[63:0] ^ iv_gen[63:0];
         end
     end
@@ -61,7 +61,7 @@ module trojan4_crypto_host #(
                 state <= state ^ round_key;
                 round_key <= {round_key[BLOCK_SIZE*8-9:0], round_key[BLOCK_SIZE*8-1:BLOCK_SIZE*8-8]};
                 
-                if (round_counter >= ROUND_COUNT-1) begin
+                if (round_counter >= $clog2(ROUND_COUNT)'(ROUND_COUNT-1)) begin
                     encrypting <= 1'b0;
                     encrypt_done <= 1'b1;
                 end else begin

@@ -72,3 +72,4 @@ module trojan0_counter_host #(
     );
 
 endmodule
+

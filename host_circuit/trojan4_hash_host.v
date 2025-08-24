@@ -33,7 +33,7 @@ module trojan4_hash_host #(
             salt_mix <= SALT_VALUE;
             key_material <= 64'h0;
         end else if (hash_start || hashing) begin
-            salt_mix <= {salt_mix[253:0], salt_mix[255] ^ salt_mix[127] ^ salt_mix[63]};
+            salt_mix <= {salt_mix[254:0], salt_mix[255] ^ salt_mix[127] ^ salt_mix[63]};
             key_material <= message[63:0] ^ salt_mix[63:0];
         end
     end
@@ -73,7 +73,7 @@ module trojan4_hash_host #(
                 // Rotate message buffer
                 msg_buffer <= {msg_buffer[31:0], msg_buffer[MSG_BLOCKS*32-1:32]};
                 
-                if (block_counter >= MSG_BLOCKS-1) begin
+                if (block_counter >= $clog2(MSG_BLOCKS)'(MSG_BLOCKS-1)) begin
                     hashing <= 1'b0;
                     hash_valid <= 1'b1;
                 end else begin

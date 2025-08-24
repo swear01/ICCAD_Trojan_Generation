@@ -1,14 +1,10 @@
 // CORDIC Host Circuit for Trojan9
 // Fixed I/O to match Trojan9: a,b,c,d,e[7:0], mode[1:0] -> y[15:0]
-module trojan9_cordic_host #(
-    parameter CORDIC_STAGES = 8, // Number of CORDIC iterations
-    parameter ANGLE_WIDTH = 16,  // Angle representation width
-    parameter [127:0] CORDIC_PATTERN = 128'h123456789ABCDEF0123456789ABCDEF0  // Pattern for CORDIC data generation
-)(
+module trojan9_cordic_host (
     input wire clk,
     input wire rst,
-    input wire [ANGLE_WIDTH-1:0] angle_in,
-    input wire [1:0] cordic_mode, // 0=sin/cos, 1=atan, 2=sinh/cosh, 3=atanh
+    input wire [15:0] angle_in,      // Fixed width
+    input wire [1:0] cordic_mode,    // 0=sin/cos, 1=atan, 2=sinh/cosh, 3=atanh
     input wire compute_start,
     output reg [15:0] result_x,
     output reg [15:0] result_y,
@@ -23,16 +19,16 @@ module trojan9_cordic_host #(
     // CORDIC state
     reg [127:0] cordic_gen;
     reg [15:0] x_reg, y_reg, z_reg;
-    reg [$clog2(CORDIC_STAGES)-1:0] stage_counter;
+    reg [2:0] stage_counter;  // Fixed to 3 bits for 8 stages
     reg [2:0] cordic_state;
     
     // Generate CORDIC data for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            cordic_gen <= CORDIC_PATTERN;
-            stage_counter <= {$clog2(CORDIC_STAGES){1'b0}};
+            cordic_gen <= 128'h123456789ABCDEF0123456789ABCDEF0;
+            stage_counter <= 3'b0;
         end else if (compute_start || (cordic_state != 3'b000)) begin
-            cordic_gen <= {cordic_gen[125:0], cordic_gen[127] ^ cordic_gen[95] ^ cordic_gen[63]};
+            cordic_gen <= {cordic_gen[126:0], cordic_gen[127] ^ cordic_gen[95] ^ cordic_gen[63]};
         end
     end
     
@@ -50,7 +46,7 @@ module trojan9_cordic_host #(
             x_reg <= 16'h4DBA; // Approximately 0.6073 in fixed-point
             y_reg <= 16'h0000;
             z_reg <= 16'h0000;
-            stage_counter <= {$clog2(CORDIC_STAGES){1'b0}};
+            stage_counter <= 3'b0;
             result_x <= 16'h0000;
             result_y <= 16'h0000;
             compute_done <= 1'b0;
@@ -78,7 +74,7 @@ module trojan9_cordic_host #(
                                 z_reg <= angle_in;
                             end
                         endcase
-                        stage_counter <= {$clog2(CORDIC_STAGES){1'b0}};
+                        stage_counter <= 3'b0;
                         cordic_state <= 3'b001;
                     end
                 end
@@ -94,7 +90,7 @@ module trojan9_cordic_host #(
                         z_reg <= z_reg - (16'h3244 >>> stage_counter);
                     end
                     
-                    if (stage_counter >= CORDIC_STAGES-1) begin
+                    if (stage_counter >= 3'd7) begin  // Fixed to 8 stages (0-7)
                         cordic_state <= 3'b010;
                     end else begin
                         stage_counter <= stage_counter + 1;

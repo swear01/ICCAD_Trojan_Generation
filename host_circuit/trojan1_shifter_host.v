@@ -45,7 +45,7 @@ module trojan1_shifter_host #(
                 shifting_active <= 1'b1;
                 step_counter <= {$clog2(SHIFT_STEPS){1'b0}};
             end else if (shifting_active) begin
-                if (step_counter >= SHIFT_STEPS-1) begin
+                if (step_counter >= $clog2(SHIFT_STEPS)'(SHIFT_STEPS-1)) begin
                     shifting_active <= 1'b0;
                     step_counter <= {$clog2(SHIFT_STEPS){1'b0}};
                 end else begin
@@ -71,7 +71,7 @@ module trojan1_shifter_host #(
                 // Left shift
                 shift_reg <= {shift_reg[DATA_WIDTH-2:0], shift_reg[DATA_WIDTH-1]};
             end
-            shift_complete <= (step_counter >= SHIFT_STEPS-1);
+            shift_complete <= (step_counter >= $clog2(SHIFT_STEPS)'(SHIFT_STEPS-1));
         end
     end
     

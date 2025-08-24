@@ -16,31 +16,28 @@ host_files = [
 file = "trojan5_cpu_host.v"
 description = "Simple CPU with instruction decoder and registers"
 # Structural parameters
-[hosts.trojan5_cpu_host.params]
-INSTR_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Instruction width" }
-REG_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of CPU registers" }
-# Crypto parameters
-[hosts.trojan5_cpu_host.crypto_vars]
-BOOT_VECTOR = { type = "random_hex", bits = 32, description = "Boot vector for program generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# INSTR_WIDTH = 16 (fixed)
+# REG_COUNT = 8 (fixed) 
+# BOOT_VECTOR = 32'h1000 (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan5_decoder_host]
 file = "trojan5_decoder_host.v" 
 description = "Binary decoder with configurable output count"
 # Structural parameters
-[hosts.trojan5_decoder_host.params]
-DECODE_WIDTH = { type = "choice", values = [4, 6, 8, 10], description = "Decoder input width" }
-OUTPUT_COUNT = { type = "choice", values = [8, 16, 32, 64], description = "Number of decoded outputs" }
-# Crypto parameters
-[hosts.trojan5_decoder_host.crypto_vars]
-DECODE_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for decode data generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# DECODE_WIDTH = 8 (fixed)
+# OUTPUT_COUNT = 16 (fixed)
+# DECODE_PATTERN = 128'h... (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan5_pipeline_host]
 file = "trojan5_pipeline_host.v"
 description = "Pipeline processor with configurable stages"
 # Structural parameters
-[hosts.trojan5_pipeline_host.params]
-STAGE_COUNT = { type = "choice", values = [3, 4, 5, 6], description = "Number of pipeline stages" }
-DATA_WIDTH = { type = "choice", values = [8, 12, 16, 20], description = "Pipeline data width" }
-# Crypto parameters
-[hosts.trojan5_pipeline_host.crypto_vars]
-STAGE_PATTERN = { type = "random_hex", bits = 80, description = "Pattern for stage data generation" }
+# Structural parameters - converted to fixed constants in host circuit  
+# STAGE_COUNT = 4 (fixed)
+# DATA_WIDTH = 16 (fixed)
+# STAGE_PATTERN = 80'h... (fixed)
+# No configurable parameters - using fixed design

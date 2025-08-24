@@ -37,7 +37,7 @@ module trojan6_router_host #(
                 routing_table[i] <= ROUTE_PATTERN[31:0] + i;
             end
         end else if (packet_valid) begin
-            route_gen <= {route_gen[61:0], route_gen[63] ^ route_gen[31] ^ route_gen[15]};
+            route_gen <= {route_gen[62:0], route_gen[63] ^ route_gen[31] ^ route_gen[15]};
         end
     end
     

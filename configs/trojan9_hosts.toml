@@ -16,31 +16,28 @@ host_files = [
 file = "trojan9_cordic_host.v"
 description = "CORDIC processor for trigonometric and hyperbolic functions"
 # Structural parameters
-[hosts.trojan9_cordic_host.params]
-CORDIC_STAGES = { type = "choice", values = [6, 8, 10, 12], description = "Number of CORDIC iterations" }
-ANGLE_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Angle representation width" }
-# Crypto parameters
-[hosts.trojan9_cordic_host.crypto_vars]
-CORDIC_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for CORDIC data generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# CORDIC_STAGES = 8 (fixed)
+# ANGLE_WIDTH = 16 (fixed)
+# CORDIC_PATTERN = fixed constants (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan9_fft_host]
 file = "trojan9_fft_host.v" 
 description = "FFT processor with configurable size and transform modes"
 # Structural parameters
-[hosts.trojan9_fft_host.params]
-FFT_SIZE = { type = "choice", values = [8, 16, 32, 64], description = "FFT size (power of 2)" }
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "FFT data width" }
-# Crypto parameters
-[hosts.trojan9_fft_host.crypto_vars]
-FFT_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for FFT data generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# FFT_SIZE = 8 (fixed)
+# DATA_WIDTH = 16 (fixed)
+# FFT_PATTERN = fixed constants (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan9_signal_host]
 file = "trojan9_signal_host.v"
 description = "Signal processor with configurable filter order and sample rate"
 # Structural parameters
-[hosts.trojan9_signal_host.params]
-FILTER_ORDER = { type = "choice", values = [4, 6, 8, 12], description = "Filter order" }
-SAMPLE_RATE = { type = "choice", values = [8, 12, 16, 24], description = "Sample rate divider" }
-# Crypto parameters
-[hosts.trojan9_signal_host.crypto_vars]
-SIG_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for signal data generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# FILTER_ORDER = 8 (fixed)
+# SAMPLE_RATE = 16 (fixed)
+# SIG_PATTERN = fixed constants (fixed)
+# No configurable parameters - using fixed design

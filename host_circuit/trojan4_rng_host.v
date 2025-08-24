@@ -45,8 +45,8 @@ module trojan4_rng_host #(
             key_material <= 64'h0;
             extraction_counter <= 8'h0;
         end else if (generate_enable_sync) begin
-            entropy_pool <= {entropy_pool[93:0], entropy_pool[95] ^ entropy_pool[47] ^ entropy_pool[15]};
-            key_material <= lfsr_state[31:0] ^ entropy_pool[63:0];
+            entropy_pool <= {entropy_pool[94:0], entropy_pool[95] ^ entropy_pool[47] ^ entropy_pool[15]};
+            key_material <= {lfsr_state[31:0], lfsr_state[31:0]} ^ entropy_pool[63:0];
             extraction_counter <= extraction_counter + 1;
         end
     end
@@ -60,7 +60,7 @@ module trojan4_rng_host #(
             if (SEED_WIDTH == 32)
                 lfsr_next = {current[30:0], current[31] ^ current[21] ^ current[1] ^ current[0]};
             else if (SEED_WIDTH == 16)
-                lfsr_next = {current[14:0], current[15] ^ current[13] ^ current[12] ^ current[10]};
+                lfsr_next = {{16{1'b0}}, current[14:0], current[15] ^ current[13] ^ current[12] ^ current[10]};
             else
                 lfsr_next = {current[SEED_WIDTH-2:0], current[SEED_WIDTH-1] ^ current[SEED_WIDTH/2]};
         end

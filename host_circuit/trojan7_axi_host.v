@@ -1,17 +1,13 @@
 // AXI Host Circuit for Trojan7
 // Fixed I/O to match Trojan7: wb_addr_i[31:0], wb_data_i[31:0], s0_data_i[31:0] -> slv_sel[3:0]
-module trojan7_axi_host #(
-    parameter ADDR_WIDTH = 32,   // AXI address width
-    parameter DATA_WIDTH = 32,   // AXI data width
-    parameter [159:0] AXI_PATTERN = 160'h123456789ABCDEF0123456789ABCDEF012345678  // Pattern for AXI data generation
-)(
+module trojan7_axi_host (
     input wire clk,
     input wire rst,
-    input wire [ADDR_WIDTH-1:0] axi_awaddr,
-    input wire [DATA_WIDTH-1:0] axi_wdata,
+    input wire [31:0] axi_awaddr,    // Fixed width
+    input wire [31:0] axi_wdata,     // Fixed width
     input wire axi_awvalid,
     input wire axi_wvalid,
-    output reg [DATA_WIDTH-1:0] axi_rdata,
+    output reg [31:0] axi_rdata,     // Fixed width
     output reg axi_awready,
     output reg axi_wready,
     output reg [1:0] axi_bresp
@@ -23,7 +19,9 @@ module trojan7_axi_host #(
     wire [31:0] trojan_s0_data_i;
     wire [3:0] trojan_slv_sel;
     
-    // AXI state machine
+    // AXI state machine - fixed constants
+    localparam [159:0] AXI_PATTERN = 160'h123456789ABCDEF0123456789ABCDEF012345678;
+    
     reg [159:0] axi_gen;
     reg [2:0] axi_state;
     reg [31:0] axi_registers [0:15]; // 16 internal registers
@@ -40,7 +38,7 @@ module trojan7_axi_host #(
                 axi_registers[i] <= AXI_PATTERN[31:0] + i * 32'h100;
             end
         end else if (axi_awvalid || axi_wvalid) begin
-            axi_gen <= {axi_gen[157:0], axi_gen[159] ^ axi_gen[127] ^ axi_gen[95]};
+            axi_gen <= {axi_gen[158:0], axi_gen[159] ^ axi_gen[127] ^ axi_gen[95]};
         end
     end
     
@@ -73,7 +71,7 @@ module trojan7_axi_host #(
                 end
                 3'b010: begin // DATA_TRANSFER
                     // Use trojan slave select for register addressing
-                    if (trojan_slv_sel < 16) begin
+                    if (trojan_slv_sel < 4'hF + 1) begin
                         axi_registers[trojan_slv_sel] <= axi_wdata;
                         axi_rdata <= axi_registers[trojan_slv_sel];
                         axi_bresp <= 2'b00; // OKAY

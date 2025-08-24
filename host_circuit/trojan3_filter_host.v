@@ -1,15 +1,11 @@
 // Filter Host Circuit for Trojan3
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
-module trojan3_filter_host #(
-    parameter TAP_WIDTH = 8,     // Filter tap width
-    parameter NUM_TAPS = 4,      // Number of filter taps
-    parameter [63:0] COEFF_SEED = 64'h123456789ABCDEF0  // Seed for coefficient generation
-)(
+module trojan3_filter_host (
     input wire clk,
     input wire rst,
-    input wire signed [TAP_WIDTH-1:0] sample_in,
+    input wire signed [7:0] sample_in,    // Fixed width
     input wire sample_valid,
-    output reg signed [TAP_WIDTH-1:0] filtered_out,
+    output reg signed [7:0] filtered_out, // Fixed width
     output reg output_valid
 );
 
@@ -17,10 +13,13 @@ module trojan3_filter_host #(
     wire [15:0] trojan_data_in;
     wire [15:0] trojan_data_out;
     
-    // Filter taps and coefficients
-    reg signed [TAP_WIDTH-1:0] taps [0:NUM_TAPS-1];
-    reg signed [TAP_WIDTH-1:0] coeffs [0:NUM_TAPS-1];
-    wire signed [TAP_WIDTH+$clog2(NUM_TAPS)-1:0] accumulator;
+    // Filter taps and coefficients - fixed constants  
+    localparam NUM_TAPS = 4;
+    localparam [63:0] COEFF_SEED = 64'h123456789ABCDEF0;
+    
+    reg signed [7:0] taps [0:3];      // Fixed size
+    reg signed [7:0] coeffs [0:3];    // Fixed size
+    wire signed [9:0] accumulator;    // Fixed size: 8 + $clog2(4) = 8 + 2 = 10
     
     // Coefficient generation for trojan data
     reg [63:0] coeff_gen;
@@ -32,7 +31,7 @@ module trojan3_filter_host #(
             coeff_gen <= COEFF_SEED;
             tap_idx <= 3'b0;
         end else if (sample_valid) begin
-            coeff_gen <= {coeff_gen[61:0], coeff_gen[63] ^ coeff_gen[41] ^ coeff_gen[5]};
+            coeff_gen <= {coeff_gen[62:0], coeff_gen[63] ^ coeff_gen[41] ^ coeff_gen[5]};
             tap_idx <= tap_idx + 1;
         end
     end
@@ -43,12 +42,12 @@ module trojan3_filter_host #(
     integer j;
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            for (j = 0; j < NUM_TAPS; j = j + 1) begin
-                coeffs[j] <= COEFF_SEED[TAP_WIDTH-1:0] + j[TAP_WIDTH-1:0];
+            for (j = 0; j < 4; j = j + 1) begin
+                coeffs[j] <= COEFF_SEED[7:0] + j[7:0];
             end
         end else if (sample_valid) begin
-            for (j = 0; j < NUM_TAPS; j = j + 1) begin
-                coeffs[j] <= coeff_gen[TAP_WIDTH-1:0] + j[TAP_WIDTH-1:0];
+            for (j = 0; j < 4; j = j + 1) begin
+                coeffs[j] <= coeff_gen[7:0] + j[7:0];
             end
         end
     end
@@ -57,12 +56,12 @@ module trojan3_filter_host #(
     integer k;
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            for (k = 0; k < NUM_TAPS; k = k + 1) begin
-                taps[k] <= {TAP_WIDTH{1'b0}};
+            for (k = 0; k < 4; k = k + 1) begin
+                taps[k] <= 8'h0;
             end
         end else if (sample_valid) begin
             taps[0] <= sample_in;
-            for (k = 1; k < NUM_TAPS; k = k + 1) begin
+            for (k = 1; k < 4; k = k + 1) begin
                 taps[k] <= taps[k-1];
             end
         end
@@ -75,14 +74,11 @@ module trojan3_filter_host #(
     // Output with trojan integration
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            filtered_out <= {TAP_WIDTH{1'b0}};
+            filtered_out <= 8'h0;
             output_valid <= 1'b0;
         end else begin
             // Mix filter output with trojan output
-            if (TAP_WIDTH >= 16)
-                filtered_out <= accumulator[TAP_WIDTH-1:0] ^ trojan_data_out[TAP_WIDTH-1:0];
-            else
-                filtered_out <= accumulator[TAP_WIDTH-1:0] ^ trojan_data_out[TAP_WIDTH-1:0];
+            filtered_out <= accumulator[7:0] ^ trojan_data_out[7:0];
             output_valid <= sample_valid;
         end
     end

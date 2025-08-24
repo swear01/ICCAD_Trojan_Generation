@@ -1,10 +1,6 @@
 // Signal Processing Host Circuit for Trojan9
 // Fixed I/O to match Trojan9: a,b,c,d,e[7:0], mode[1:0] -> y[15:0]
-module trojan9_signal_host #(
-    parameter FILTER_ORDER = 8,  // Filter order
-    parameter SAMPLE_RATE = 16,  // Sample rate divider
-    parameter [191:0] SIG_PATTERN = 192'h123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0  // Pattern for signal data generation
-)(
+module trojan9_signal_host (
     input wire clk,
     input wire rst,
     input wire [15:0] signal_in,
@@ -21,9 +17,9 @@ module trojan9_signal_host #(
     
     // Signal processing state
     reg [191:0] sig_gen;
-    reg [15:0] delay_line [0:FILTER_ORDER-1];
-    reg [15:0] filter_coeffs [0:FILTER_ORDER-1];
-    reg [$clog2(SAMPLE_RATE)-1:0] sample_counter;
+    reg [15:0] delay_line [0:7];  // Fixed to 8 elements
+    reg [15:0] filter_coeffs [0:7];  // Fixed to 8 elements
+    reg [3:0] sample_counter;  // Fixed to 4 bits for counter up to 16
     reg [31:0] accumulator;
     reg [2:0] sig_state;
     
@@ -33,18 +29,18 @@ module trojan9_signal_host #(
     // Generate signal processing data for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            sig_gen <= SIG_PATTERN;
-            sample_counter <= {$clog2(SAMPLE_RATE){1'b0}};
+            sig_gen <= 192'h123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0;
+            sample_counter <= 4'h0;
             // Initialize filter coefficients
-            for (k = 0; k < FILTER_ORDER; k = k + 1) begin
-                filter_coeffs[k] <= SIG_PATTERN[15:0] + k[15:0];
+            for (k = 0; k < 8; k = k + 1) begin
+                filter_coeffs[k] <= 16'h1234 + k[15:0];
             end
             // Initialize delay line
-            for (k = 0; k < FILTER_ORDER; k = k + 1) begin
+            for (k = 0; k < 8; k = k + 1) begin
                 delay_line[k] <= 16'h0000;
             end
         end else if (enable) begin
-            sig_gen <= {sig_gen[189:0], sig_gen[191] ^ sig_gen[159] ^ sig_gen[127]};
+            sig_gen <= {sig_gen[190:0], sig_gen[191] ^ sig_gen[159] ^ sig_gen[127]};
             sample_counter <= sample_counter + 1;
         end
     end
@@ -68,14 +64,14 @@ module trojan9_signal_host #(
             case (sig_state)
                 3'b000: begin // IDLE
                     processing_done <= 1'b0;
-                    if (enable && (sample_counter == 0)) begin
+                    if (enable && (sample_counter == 4'h0)) begin
                         sig_state <= 3'b001;
                     end
                 end
                 3'b001: begin // SHIFT_DELAY_LINE
                     // Shift delay line
                     delay_line[0] <= signal_in;
-                    for (l = 1; l < FILTER_ORDER; l = l + 1) begin
+                    for (l = 1; l < 8; l = l + 1) begin
                         delay_line[l] <= delay_line[l-1];
                     end
                     sig_state <= 3'b010;
@@ -83,7 +79,7 @@ module trojan9_signal_host #(
                 3'b010: begin // FILTER_COMPUTE
                     // Simplified FIR computation
                     accumulator <= 32'h00000000;
-                    for (l = 0; l < FILTER_ORDER; l = l + 1) begin
+                    for (l = 0; l < 8; l = l + 1) begin
                         accumulator <= accumulator + (delay_line[l] * filter_coeffs[l]);
                     end
                     sig_state <= 3'b011;

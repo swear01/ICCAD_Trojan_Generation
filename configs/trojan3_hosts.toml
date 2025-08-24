@@ -16,32 +16,29 @@ host_files = [
 file = "trojan3_arithmetic_host.v"
 description = "Pipelined arithmetic unit with multiple operations"
 # Structural parameters
-[hosts.trojan3_arithmetic_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Arithmetic data width" }
-PIPELINE_STAGES = { type = "choice", values = [2, 3, 4, 5], description = "Number of pipeline stages" }
-# Crypto parameters
-[hosts.trojan3_arithmetic_host.crypto_vars]
-MULT_SEED = { type = "random_hex", bits = 32, description = "Seed for data generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# DATA_WIDTH = 16 (fixed)
+# PIPELINE_STAGES = 3 (fixed)
+# MULT_SEED = 32'hABCD1234 (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan3_filter_host]
 file = "trojan3_filter_host.v" 
 description = "FIR filter with configurable taps and coefficients"
 # Structural parameters
-[hosts.trojan3_filter_host.params]
-TAP_WIDTH = { type = "choice", values = [8, 10, 12, 16], description = "Filter tap data width" }
-NUM_TAPS = { type = "choice", values = [4, 6, 8, 12], description = "Number of filter taps" }
-# Crypto parameters
-[hosts.trojan3_filter_host.crypto_vars]
-COEFF_SEED = { type = "random_hex", bits = 64, description = "Seed for coefficient generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# TAP_WIDTH = 16 (fixed)
+# NUM_TAPS = 8 (fixed)
+# COEFF_SEED = fixed constants (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan3_cache_host]
 file = "trojan3_cache_host.v"
 description = "Cache memory with configurable size and associativity"
 # Structural parameters
-[hosts.trojan3_cache_host.params]
-CACHE_SIZE = { type = "choice", values = [16, 32, 64, 128], description = "Number of cache entries" }
-TAG_WIDTH = { type = "choice", values = [3, 4, 5, 6], description = "Cache tag width" }
-DATA_WIDTH = { type = "choice", values = [8, 12, 16, 20], description = "Cache data width" }
-# Crypto parameters
-[hosts.trojan3_cache_host.crypto_vars]
-ADDR_PATTERN = { type = "random_hex", bits = 48, description = "Pattern for address generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# CACHE_SIZE = 64 (fixed)
+# TAG_WIDTH = 4 (fixed) 
+# DATA_WIDTH = 16 (fixed)
+# ADDR_PATTERN = fixed constants (fixed)
+# No configurable parameters - using fixed design

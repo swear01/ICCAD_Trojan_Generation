@@ -66,3 +66,4 @@ module trojan0_memory_host #(
     );
 
 endmodule
+

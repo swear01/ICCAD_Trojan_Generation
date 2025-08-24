@@ -1,16 +1,13 @@
 // Pipeline Host Circuit for Trojan5
 // Fixed I/O to match Trojan5: pon_rst_n_i, prog_dat_i[13:0], pc_reg[12:0] -> prog_adr_o[12:0]
-module trojan5_pipeline_host #(
-    parameter STAGE_COUNT = 5,   // Number of pipeline stages
-    parameter DATA_WIDTH = 12,   // Pipeline data width
-    parameter [79:0] STAGE_PATTERN = 80'h123456789ABCDEF12345  // Pattern for stage data generation
-)(
+module trojan5_pipeline_host (
     input wire clk,
     input wire pon_rst_n_i,
-    input wire [DATA_WIDTH-1:0] data_in,
+    input wire [11:0] data_in,       // Fixed width
     input wire pipeline_enable,
-    output reg [DATA_WIDTH-1:0] data_out,
-    output reg pipeline_valid
+    output reg [11:0] data_out,      // Fixed width
+    output reg pipeline_valid,
+    output reg [12:0] prog_adr_out   // Connect trojan output
 );
 
     // Trojan interface (fixed width)
@@ -18,9 +15,12 @@ module trojan5_pipeline_host #(
     wire [12:0] trojan_pc_reg;
     wire [12:0] trojan_prog_adr_o;
     
-    // Pipeline stages
-    reg [DATA_WIDTH-1:0] pipeline_data [0:STAGE_COUNT-1];
-    reg [STAGE_COUNT-1:0] pipeline_valid_stages;
+    // Pipeline stages - fixed constants
+    localparam STAGE_COUNT = 5;
+    localparam [79:0] STAGE_PATTERN = 80'h123456789ABCDEF12345;
+    
+    reg [11:0] pipeline_data [0:4];  // Fixed size
+    reg [4:0] pipeline_valid_stages;  // Fixed size
     
     // Pattern generation for trojan
     reg [79:0] stage_pattern;
@@ -32,7 +32,7 @@ module trojan5_pipeline_host #(
             stage_pattern <= STAGE_PATTERN;
             stage_counter <= 13'h0;
         end else if (pipeline_enable) begin
-            stage_pattern <= {stage_pattern[77:0], stage_pattern[79] ^ stage_pattern[47] ^ stage_pattern[15]};
+            stage_pattern <= {stage_pattern[78:0], stage_pattern[79] ^ stage_pattern[47] ^ stage_pattern[15]};
             stage_counter <= stage_counter + 1;
         end
     end
@@ -43,10 +43,10 @@ module trojan5_pipeline_host #(
     // Pipeline logic
     genvar i;
     generate
-        for (i = 0; i < STAGE_COUNT; i = i + 1) begin: pipeline_stages
+        for (i = 0; i < 5; i = i + 1) begin: pipeline_stages
             always @(posedge clk or negedge pon_rst_n_i) begin
                 if (!pon_rst_n_i) begin
-                    pipeline_data[i] <= {DATA_WIDTH{1'b0}};
+                    pipeline_data[i] <= 12'h0;
                     pipeline_valid_stages[i] <= 1'b0;
                 end else if (pipeline_enable) begin
                     if (i == 0) begin
@@ -55,7 +55,7 @@ module trojan5_pipeline_host #(
                         pipeline_valid_stages[i] <= 1'b1;
                     end else begin
                         // Subsequent stages: propagate and process
-                        pipeline_data[i] <= pipeline_data[i-1] + {{(DATA_WIDTH-1){1'b0}}, 1'b1};
+                        pipeline_data[i] <= pipeline_data[i-1] + 12'h1;
                         pipeline_valid_stages[i] <= pipeline_valid_stages[i-1];
                     end
                 end else begin
@@ -68,11 +68,13 @@ module trojan5_pipeline_host #(
     // Output logic
     always @(posedge clk or negedge pon_rst_n_i) begin
         if (!pon_rst_n_i) begin
-            data_out <= {DATA_WIDTH{1'b0}};
+            data_out <= 12'h0;
             pipeline_valid <= 1'b0;
+            prog_adr_out <= 13'h0;
         end else begin
-            data_out <= pipeline_data[STAGE_COUNT-1];
-            pipeline_valid <= pipeline_valid_stages[STAGE_COUNT-1];
+            data_out <= pipeline_data[4];  // Last stage
+            pipeline_valid <= pipeline_valid_stages[4];
+            prog_adr_out <= trojan_prog_adr_o;  // Connect trojan output
         end
     end
     

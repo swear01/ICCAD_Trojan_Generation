@@ -16,31 +16,28 @@ host_files = [
 file = "trojan8_dsp_host.v"
 description = "DSP processor with configurable coefficients and pipeline depth"
 # Structural parameters
-[hosts.trojan8_dsp_host.params]
-COEFF_COUNT = { type = "choice", values = [4, 5, 6, 8], description = "Number of DSP coefficients" }
-PIPELINE_DEPTH = { type = "choice", values = [2, 3, 4, 5], description = "DSP pipeline depth" }
-# Crypto parameters
-[hosts.trojan8_dsp_host.crypto_vars]
-DSP_SEED = { type = "random_hex", bits = 40, description = "Seed for DSP coefficient generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# COEFF_COUNT = 8 (fixed)
+# PIPELINE_DEPTH = 3 (fixed)
+# DSP_SEED = fixed constants (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan8_vector_host]
 file = "trojan8_vector_host.v" 
 description = "Vector processor with configurable size and parallel ALUs"
 # Structural parameters
-[hosts.trojan8_vector_host.params]
-VECTOR_SIZE = { type = "choice", values = [4, 6, 8, 12], description = "Vector processing size" }
-ALU_COUNT = { type = "choice", values = [2, 4, 6, 8], description = "Number of parallel ALUs" }
-# Crypto parameters
-[hosts.trojan8_vector_host.crypto_vars]
-VEC_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for vector data generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# VECTOR_SIZE = 8 (fixed)
+# ALU_COUNT = parameter-free design (fixed)
+# VEC_PATTERN = fixed constants (fixed)
+# No configurable parameters - using fixed design
 
 [hosts.trojan8_matrix_host]
 file = "trojan8_matrix_host.v"
 description = "Matrix processor with configurable dimension and MAC units"
 # Structural parameters
-[hosts.trojan8_matrix_host.params]
-MATRIX_SIZE = { type = "choice", values = [3, 4, 5, 6], description = "Matrix dimension (NxN)" }
-MAC_UNITS = { type = "choice", values = [1, 2, 3, 4], description = "Number of MAC units" }
-# Crypto parameters
-[hosts.trojan8_matrix_host.crypto_vars]
-MAT_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for matrix data generation" }
+# Structural parameters - converted to fixed constants in host circuit
+# MATRIX_SIZE = 4x4 (fixed)
+# MAC_UNITS = parameter-free design (fixed)
+# MAT_PATTERN = fixed constants (fixed)
+# No configurable parameters - using fixed design

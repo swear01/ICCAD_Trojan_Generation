@@ -1,13 +1,9 @@
 // CPU Host Circuit for Trojan5
 // Fixed I/O to match Trojan5: pon_rst_n_i, prog_dat_i[13:0], pc_reg[12:0] -> prog_adr_o[12:0]
-module trojan5_cpu_host #(
-    parameter INSTR_WIDTH = 16,  // Instruction width
-    parameter REG_COUNT = 8,     // Number of registers
-    parameter [31:0] BOOT_VECTOR = 32'h1000  // Boot vector for program generation
-)(
+module trojan5_cpu_host (
     input wire clk,
     input wire pon_rst_n_i,
-    input wire [INSTR_WIDTH-1:0] instruction,
+    input wire [15:0] instruction,
     input wire instr_valid,
     output reg [12:0] pc_out,
     output reg [15:0] reg_data_out,
@@ -19,8 +15,11 @@ module trojan5_cpu_host #(
     wire [12:0] trojan_pc_reg;
     wire [12:0] trojan_prog_adr_o;
     
-    // CPU state
-    reg [15:0] registers [0:REG_COUNT-1];
+    // CPU state - fixed constants
+    localparam REG_COUNT = 8;
+    localparam [31:0] BOOT_VECTOR = 32'h1000;
+    
+    reg [15:0] registers [0:7];  // Fixed to 8 registers
     reg [12:0] program_counter;
     reg [31:0] boot_gen;
     reg [3:0] cpu_state;
@@ -33,7 +32,7 @@ module trojan5_cpu_host #(
         if (!pon_rst_n_i) begin
             boot_gen <= BOOT_VECTOR;
         end else if (instr_valid) begin
-            boot_gen <= {boot_gen[29:0], boot_gen[31] ^ boot_gen[15] ^ boot_gen[7]};
+            boot_gen <= {boot_gen[30:0], boot_gen[31] ^ boot_gen[15] ^ boot_gen[7]};
         end
     end
     
@@ -47,7 +46,7 @@ module trojan5_cpu_host #(
             cpu_state <= 4'h0;
             cpu_halt <= 1'b0;
             // Initialize registers
-            for (i = 0; i < REG_COUNT; i = i + 1) begin
+            for (i = 0; i < 8; i = i + 1) begin
                 registers[i] <= 16'h0;
             end
         end else begin

@@ -47,7 +47,7 @@ module trojan7_interconnect_host #(
                 packet_buffer[k] <= 32'h0;
             end
         end else if (packet_send) begin
-            ic_gen <= {ic_gen[221:0], ic_gen[223] ^ ic_gen[191] ^ ic_gen[159]};
+            ic_gen <= {ic_gen[222:0], ic_gen[223] ^ ic_gen[191] ^ ic_gen[159]};
         end
     end
     
@@ -75,7 +75,7 @@ module trojan7_interconnect_host #(
                 end
                 3'b001: begin // BUFFER_PACKET
                     packet_buffer[packet_index] <= packet_data;
-                    if (packet_index >= PACKET_SIZE-1) begin
+                    if (packet_index >= $clog2(PACKET_SIZE)'(PACKET_SIZE-1)) begin
                         ic_state <= 3'b010;
                     end else begin
                         packet_index <= packet_index + 1;
@@ -84,7 +84,7 @@ module trojan7_interconnect_host #(
                 3'b010: begin // ROUTE_LOOKUP
                     // Use trojan slave select for routing decision
                     if (trojan_slv_sel < NODE_COUNT) begin
-                        routed_addr <= routing_table[trojan_slv_sel];
+                        routed_addr <= routing_table[trojan_slv_sel[2:0]];
                         ic_state <= 3'b011;
                     end else begin
                         route_error <= 1'b1;
