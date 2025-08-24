@@ -6,7 +6,14 @@ trojan_id = "trojan0"
 host_files = [
     "trojan0_datapath_host", 
     "trojan0_memory_host", 
-    "trojan0_counter_host"
+    "trojan0_counter_host",
+    "trojan0_crypto_host",
+    "trojan0_network_host", 
+    "trojan0_dsp_host",
+    "trojan0_cache_host",
+    "trojan0_uart_host",
+    "trojan0_timer_host",
+    "trojan0_fifo_host"
 ]
 
 # Host circuit mapping for Trojan0
@@ -44,3 +51,84 @@ PERIOD = { type = "range", min = 50, max = 200, description = "Pulse generation 
 
 [hosts.trojan0_counter_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Counter key generator seed" }
+
+[hosts.trojan0_crypto_host]
+file = "trojan0_crypto_host.v"
+description = "Cryptographic processor with encryption rounds"
+# Structural parameters
+[hosts.trojan0_crypto_host.params]
+DATA_WIDTH = { type = "choice", values = [64, 128, 256], description = "Cipher block size" }
+ROUND_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of encryption rounds" }
+# Crypto parameters
+[hosts.trojan0_crypto_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "Crypto key generator seed" }
+
+[hosts.trojan0_network_host]
+file = "trojan0_network_host.v"
+description = "Network packet processor with routing"
+# Structural parameters
+[hosts.trojan0_network_host.params]
+PACKET_SIZE = { type = "choice", values = [32, 64, 128], description = "Network packet size in bytes" }
+BUFFER_DEPTH = { type = "choice", values = [8, 16, 32, 64], description = "Packet buffer depth" }
+# Crypto parameters
+[hosts.trojan0_network_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "Network key generator seed" }
+
+[hosts.trojan0_dsp_host]
+file = "trojan0_dsp_host.v"
+description = "Digital Signal Processor with FIR filtering"
+# Structural parameters
+[hosts.trojan0_dsp_host.params]
+DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "DSP data width" }
+COEFF_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of filter coefficients" }
+PIPELINE_STAGES = { type = "choice", values = [2, 3, 4, 5], description = "Pipeline depth" }
+# Crypto parameters
+[hosts.trojan0_dsp_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "DSP key generator seed" }
+
+[hosts.trojan0_cache_host]
+file = "trojan0_cache_host.v"
+description = "Cache memory with tag-based lookup"
+# Structural parameters
+[hosts.trojan0_cache_host.params]
+CACHE_SIZE = { type = "choice", values = [32, 64, 128, 256], description = "Number of cache lines" }
+DATA_WIDTH = { type = "choice", values = [16, 32, 64], description = "Cache line data width" }
+TAG_WIDTH = { type = "choice", values = [6, 7, 8, 10], description = "Cache tag width" }
+# Crypto parameters
+[hosts.trojan0_cache_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "Cache key generator seed" }
+
+[hosts.trojan0_uart_host]
+file = "trojan0_uart_host.v"
+description = "UART transceiver with configurable baud rate"
+# Structural parameters
+[hosts.trojan0_uart_host.params]
+BAUD_DIV = { type = "choice", values = [52, 104, 208, 416], description = "Baud rate divisor (higher = slower)" }
+DATA_BITS = { type = "choice", values = [7, 8, 9], description = "Number of data bits" }
+STOP_BITS = { type = "choice", values = [1, 2], description = "Number of stop bits" }
+# Crypto parameters
+[hosts.trojan0_uart_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "UART key generator seed" }
+
+[hosts.trojan0_timer_host]
+file = "trojan0_timer_host.v"
+description = "Programmable timer with prescaler"
+# Structural parameters
+[hosts.trojan0_timer_host.params]
+TIMER_WIDTH = { type = "choice", values = [16, 24, 32], description = "Timer counter width" }
+PRESCALER = { type = "choice", values = [100, 500, 1000, 5000], description = "Clock prescaler value" }
+# Crypto parameters
+[hosts.trojan0_timer_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "Timer key generator seed" }
+
+[hosts.trojan0_fifo_host]
+file = "trojan0_fifo_host.v"
+description = "FIFO buffer with configurable depth"
+# Structural parameters
+[hosts.trojan0_fifo_host.params]
+DATA_WIDTH = { type = "choice", values = [16, 32, 64], description = "FIFO data width" }
+DEPTH = { type = "choice", values = [16, 32, 64, 128], description = "FIFO depth (power of 2)" }
+ADDR_WIDTH = { type = "choice", values = [4, 5, 6, 7], description = "log2(DEPTH)" }
+# Crypto parameters
+[hosts.trojan0_fifo_host.crypto_vars]
+KEY_INIT = { type = "random_hex", bits = 128, description = "FIFO key generator seed" }
