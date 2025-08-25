@@ -1,6 +1,10 @@
 // Bus Host Circuit for Trojan6
 // Fixed I/O to match Trojan6: m0_data_o[31:0], i_s15_data_o[31:0] -> i_s15_data_o_TrojanPayload[31:0]
-module trojan6_bus_host (
+module trojan6_bus_host #(
+    parameter MASTER_COUNT = 3,       // Number of bus masters
+    parameter SLAVE_COUNT = 4,        // Number of bus slaves
+    parameter [127:0] BUS_PATTERN = 128'h0123456789ABCDEF0123456789ABCDEF  // Bus data pattern
+)(
     input wire clk,
     input wire rst,
     input wire [31:0] master_addr,
@@ -18,9 +22,6 @@ module trojan6_bus_host (
     wire [31:0] trojan_i_s15_data_o_TrojanPayload;
     
     // Bus arbiter state - fixed constants
-    localparam MASTER_COUNT = 3;
-    localparam SLAVE_COUNT = 4;
-    localparam [127:0] BUS_PATTERN = 128'h0123456789ABCDEF0123456789ABCDEF;
     
     reg [127:0] bus_gen;
     reg [1:0] grant_master;          // Fixed width: $clog2(3) = 2
@@ -100,3 +101,4 @@ module trojan6_bus_host (
     );
 
 endmodule
+
