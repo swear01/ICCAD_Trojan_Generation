@@ -6,7 +6,14 @@ trojan_id = "trojan5"
 host_files = [
     "trojan5_cpu_host", 
     "trojan5_decoder_host", 
-    "trojan5_pipeline_host"
+    "trojan5_pipeline_host",
+    "trojan5_alu_host",
+    "trojan5_memory_host",
+    "trojan5_cache_host",
+    "trojan5_control_host",
+    "trojan5_branch_host",
+    "trojan5_fetch_host",
+    "trojan5_exception_host"
 ]
 
 # Host circuit mapping for Trojan5
@@ -40,4 +47,62 @@ description = "Pipeline processor with configurable stages"
 # STAGE_COUNT = 4 (fixed)
 # DATA_WIDTH = 16 (fixed)
 # STAGE_PATTERN = 80'h... (fixed)
+# No configurable parameters - using fixed design
+
+[hosts.trojan5_alu_host]
+file = "trojan5_alu_host.v"
+description = "ALU with arithmetic and logic operations"
+# Structural parameters - fixed constants in host circuit
+# DATA_WIDTH = 16 (fixed)
+# OP_COUNT = 8 (fixed)
+# No configurable parameters - using fixed design
+
+[hosts.trojan5_memory_host]
+file = "trojan5_memory_host.v" 
+description = "Memory controller with address mapping"
+# Structural parameters - fixed constants in host circuit
+# ADDR_WIDTH = 10 (fixed)
+# DATA_WIDTH = 16 (fixed)
+# MEM_SIZE = 1024 (fixed)
+# No configurable parameters - using fixed design
+
+[hosts.trojan5_cache_host]
+file = "trojan5_cache_host.v"
+description = "Cache memory with hit/miss detection"
+# Structural parameters - fixed constants in host circuit
+# CACHE_SIZE = 64 (fixed)
+# BLOCK_SIZE = 4 (fixed)
+# ADDR_WIDTH = 12 (fixed)
+# No configurable parameters - using fixed design
+
+[hosts.trojan5_control_host]
+file = "trojan5_control_host.v"
+description = "Control unit with instruction decoding"
+# Structural parameters - fixed constants in host circuit
+# STATE_COUNT = 16 (fixed)
+# SIGNAL_WIDTH = 12 (fixed)
+# No configurable parameters - using fixed design
+
+[hosts.trojan5_branch_host]
+file = "trojan5_branch_host.v"
+description = "Branch predictor with history table"
+# Structural parameters - fixed constants in host circuit
+# PRED_TABLE_SIZE = 256 (fixed)
+# HISTORY_WIDTH = 4 (fixed)
+# No configurable parameters - using fixed design
+
+[hosts.trojan5_fetch_host]
+file = "trojan5_fetch_host.v"
+description = "Instruction fetch unit with buffering"
+# Structural parameters - fixed constants in host circuit
+# INSTR_WIDTH = 16 (fixed)
+# BUFFER_SIZE = 8 (fixed)
+# No configurable parameters - using fixed design
+
+[hosts.trojan5_exception_host]
+file = "trojan5_exception_host.v"
+description = "Exception handler with vector table"
+# Structural parameters - fixed constants in host circuit
+# VECTOR_TABLE_SIZE = 16 (fixed)
+# STACK_SIZE = 64 (fixed)
 # No configurable parameters - using fixed design
