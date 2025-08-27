@@ -150,10 +150,16 @@ class TrojanGenerator:
         import re
         
         # Find module declaration and add instance ID
-        pattern = r'module\s+(\w+)\s*#?\s*\('
+        pattern = r'module\s+(\w+)\s*(#\s*\([^)]*\))?\s*\('
         def replacement(match):
             module_name = match.group(1)
-            return f'module {module_name}_{instance_id:04d} #('
+            param_part = match.group(2)  # Captures #(...) if it exists
+            if param_part:
+                # Module already has parameters, keep them
+                return f'module {module_name}_{instance_id:04d} {param_part} ('
+            else:
+                # Module has no parameters, don't add empty parameter list
+                return f'module {module_name}_{instance_id:04d} ('
         
         return re.sub(pattern, replacement, verilog_code)
 

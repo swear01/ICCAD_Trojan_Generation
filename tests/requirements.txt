@@ -1,0 +1,6 @@
+# Testing requirements for ICCAD Trojan Generation
+pytest>=6.0.0
+pytest-timeout>=1.4.0
+pytest-xdist>=2.0.0
+pytest-html>=3.0.0
+pytest-cov>=2.10.0
