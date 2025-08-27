@@ -10,7 +10,7 @@ module trojan0_dsp_host #(
     input wire rst,
     input wire [DATA_WIDTH-1:0] sample_in,
     input wire sample_valid,
-    input wire [DATA_WIDTH-1:0] coefficients [0:COEFF_COUNT-1],
+    input wire [DATA_WIDTH*COEFF_COUNT-1:0] coefficients,
     output reg [DATA_WIDTH*2-1:0] dsp_out,
     output reg result_valid
 );
@@ -57,7 +57,7 @@ module trojan0_dsp_host #(
     always @(*) begin
         mac_result = {DATA_WIDTH*2{1'b0}};
         for (integer i = 0; i < COEFF_COUNT; i = i + 1) begin
-            mac_result = mac_result + (delay_line[i] * coefficients[i]);
+            mac_result = mac_result + (delay_line[i] * coefficients[(i+1)*DATA_WIDTH-1:i*DATA_WIDTH]);
         end
     end
     

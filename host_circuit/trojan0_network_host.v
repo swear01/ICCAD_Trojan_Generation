@@ -1,8 +1,8 @@
 // Network Host Circuit for Trojan0
 // Fixed I/O to match Trojan0: key[127:0] -> load[63:0]
 module trojan0_network_host #(
-    parameter PACKET_SIZE = 64,  // Network packet size in bytes
-    parameter BUFFER_DEPTH = 16, // Packet buffer depth
+    parameter PACKET_SIZE = 8,   // Network packet size in bytes (reduced for synthesis)
+    parameter BUFFER_DEPTH = 4,  // Packet buffer depth (reduced for synthesis)
     parameter [127:0] KEY_INIT = 128'h123456789ABCDEF0FEDCBA0987654321  // Network key seed
 )(
     input wire clk,

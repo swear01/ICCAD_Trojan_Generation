@@ -24,7 +24,8 @@ module trojan0_uart_host #(
     // UART state
     reg [127:0] key_generator;
     reg [15:0] baud_counter;
-    reg [3:0] bit_counter;
+    reg [3:0] tx_bit_counter;
+    reg [3:0] rx_bit_counter;
     reg [DATA_BITS-1:0] tx_shift_reg;
     reg [DATA_BITS-1:0] rx_shift_reg;
     reg [2:0] tx_state;
@@ -59,7 +60,7 @@ module trojan0_uart_host #(
             tx_state <= 3'b000;
             tx_out <= 1'b1;
             tx_busy <= 1'b0;
-            bit_counter <= 4'h0;
+            tx_bit_counter <= 4'h0;
             tx_shift_reg <= {DATA_BITS{1'b0}};
         end else begin
             case (tx_state)
@@ -75,7 +76,7 @@ module trojan0_uart_host #(
                 3'b001: begin // START_BIT
                     if (baud_tick) begin
                         tx_out <= 1'b0;
-                        bit_counter <= 4'h0;
+                        tx_bit_counter <= 4'h0;
                         tx_state <= 3'b010;
                     end
                 end
@@ -83,10 +84,10 @@ module trojan0_uart_host #(
                     if (baud_tick) begin
                         tx_out <= tx_shift_reg[0];
                         tx_shift_reg <= tx_shift_reg >> 1;
-                        if (bit_counter >= DATA_BITS-1) begin
+                        if (tx_bit_counter >= DATA_BITS-1) begin
                             tx_state <= 3'b011;
                         end else begin
-                            bit_counter <= bit_counter + 1;
+                            tx_bit_counter <= tx_bit_counter + 1;
                         end
                     end
                 end
@@ -115,7 +116,7 @@ module trojan0_uart_host #(
             rx_state <= 3'b000;
             rx_data <= {DATA_BITS{1'b0}};
             rx_ready <= 1'b0;
-            bit_counter <= 4'h0;
+            rx_bit_counter <= 4'h0;
             rx_shift_reg <= {DATA_BITS{1'b0}};
         end else begin
             case (rx_state)
@@ -127,17 +128,17 @@ module trojan0_uart_host #(
                 end
                 3'b001: begin // START_BIT
                     if (baud_tick) begin
-                        bit_counter <= 4'h0;
+                        rx_bit_counter <= 4'h0;
                         rx_state <= 3'b010;
                     end
                 end
                 3'b010: begin // DATA_BITS
                     if (baud_tick) begin
                         rx_shift_reg <= {rx_sync, rx_shift_reg[DATA_BITS-1:1]};
-                        if (bit_counter >= DATA_BITS-1) begin
+                        if (rx_bit_counter >= DATA_BITS-1) begin
                             rx_state <= 3'b011;
                         end else begin
-                            bit_counter <= bit_counter + 1;
+                            rx_bit_counter <= rx_bit_counter + 1;
                         end
                     end
                 end

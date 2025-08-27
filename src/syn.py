@@ -7,16 +7,16 @@ Includes latch and large circuit (>60,000 gates) detection with warnings.
 
 Usage:
 # Generate clean gate-level circuits (with progress bar):
-python syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --count-start 3001
+python src/syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --count-start 3001
 
 # Generate trojan gate-level circuits (with progress bar):
-python syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan --count-start 1001
+python src/syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan --count-start 1001
 
 # For detailed verbose output (no progress bar):
-python syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --verbose
+python src/syn.py --input generated_circuits/clean --output data/netlist/clean --labels data/label/clean --verbose
 
 # For batch processing with progress tracking:
-python syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan
+python src/syn.py --input generated_circuits/trojan --output data/netlist/trojan --labels data/label/trojan
 """
 
 import os
@@ -41,7 +41,7 @@ DEFAULT_LABEL_OUT_DIR = "data/label/clean"
 def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 	"""Run Yosys + ABC flow using the provided liberty for mapping only to cells in cell.lib."""
 
-	# New Yosys commands with ALDFF mapping
+	# Enhanced Yosys commands with better diagnostics for unconnected wire detection
 	yosys_cmds = [
 		f"read_liberty -lib {lib_path}",
 		*[f"read_verilog -sv {f}" for f in rtl_files],
@@ -52,9 +52,11 @@ def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 		f"techmap -map {map_path}",         # Map the ALDFF to the DFF primitive
 		f"dfflibmap -liberty {lib_path}",
 		"insbuf -buf buf A Y",             # Insert buffers to replace assign usage
+		"check",                           # Check for unconnected ports and wires
 		"opt_clean -purge",
 		f"abc -liberty {lib_path} -fast",   # ABC combinational mapping/optimization
 		"opt_merge; opt_clean; clean",
+		"check -assert",                   # Final connectivity check with assertions
 		f"stat -liberty {lib_path}",
 		f"write_verilog -noattr -noexpr -nodec -defparam {out_tmp}",
 	]
@@ -75,6 +77,8 @@ def analyze_synthesis_output(stdout, stderr):
 	"""Analyze Yosys synthesis output for warnings and circuit statistics"""
 	warnings = []
 	
+	full_output = stdout + stderr
+	
 	# Check for latch inference
 	latch_patterns = [
 		r"inferred latch",
@@ -83,12 +87,67 @@ def analyze_synthesis_output(stdout, stderr):
 		r"PROC_DLATCH.*created.*latch"
 	]
 	
-	full_output = stdout + stderr
 	for pattern in latch_patterns:
 		matches = re.findall(pattern, full_output, re.IGNORECASE)
 		if matches:
 			warnings.append(f"LATCH_WARNING: {len(matches)} latch(es) inferred")
 			break
+	
+	# Check for unconnected wires/ports - these indicate potentially problematic synthesis
+	unconnected_patterns = [
+		r"Warning: Wire (\w+) is used but has no driver",
+		r"Warning: (\w+) is not driven by any cell output",
+		r"unused wire: (\w+)",
+		r"undriven wire: (\w+)",
+		r"floating wire: (\w+)",
+		r"Warning.*unconnected.*wire.*(\w+)",
+		r"Warning.*wire.*(\w+).*not connected",
+		r"Warning.*(\w+).*has no driver",
+		r"Warning: Port (\w+) of cell.*is unconnected"
+	]
+	
+	unconnected_wires = set()
+	for pattern in unconnected_patterns:
+		matches = re.findall(pattern, full_output, re.IGNORECASE)
+		for match in matches:
+			if isinstance(match, tuple):
+				# Handle regex groups
+				for group in match:
+					if group:
+						unconnected_wires.add(group)
+			else:
+				unconnected_wires.add(match)
+	
+	# Check for specific Yosys warnings about optimization issues
+	opt_warning_patterns = [
+		r"Warning:.*removed \d+ unused.*",
+		r"Warning:.*(\d+) wires.*unused",
+		r"Warning: found \d+ undriven signals",
+		r"Warning.*unused.*(\d+)"
+	]
+	
+	unused_count = 0
+	for pattern in opt_warning_patterns:
+		matches = re.findall(pattern, full_output, re.IGNORECASE)
+		if matches:
+			for match in matches:
+				if isinstance(match, str) and match.isdigit():
+					unused_count += int(match)
+				elif isinstance(match, tuple):
+					for group in match:
+						if isinstance(group, str) and group.isdigit():
+							unused_count += int(group)
+	
+	# Report unconnected issues
+	if unconnected_wires:
+		wire_names = sorted(list(unconnected_wires))[:5]  # Show first 5 names
+		if len(unconnected_wires) <= 5:
+			warnings.append(f"UNCONNECTED_WARNING: {len(unconnected_wires)} unconnected wire(s): {', '.join(wire_names)}")
+		else:
+			warnings.append(f"UNCONNECTED_WARNING: {len(unconnected_wires)} unconnected wire(s): {', '.join(wire_names)} ...")
+	
+	if unused_count > 0:
+		warnings.append(f"UNUSED_WARNING: {unused_count} unused/removed signal(s)")
 	
 	# Check circuit size - look for total cell count from stat command
 	gate_count = 0
@@ -323,7 +382,7 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, ma
 	
 	# Collect files
 	verilog_files = []
-	for root, _dirs, files in os.walk(rtl_dir):
+	for root, dirs, files in os.walk(rtl_dir):
 		for fname in files:
 			if fname.lower().endswith(".v"):
 				verilog_files.append(os.path.join(root, fname))
@@ -398,6 +457,7 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, ma
 		
 		try:
 			success, warnings, gate_count = synthesize([vf], top, out_netlist, lib_path, map_path, script_path, show_progress=not batch_mode)
+			success = success  # Use the variable to avoid Pylance warning
 			
 			# Handle warnings
 			if warnings:
