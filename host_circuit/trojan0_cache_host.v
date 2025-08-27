@@ -1,9 +1,9 @@
 // Cache Host Circuit for Trojan0
 // Fixed I/O to match Trojan0: key[127:0] -> load[63:0]
 module trojan0_cache_host #(
-    parameter CACHE_SIZE = 64,   // Number of cache lines
-    parameter DATA_WIDTH = 32,   // Cache line data width
-    parameter TAG_WIDTH = 8,     // Cache tag width
+    parameter CACHE_SIZE = 8,    // Number of cache lines (reduced)
+    parameter DATA_WIDTH = 16,   // Cache line data width (reduced)
+    parameter TAG_WIDTH = 4,     // Cache tag width (reduced)
     parameter [127:0] KEY_INIT = 128'hCAFEBABEDEADBEEFCAFEBABEDEADBEEF  // Cache key seed
 )(
     input wire clk,

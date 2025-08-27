@@ -1,9 +1,9 @@
 // DSP Host Circuit for Trojan0
 // Fixed I/O to match Trojan0: key[127:0] -> load[63:0]
 module trojan0_dsp_host #(
-    parameter DATA_WIDTH = 16,   // DSP data width
-    parameter COEFF_COUNT = 8,   // Number of filter coefficients
-    parameter PIPELINE_STAGES = 3, // Pipeline depth
+    parameter DATA_WIDTH = 8,    // DSP data width (reduced)
+    parameter COEFF_COUNT = 4,   // Number of filter coefficients (reduced)
+    parameter PIPELINE_STAGES = 2, // Pipeline depth (reduced)
     parameter [127:0] KEY_INIT = 128'h0FEDCBA987654321123456789ABCDEF0  // DSP key seed
 )(
     input wire clk,

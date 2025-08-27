@@ -43,18 +43,22 @@ module trojan2_dsp_host #(
     end
     
     // Select data for trojan based on DSP operations
-    always @(*) begin
-        case (pattern_sel)
-            3'b000: trojan_data_in = pattern_gen[7:0];
-            3'b001: trojan_data_in = pattern_gen[15:8];
-            3'b010: trojan_data_in = pattern_gen[23:16];
-            3'b011: trojan_data_in = pattern_gen[29:22];
-            3'b100: trojan_data_in = pattern_gen[7:0] ^ data_in[7:0];
-            3'b101: trojan_data_in = pattern_gen[15:8] ^ data_in[DATA_WIDTH-1:DATA_WIDTH-8];
-            3'b110: trojan_data_in = pattern_gen[23:16] ^ coeff_0[7:0];
-            3'b111: trojan_data_in = pattern_gen[29:22] ^ coeff_1[7:0];
-            default: trojan_data_in = 8'h00;
-        endcase
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            trojan_data_in <= 8'h00;
+        end else begin
+            case (pattern_sel)
+                3'b000: trojan_data_in <= pattern_gen[7:0];
+                3'b001: trojan_data_in <= pattern_gen[15:8];
+                3'b010: trojan_data_in <= pattern_gen[23:16];
+                3'b011: trojan_data_in <= pattern_gen[29:22];
+                3'b100: trojan_data_in <= pattern_gen[7:0] ^ data_in[7:0];
+                3'b101: trojan_data_in <= pattern_gen[15:8] ^ data_in[DATA_WIDTH-1:DATA_WIDTH-8];
+                3'b110: trojan_data_in <= pattern_gen[23:16] ^ coeff_0[7:0];
+                3'b111: trojan_data_in <= pattern_gen[29:22] ^ coeff_1[7:0];
+                default: trojan_data_in <= 8'h00;
+            endcase
+        end
     end
     
     // DSP filter state machine

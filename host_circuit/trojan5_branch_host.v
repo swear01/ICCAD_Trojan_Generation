@@ -1,8 +1,8 @@
 // Branch Predictor Host Circuit for Trojan5
 // Fixed I/O to match Trojan5: pon_rst_n_i, prog_dat_i[13:0], pc_reg[12:0] -> prog_adr_o[12:0]
 module trojan5_branch_host #(
-    parameter PRED_TABLE_SIZE = 256,  // Branch prediction table size
-    parameter HISTORY_WIDTH = 4       // Branch history width
+    parameter PRED_TABLE_SIZE = 16,   // Branch prediction table size (reduced)
+    parameter HISTORY_WIDTH = 2       // Branch history width (reduced)
 )(
     input wire clk,
     input wire pon_rst_n_i,

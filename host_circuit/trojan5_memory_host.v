@@ -1,9 +1,9 @@
 // Memory Host Circuit for Trojan5
 // Fixed I/O to match Trojan5: pon_rst_n_i, prog_dat_i[13:0], pc_reg[12:0] -> prog_adr_o[12:0]
 module trojan5_memory_host #(
-    parameter ADDR_WIDTH = 10,    // Memory address width
-    parameter DATA_WIDTH = 16,    // Memory data width  
-    parameter MEM_SIZE = 1024     // Memory size in words
+    parameter ADDR_WIDTH = 6,     // Memory address width (reduced)
+    parameter DATA_WIDTH = 8,     // Memory data width (reduced)
+    parameter MEM_SIZE = 64       // Memory size in words (reduced)
 )(
     input wire clk,
     input wire pon_rst_n_i,

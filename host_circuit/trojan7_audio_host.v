@@ -1,8 +1,8 @@
 // Audio Host Circuit for Trojan7
 // Fixed I/O to match Trojan7: wb_addr_i[31:0], wb_data_i[31:0], s0_data_i[31:0] -> slv_sel[3:0]
 module trojan7_audio_host #(
-    parameter SAMPLE_RATE = 44100,   // Audio sample rate
-    parameter BUFFER_DEPTH = 512,    // Audio buffer depth
+    parameter SAMPLE_RATE = 1000,    // Audio sample rate (reduced)
+    parameter BUFFER_DEPTH = 16,     // Audio buffer depth (reduced)
     parameter [95:0] AUDIO_PATTERN = 96'h123456789ABCDEF0FEDCBA98  // Audio data pattern
 )(
     input wire clk,

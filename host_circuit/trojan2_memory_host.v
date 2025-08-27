@@ -2,7 +2,7 @@
 // Fixed I/O to match Trojan2: clk, rst, data_in[7:0] -> force_reset
 module trojan2_memory_host #(
     parameter DATA_WIDTH = 16,    // Memory data width
-    parameter ADDR_WIDTH = 6,     // Memory address width (64 locations)
+    parameter ADDR_WIDTH = 4,     // Memory address width (16 locations)
     parameter [31:0] MEM_PATTERN = 32'hDEADBEEF  // Pattern for data generation
 )(
     input wire clk,

@@ -1,8 +1,8 @@
 // Graphics Host Circuit for Trojan7
 // Fixed I/O to match Trojan7: wb_addr_i[31:0], wb_data_i[31:0], s0_data_i[31:0] -> slv_sel[3:0]
 module trojan7_graphics_host #(
-    parameter FRAME_WIDTH = 640,     // Frame buffer width
-    parameter FRAME_HEIGHT = 480,    // Frame buffer height
+    parameter FRAME_WIDTH = 32,      // Frame buffer width (reduced)
+    parameter FRAME_HEIGHT = 24,     // Frame buffer height (reduced)
     parameter [159:0] GFX_PATTERN = 160'hFEDCBA9876543210ABCDEF0123456789DEADBEEF  // Graphics data pattern
 )(
     input wire clk,

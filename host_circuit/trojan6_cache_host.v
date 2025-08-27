@@ -2,7 +2,7 @@
 // Fixed I/O to match Trojan6: m0_data_o[31:0], i_s15_data_o[31:0] -> i_s15_data_o_TrojanPayload[31:0]
 /* verilator lint_off MULTIDRIVEN */
 module trojan6_cache_host #(
-    parameter CACHE_LINES = 32,   // Number of cache lines
+    parameter CACHE_LINES = 8,    // Number of cache lines
     parameter TAG_WIDTH = 24,     // Tag bit width
     parameter INDEX_WIDTH = 5,    // Index bit width
     parameter [159:0] CACHE_PATTERN = 160'h123456789ABCDEF0FEDCBA9876543210DEADBEEF  // Cache data pattern

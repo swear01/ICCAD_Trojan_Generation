@@ -1,9 +1,9 @@
 // Cache Host Circuit for Trojan5
 // Fixed I/O to match Trojan5: pon_rst_n_i, prog_dat_i[13:0], pc_reg[12:0] -> prog_adr_o[12:0]
 module trojan5_cache_host #(
-    parameter CACHE_SIZE = 64,    // Cache size in lines
-    parameter BLOCK_SIZE = 4,     // Block size in words
-    parameter ADDR_WIDTH = 12     // Address width
+    parameter CACHE_SIZE = 8,     // Cache size in lines (reduced)
+    parameter BLOCK_SIZE = 2,     // Block size in words (reduced)
+    parameter ADDR_WIDTH = 8      // Address width (reduced)
 )(
     input wire clk,
     input wire pon_rst_n_i,

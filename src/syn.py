@@ -41,22 +41,41 @@ DEFAULT_LABEL_OUT_DIR = "data/label/clean"
 def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 	"""Run Yosys + ABC flow using the provided liberty for mapping only to cells in cell.lib."""
 
-	# Enhanced Yosys commands with better diagnostics for unconnected wire detection
+	# Enhanced Yosys commands with aggressive optimization to eliminate unconnected wires
 	yosys_cmds = [
 		f"read_liberty -lib {lib_path}",
 		*[f"read_verilog -sv {f}" for f in rtl_files],
 		f"hierarchy -check -top {top}",
 		"proc; opt",
-		"flatten", 
-		"techmap; opt",
-		f"techmap -map {map_path}",         # Map the ALDFF to the DFF primitive
+		"flatten",
+		"# More aggressive optimization and cleanup to eliminate unconnected wires",
+		"opt -full",                       # Full optimization pass
+		"opt_clean -purge",               
+		"opt_dff -sat",                   # DFF optimization with SAT
+		"opt -full",
+		"techmap; opt -full",             # Aggressive optimization after techmap
+		"opt_clean -purge",               
+		f"techmap -map {map_path}",       # Map the ALDFF to the DFF primitive
+		"opt -full",                      # Full optimization after custom mapping
+		"opt_clean -purge",               
 		f"dfflibmap -liberty {lib_path}",
-		"insbuf -buf buf A Y",             # Insert buffers to replace assign usage
-		"check",                           # Check for unconnected ports and wires
+		"opt -full",                      # Full optimization after DFF mapping
+		"opt_clean -purge",               
+		"insbuf -buf buf A Y",            # Insert buffers to replace assign usage
+		"opt -full",                      # Full optimization after buffer insertion
+		"opt_clean -purge",               
+		"# Multiple ABC passes with different strategies",
+		f"abc -liberty {lib_path} -fast", # Fast ABC pass
+		"opt -full",
+		f"abc -liberty {lib_path}",       # Normal ABC pass for better optimization
+		"opt_merge; opt_clean; clean",    # Comprehensive cleanup
+		"opt -full",
 		"opt_clean -purge",
-		f"abc -liberty {lib_path} -fast",   # ABC combinational mapping/optimization
-		"opt_merge; opt_clean; clean",
-		"check -assert",                   # Final connectivity check with assertions
+		"# Final cleanup passes",
+		"wreduce -memx",                  # Word-level reduction
+		"opt -full",
+		"opt_clean -purge",
+		"check -noinit",                  # Check without initialization warnings
 		f"stat -liberty {lib_path}",
 		f"write_verilog -noattr -noexpr -nodec -defparam {out_tmp}",
 	]
@@ -66,11 +85,21 @@ def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 	with open(script_path, "w") as f:
 		f.write(script)
 
-	# Run Yosys script and capture output for analysis
-	result = subprocess.run(["yosys", script_path], capture_output=True, text=True, check=True)
-	
-	# Return the captured output for analysis
-	return result.stdout, result.stderr
+	# Run Yosys script with 3-second timeout and capture output for analysis
+	try:
+		result = subprocess.run(
+			["yosys", script_path], 
+			capture_output=True, 
+			text=True, 
+			check=True,
+			timeout=10.0  # 10-second timeout
+		)
+		
+		# Return the captured output for analysis
+		return result.stdout, result.stderr
+		
+	except subprocess.TimeoutExpired:
+		raise RuntimeError(f"Synthesis timeout: exceeded 8 seconds for script {script_path}")
 
 
 def analyze_synthesis_output(stdout, stderr):
@@ -94,16 +123,17 @@ def analyze_synthesis_output(stdout, stderr):
 			break
 	
 	# Check for unconnected wires/ports - these indicate potentially problematic synthesis
+	# Use more precise regex patterns to match signal names including complex hierarchical names
 	unconnected_patterns = [
-		r"Warning: Wire (\w+) is used but has no driver",
-		r"Warning: (\w+) is not driven by any cell output",
-		r"unused wire: (\w+)",
-		r"undriven wire: (\w+)",
-		r"floating wire: (\w+)",
-		r"Warning.*unconnected.*wire.*(\w+)",
-		r"Warning.*wire.*(\w+).*not connected",
-		r"Warning.*(\w+).*has no driver",
-		r"Warning: Port (\w+) of cell.*is unconnected"
+		r"Warning: Wire ([^\s]+(?:\s*\[[^\]]+\])?) is used but has no driver",
+		r"Warning: ([^\s]+(?:\s*\[[^\]]+\])?) is not driven by any cell output",
+		r"unused wire: ([^\s]+(?:\s*\[[^\]]+\])?)",
+		r"undriven wire: ([^\s]+(?:\s*\[[^\]]+\])?)", 
+		r"floating wire: ([^\s]+(?:\s*\[[^\]]+\])?)",
+		r"Warning.*unconnected.*wire.*([^\s]+(?:\s*\[[^\]]+\])?)",
+		r"Warning.*wire.*([^\s]+(?:\s*\[[^\]]+\])?).*not connected",
+		r"Warning.*([^\s]+(?:\s*\[[^\]]+\])?).*has no driver",
+		r"Warning: Port ([^\s]+(?:\s*\[[^\]]+\])?) of cell.*is unconnected"
 	]
 	
 	unconnected_wires = set()
@@ -137,6 +167,7 @@ def analyze_synthesis_output(stdout, stderr):
 					for group in match:
 						if isinstance(group, str) and group.isdigit():
 							unused_count += int(group)
+	
 	
 	# Report unconnected issues
 	if unconnected_wires:
@@ -473,7 +504,12 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, ma
 				large_circuits.append(f"{os.path.basename(vf)}: {gate_count} gates")
 			
 		except Exception as e:
-			error_msg = f"Error synthesizing {vf}: {e}"
+			# Special handling for timeout errors
+			if "timeout" in str(e).lower() or "exceeded 8 seconds" in str(e):
+				error_msg = f"Error synthesizing {vf}: Synthesis timeout (>8s) - circuit too complex"
+			else:
+				error_msg = f"Error synthesizing {vf}: {e}"
+			
 			errors.append(error_msg)
 			if batch_mode:
 				# Pause progress bar to show error

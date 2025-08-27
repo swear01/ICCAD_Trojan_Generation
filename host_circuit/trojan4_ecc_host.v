@@ -1,8 +1,8 @@
 // ECC Host Circuit for Trojan4
 // Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
 module trojan4_ecc_host #(
-    parameter FIELD_WIDTH = 16,   // Reduced ECC field width
-    parameter SCALAR_WIDTH = 16,  // Reduced scalar width
+    parameter FIELD_WIDTH = 8,    // Reduced ECC field width
+    parameter SCALAR_WIDTH = 8,   // Reduced scalar width
     parameter [127:0] CURVE_PARAM = 128'h0123456789ABCDEF0123456789ABCDEF
 )(
     input wire clk,

