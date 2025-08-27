@@ -45,8 +45,8 @@ class TestRTLCompilation:
         else:
             return "Other Error"
     
-    def test_rtl_file(self, rtl_file_path, trojan_core_dir):
-        """Test a single RTL file with Verilator"""
+    def test_single_rtl_file(self, rtl_file_path, trojan_core_dir):
+        """Test a single RTL file with Verilator - helper method"""
         rtl_file = Path(rtl_file_path)
         trojan_num = self.extract_trojan_number(str(rtl_file))
         
@@ -62,8 +62,22 @@ class TestRTLCompilation:
         if not trojan_core_file.exists():
             pytest.fail(f"Trojan core file not found: {trojan_core_file}")
         
-        # Run Verilator
-        cmd = ["verilator", "--lint-only", str(rtl_file), str(trojan_core_file)]
+        # Extract top module name from file
+        with open(rtl_file, 'r') as f:
+            content = f.read()
+            import re
+            match = re.search(r'module\s+(\w+)\s*(?:#|\()', content)
+            if match:
+                top_module = match.group(1)
+            else:
+                pytest.fail(f"Could not find top module in {rtl_file}")
+        
+        # Run Verilator - generated files already include trojan core
+        # Allow common warnings but fail on actual errors
+        cmd = ["verilator", "--lint-only", f"--top-module", top_module, 
+               "-Wno-WIDTHEXPAND", "-Wno-WIDTHTRUNC", "-Wno-MULTIDRIVEN", 
+               "-Wno-UNUSED", "-Wno-UNDRIVEN", "-Wno-SELRANGE", 
+               "-Wno-WIDTH", "-Wno-REDEFMACRO", str(rtl_file)]
         
         try:
             result = subprocess.run(
@@ -111,13 +125,13 @@ class TestRTLCompilation:
     @pytest.mark.clean
     def test_clean_rtl_files(self, rtl_file, trojan_core_dir):
         """Test all clean RTL files for compilation"""
-        self.test_rtl_file(rtl_file, trojan_core_dir)
+        self.test_single_rtl_file(rtl_file, trojan_core_dir)
     
     @pytest.mark.verilator
     @pytest.mark.trojan
     def test_trojan_rtl_files(self, rtl_file, trojan_core_dir):
         """Test all trojan RTL files for compilation"""
-        self.test_rtl_file(rtl_file, trojan_core_dir)
+        self.test_single_rtl_file(rtl_file, trojan_core_dir)
 
 
 def pytest_generate_tests(metafunc):

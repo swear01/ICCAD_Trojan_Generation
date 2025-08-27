@@ -150,7 +150,7 @@ class TrojanGenerator:
         import re
         
         # Find module declaration and add instance ID
-        pattern = r'module\s+(\w+)\s*(#\s*\([^)]*\))?\s*\('
+        pattern = r'module\s+(\w+)\s*(#.*?)?\s*\('
         def replacement(match):
             module_name = match.group(1)
             param_part = match.group(2)  # Captures #(...) if it exists
