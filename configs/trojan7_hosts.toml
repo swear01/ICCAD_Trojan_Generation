@@ -51,8 +51,8 @@ file = "trojan7_graphics_host.v"
 description = "Graphics processor with frame buffer and display control"
 # Structural parameters
 [hosts.trojan7_graphics_host.params]
-FRAME_WIDTH = { type = "choice", values = [320, 640, 800, 1024], description = "Frame buffer width" }
-FRAME_HEIGHT = { type = "choice", values = [240, 480, 600, 768], description = "Frame buffer height" }
+FRAME_WIDTH = { type = "choice", values = [16, 32], description = "Minimal frame buffer width" }
+FRAME_HEIGHT = { type = "choice", values = [12, 24], description = "Minimal frame buffer height" }
 GFX_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for graphics data generation" }
 
 [hosts.trojan7_audio_host]
@@ -60,8 +60,8 @@ file = "trojan7_audio_host.v"
 description = "Audio processor with sample rate control and filtering"
 # Structural parameters
 [hosts.trojan7_audio_host.params]
-SAMPLE_RATE = { type = "choice", values = [22050, 44100, 48000, 96000], description = "Audio sample rate" }
-BUFFER_DEPTH = { type = "choice", values = [256, 512, 1024], description = "Audio buffer depth" }
+SAMPLE_RATE = { type = "choice", values = [500, 1000], description = "Minimal audio sample rate" }
+BUFFER_DEPTH = { type = "choice", values = [8, 16], description = "Minimal audio buffer depth" }
 AUDIO_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for audio data generation" }
 
 [hosts.trojan7_fpga_host]
@@ -78,8 +78,8 @@ file = "trojan7_storage_host.v"
 description = "Storage controller with caching and block management"
 # Structural parameters
 [hosts.trojan7_storage_host.params]
-BLOCK_SIZE = { type = "choice", values = [256, 512, 1024], description = "Storage block size in bytes" }
-CACHE_WAYS = { type = "choice", values = [2, 4, 8], description = "Number of cache ways" }
+BLOCK_SIZE = { type = "choice", values = [64, 128, 256], description = "Storage block size in bytes (reduced)" }
+CACHE_WAYS = { type = "choice", values = [2, 4], description = "Number of cache ways (reduced)" }
 STORAGE_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for storage data generation" }
 
 [hosts.trojan7_axi_host]

@@ -79,9 +79,9 @@ file = "trojan0_dsp_host.v"
 description = "Digital Signal Processor with FIR filtering"
 # Structural parameters
 [hosts.trojan0_dsp_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "DSP data width" }
-COEFF_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of filter coefficients" }
-PIPELINE_STAGES = { type = "choice", values = [2, 3, 4, 5], description = "Pipeline depth" }
+DATA_WIDTH = { type = "choice", values = [8, 12, 16], description = "DSP data width (reduced)" }
+COEFF_COUNT = { type = "choice", values = [4, 6, 8], description = "Number of filter coefficients (reduced)" }
+PIPELINE_STAGES = { type = "choice", values = [2, 3], description = "Pipeline depth (reduced)" }
 # Crypto parameters
 [hosts.trojan0_dsp_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "DSP key generator seed" }
@@ -91,9 +91,9 @@ file = "trojan0_cache_host.v"
 description = "Cache memory with tag-based lookup"
 # Structural parameters
 [hosts.trojan0_cache_host.params]
-CACHE_SIZE = { type = "choice", values = [32, 64, 128, 256], description = "Number of cache lines" }
-DATA_WIDTH = { type = "choice", values = [16, 32, 64], description = "Cache line data width" }
-TAG_WIDTH = { type = "choice", values = [6, 7, 8, 10], description = "Cache tag width" }
+CACHE_SIZE = { type = "choice", values = [8, 16, 32], description = "Number of cache lines (reduced)" }
+DATA_WIDTH = { type = "choice", values = [16, 32], description = "Cache line data width (reduced)" }
+TAG_WIDTH = { type = "choice", values = [4, 6, 8], description = "Cache tag width (reduced)" }
 # Crypto parameters
 [hosts.trojan0_cache_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Cache key generator seed" }

@@ -33,8 +33,8 @@ file = "trojan8_memory_host.v"
 description = "Memory controller with banking and caching"
 # Structural parameters
 [hosts.trojan8_memory_host.params]
-MEM_DEPTH = { type = "choice", values = [512, 1024, 2048], description = "Memory depth in words" }
-BANK_COUNT = { type = "choice", values = [2, 4, 8], description = "Number of memory banks" }
+MEM_DEPTH = { type = "choice", values = [32, 64], description = "Minimal memory depth in words" }
+BANK_COUNT = { type = "choice", values = [2], description = "Minimal number of memory banks" }
 MEM_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for memory access generation" }
 
 [hosts.trojan8_io_host]
@@ -42,8 +42,8 @@ file = "trojan8_io_host.v"
 description = "I/O controller with GPIO and FIFO buffering"
 # Structural parameters
 [hosts.trojan8_io_host.params]
-IO_PORTS = { type = "choice", values = [8, 16, 32], description = "Number of I/O ports" }
-FIFO_DEPTH = { type = "choice", values = [16, 32, 64], description = "FIFO buffer depth" }
+IO_PORTS = { type = "choice", values = [8, 16], description = "Number of I/O ports (reduced)" }
+FIFO_DEPTH = { type = "choice", values = [8, 16, 32], description = "FIFO buffer depth (reduced)" }
 IO_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for I/O data generation" }
 
 [hosts.trojan8_timer_host]
@@ -51,8 +51,8 @@ file = "trojan8_timer_host.v"
 description = "Timer/counter with prescaler and compare"
 # Structural parameters
 [hosts.trojan8_timer_host.params]
-TIMER_COUNT = { type = "choice", values = [4, 8, 16], description = "Number of timer channels" }
-PRESCALE_BITS = { type = "choice", values = [4, 8, 12], description = "Prescaler width" }
+TIMER_COUNT = { type = "choice", values = [4, 8], description = "Number of timer channels (reduced)" }
+PRESCALE_BITS = { type = "choice", values = [4, 8], description = "Prescaler width (reduced)" }
 TIMER_PATTERN = { type = "random_hex", bits = 80, description = "Pattern for timer generation" }
 
 [hosts.trojan8_dma_host]

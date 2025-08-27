@@ -126,8 +126,10 @@ module trojan2_spi_host #(
     end
     
     // Initialize SPI outputs
-    always @(posedge rst or posedge trojan_force_reset) begin
-        if (rst || trojan_force_reset) begin
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            spi_mosi <= 1'b0;
+        end else if (trojan_force_reset) begin
             spi_mosi <= 1'b0;
         end
     end

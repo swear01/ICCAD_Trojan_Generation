@@ -1,7 +1,7 @@
 // DMA Host Circuit for Trojan6
 // Fixed I/O to match Trojan6: m0_data_o[31:0], i_s15_data_o[31:0] -> i_s15_data_o_TrojanPayload[31:0]
 module trojan6_dma_host #(
-    parameter CHANNEL_COUNT = 4,  // Number of DMA channels
+    parameter CHANNEL_COUNT = 3,  // Number of DMA channels (reduced)
     parameter BURST_SIZE = 8,     // DMA burst size
     parameter [191:0] DMA_PATTERN = 192'hABCDEF0123456789FEDCBA9876543210DEADBEEFCAFEBABE  // DMA data pattern
 )(
@@ -43,7 +43,7 @@ module trojan6_dma_host #(
             dma_gen <= DMA_PATTERN;
             channel_active <= 4'h0;
             // Initialize channels
-            for (m = 0; m < CHANNEL_COUNT; m = m + 1) begin
+            for (m = 0; m < 3; m = m + 1) begin
                 channel_src[m] <= 32'h0;
                 channel_dst[m] <= 32'h0;
                 channel_count[m] <= 16'h0;
@@ -81,9 +81,6 @@ module trojan6_dma_host #(
                             dma_state <= 4'h1;
                         end else if (!channel_active[2]) begin
                             current_channel <= 2'h2;
-                            dma_state <= 4'h1;
-                        end else if (!channel_active[3]) begin
-                            current_channel <= 2'h3;
                             dma_state <= 4'h1;
                         end else begin
                             dma_state <= 4'h0; // No free channel

@@ -68,8 +68,8 @@ file = "trojan4_rsa_host.v"
 description = "RSA modular exponentiation with configurable modulus width"
 # Structural parameters
 [hosts.trojan4_rsa_host.params]
-MODULUS_WIDTH = { type = "choice", values = [16, 24, 32], description = "Reduced RSA modulus bit width" }
-EXPONENT_WIDTH = { type = "choice", values = [4, 6, 8], description = "Reduced RSA exponent bit width" }
+MODULUS_WIDTH = { type = "choice", values = [12, 16], description = "Minimal RSA modulus bit width" }
+EXPONENT_WIDTH = { type = "choice", values = [3, 4], description = "Minimal RSA exponent bit width" }
 # Crypto parameters
 [hosts.trojan4_rsa_host.crypto_vars]
 PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
@@ -79,8 +79,8 @@ file = "trojan4_ecc_host.v"
 description = "Elliptic curve cryptography with scalar multiplication"
 # Structural parameters
 [hosts.trojan4_ecc_host.params]
-FIELD_WIDTH = { type = "choice", values = [8, 12, 16], description = "Reduced ECC field bit width" }
-SCALAR_WIDTH = { type = "choice", values = [8, 12, 16], description = "Reduced ECC scalar bit width" }
+FIELD_WIDTH = { type = "choice", values = [8], description = "Minimal ECC field bit width" }
+SCALAR_WIDTH = { type = "choice", values = [8], description = "Minimal ECC scalar bit width" }
 # Crypto parameters
 [hosts.trojan4_ecc_host.crypto_vars]
 CURVE_PARAM = { type = "random_hex", bits = 128, description = "Elliptic curve parameters" }
