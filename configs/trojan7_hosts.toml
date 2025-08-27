@@ -10,7 +10,10 @@ host_files = [
     "trojan7_graphics_host",
     "trojan7_audio_host",
     "trojan7_fpga_host",
-    "trojan7_storage_host"
+    "trojan7_storage_host",
+    "trojan7_axi_host",
+    "trojan7_interconnect_host",
+    "trojan7_wishbone_host"
 ]
 
 # Host circuit mapping for Trojan7
@@ -78,3 +81,26 @@ description = "Storage controller with caching and block management"
 BLOCK_SIZE = { type = "choice", values = [256, 512, 1024], description = "Storage block size in bytes" }
 CACHE_WAYS = { type = "choice", values = [2, 4, 8], description = "Number of cache ways" }
 STORAGE_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for storage data generation" }
+
+[hosts.trojan7_axi_host]
+file = "trojan7_axi_host.v"
+description = "AXI4 interconnect with address decoding"
+# No configurable structural parameters for this host
+
+[hosts.trojan7_interconnect_host]
+file = "trojan7_interconnect_host.v"
+description = "NoC interconnect with packet routing"
+# Structural parameters
+[hosts.trojan7_interconnect_host.params]
+NODE_COUNT = { type = "choice", values = [4, 6, 8], description = "Number of interconnect nodes" }
+PACKET_SIZE = { type = "choice", values = [4, 8, 16], description = "Packet size in words" }
+IC_PATTERN = { type = "random_hex", bits = 224, description = "Pattern for interconnect data generation" }
+
+[hosts.trojan7_wishbone_host]
+file = "trojan7_wishbone_host.v"
+description = "Wishbone bus arbiter with slave selection"
+# Structural parameters
+[hosts.trojan7_wishbone_host.params]
+SLAVE_COUNT = { type = "choice", values = [4, 8, 16], description = "Number of wishbone slaves" }
+TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32], description = "Timeout for transactions" }
+WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }

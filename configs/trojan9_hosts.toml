@@ -10,7 +10,10 @@ host_files = [
     "trojan9_dsp_host",
     "trojan9_vector_host",
     "trojan9_graphics_host",
-    "trojan9_compression_host"
+    "trojan9_compression_host",
+    "trojan9_cordic_host",
+    "trojan9_fft_host",
+    "trojan9_signal_host"
 ]
 
 # Host circuit mapping for Trojan9
@@ -78,3 +81,25 @@ description = "Data compression unit with multiple algorithms"
 BUFFER_SIZE = { type = "choice", values = [16, 32, 64], description = "Compression buffer size" }
 DICT_SIZE = { type = "choice", values = [8, 16, 32], description = "Dictionary size for LZ compression" }
 COMP_PATTERN = { type = "random_hex", bits = 56, description = "Pattern for compression data generation" }
+
+[hosts.trojan9_cordic_host]
+file = "trojan9_cordic_host.v"
+description = "CORDIC processor for trigonometric and hyperbolic functions"
+# Structural parameters
+[hosts.trojan9_cordic_host.params]
+CORDIC_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for CORDIC data generation" }
+ATAN_CONST = { type = "choice", values = [13380, 16644, 20740], description = "ATAN approximation constant" }
+
+[hosts.trojan9_fft_host]
+file = "trojan9_fft_host.v"
+description = "FFT processor with multiple transform modes"
+# Structural parameters
+[hosts.trojan9_fft_host.params]
+FFT_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for FFT data generation" }
+
+[hosts.trojan9_signal_host]
+file = "trojan9_signal_host.v"
+description = "Signal processing unit with filter modes"
+# Structural parameters
+[hosts.trojan9_signal_host.params]
+SIG_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for signal processing data generation" }

@@ -10,7 +10,10 @@ host_files = [
     "trojan8_timer_host",
     "trojan8_dma_host",
     "trojan8_uart_host",
-    "trojan8_spi_host"
+    "trojan8_spi_host",
+    "trojan8_dsp_host",
+    "trojan8_matrix_host",
+    "trojan8_vector_host"
 ]
 
 # Host circuit mapping for Trojan8
@@ -78,3 +81,22 @@ description = "SPI controller with multi-slave support"
 SPI_SLAVES = { type = "choice", values = [2, 4, 8], description = "Number of SPI slave selects" }
 CLK_DIV = { type = "choice", values = [4, 8, 16], description = "SPI clock divisor" }
 SPI_PATTERN = { type = "random_hex", bits = 72, description = "Pattern for SPI data generation" }
+
+[hosts.trojan8_dsp_host]
+file = "trojan8_dsp_host.v"
+description = "DSP processor with signal processing operations"
+# No configurable structural parameters for this host
+
+[hosts.trojan8_matrix_host]
+file = "trojan8_matrix_host.v"
+description = "Matrix processor with linear algebra operations"
+# Structural parameters
+[hosts.trojan8_matrix_host.params]
+MAT_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for matrix data generation" }
+
+[hosts.trojan8_vector_host]
+file = "trojan8_vector_host.v"
+description = "Vector processor with parallel operations"
+# Structural parameters
+[hosts.trojan8_vector_host.params]
+VEC_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for vector data generation" }

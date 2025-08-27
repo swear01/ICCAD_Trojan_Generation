@@ -269,7 +269,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate Trojan circuits with randomized parameters")
     parser.add_argument("--output-dir", default="generated_circuits", 
                        help="Output directory for generated circuits")
-    parser.add_argument("--num-circuits", type=int, default=10,
+    parser.add_argument("--num-circuits", type=int, default=1,
                        help="Number of circuit pairs to generate per trojan")
     parser.add_argument("--trojans", nargs="+", 
                        help="Specific trojans to generate (default: all)")
