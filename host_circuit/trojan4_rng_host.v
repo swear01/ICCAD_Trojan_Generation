@@ -75,11 +75,8 @@ module trojan4_rng_host #(
         end else begin
             if (generate_enable_sync) begin
                 lfsr_state <= lfsr_next(lfsr_state);
-                // Extract random bits from LFSR state
-                if (OUTPUT_WIDTH <= SEED_WIDTH)
-                    output_buffer <= lfsr_state[OUTPUT_WIDTH-1:0];
-                else
-                    output_buffer <= {{(OUTPUT_WIDTH-SEED_WIDTH){1'b0}}, lfsr_state};
+                // Extract random bits from LFSR state - use simple bit selection
+                output_buffer <= lfsr_state[SEED_WIDTH-1:0] ^ {OUTPUT_WIDTH{extraction_counter[0]}};
                 random_valid <= 1'b1;
             end else begin
                 random_valid <= 1'b0;

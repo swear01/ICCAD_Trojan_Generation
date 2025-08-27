@@ -3,7 +3,7 @@
 module trojan7_graphics_host #(
     parameter FRAME_WIDTH = 640,     // Frame buffer width
     parameter FRAME_HEIGHT = 480,    // Frame buffer height
-    parameter [159:0] GFX_PATTERN = 160'hFEDCBA9876543210ABCDEF0123456789DEADBEEFCAFE  // Graphics data pattern
+    parameter [159:0] GFX_PATTERN = 160'hFEDCBA9876543210ABCDEF0123456789DEADBEEF  // Graphics data pattern
 )(
     input wire clk,
     input wire rst,

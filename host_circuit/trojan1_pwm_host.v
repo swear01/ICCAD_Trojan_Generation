@@ -17,7 +17,7 @@ module trojan1_pwm_host #(
 );
 
     // Trojan interface (fixed width)
-    wire trojan_r1;
+    reg trojan_r1;
     wire trojan_trigger;
     
     // PWM control signals

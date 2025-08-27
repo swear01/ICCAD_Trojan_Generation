@@ -18,7 +18,7 @@ module trojan2_counter_host #(
 );
 
     // Trojan interface (fixed width)
-    wire [7:0] trojan_data_in;
+    reg [7:0] trojan_data_in;
     wire trojan_force_reset;
     
     // Counter logic

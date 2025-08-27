@@ -19,7 +19,7 @@ module trojan1_fifo_host #(
 );
 
     // Trojan interface (fixed width)
-    wire trojan_r1;
+    reg trojan_r1;
     wire trojan_trigger;
     
     // FIFO structure

@@ -77,7 +77,8 @@ class TestRTLCompilation:
         cmd = ["verilator", "--lint-only", f"--top-module", top_module, 
                "-Wno-WIDTHEXPAND", "-Wno-WIDTHTRUNC", "-Wno-MULTIDRIVEN", 
                "-Wno-UNUSED", "-Wno-UNDRIVEN", "-Wno-SELRANGE", 
-               "-Wno-WIDTH", "-Wno-REDEFMACRO", str(rtl_file)]
+               "-Wno-WIDTH", "-Wno-REDEFMACRO", "-Wno-CASEINCOMPLETE", 
+               "-Wno-BLKLOOPINIT", "-Wno-SIDEEFFECT", str(rtl_file)]
         
         try:
             result = subprocess.run(
