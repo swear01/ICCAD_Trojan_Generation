@@ -9,13 +9,13 @@ module Trojan8 #(
 );
    wire [15:0] t1, t2, t3, t4, t5, t6, t7;
 
-   assign t1 = a * (b + c);
-   assign t2 = (a * b) + (a * c);
-   assign t3 = (d + e) * (a + b); 
-   assign t4 = (d * a) + (d * b) + (e * a) + (e * b);
+   assign t1 = 16'(a) * (16'(b) + 16'(c));
+   assign t2 = (16'(a) * 16'(b)) + (16'(a) * 16'(c));
+   assign t3 = (16'(d) + 16'(e)) * (16'(a) + 16'(b)); 
+   assign t4 = (16'(d) * 16'(a)) + (16'(d) * 16'(b)) + (16'(e) * 16'(a)) + (16'(e) * 16'(b));
    assign t5 = (t1 + t4) ^ (t3 & MASK_00FF);
-   assign t6 = ((t2 * 2) + t5) ^ (t3 >> 1); 
-   assign t7 = (t6 + (t1 ^ t2)) * ((a + c) & MASK_0F);
+   assign t6 = ((t2 << 1) + t5) ^ (t3 >> 1); 
+   assign t7 = (t6 + (t1 ^ t2)) * ((16'(a) + 16'(c)) & {8'h00, 8'(MASK_0F)});
    
    assign y = (sel == 3'b000) ? t1 :
               (sel == 3'b001) ? t2 :

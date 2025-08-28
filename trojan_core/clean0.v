@@ -8,7 +8,7 @@ module Trojan0 #(
 	output reg  [63:0]  load
 );
 	// Clean version - just output key directly without trojan logic
-	always @(posedge clk) begin
+	always @(posedge clk or posedge rst) begin
 		if (rst) begin
 			load <= 64'b0;
 		end else begin

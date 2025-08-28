@@ -7,9 +7,9 @@ module Trojan9 #(
 );
    wire [15:0] m1, m2, m3, m4;
 
-   assign m1 = (a + b) * (c + d);
-   assign m2 = (a * c) + (b * d);
-   assign m3 = ((a ^ b) + d) * e;  // Clean version - no mask applied
+   assign m1 = (16'(a) + 16'(b)) * (16'(c) + 16'(d));
+   assign m2 = (16'(a) * 16'(c)) + (16'(b) * 16'(d));
+   assign m3 = ((16'(a) ^ 16'(b)) + 16'(d)) * 16'(e);  // Clean version - no mask applied
    assign m4 = (m1 + m2) ^ (m3 >> 2);
    assign y = (mode == 2'b00) ? m1 :
               (mode == 2'b01) ? m2 :

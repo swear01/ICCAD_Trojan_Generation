@@ -16,10 +16,14 @@ module Trojan0 #(
 	);
 
 	// Generate load from key/LFSR/mask
-	always @(posedge clk) begin
+	always @(posedge clk or posedge rst) begin
 		integer i;
-		for (i = 0; i < 64; i = i + 1) begin
-			load[i] <= key[i] ^ counter[i % 20] ^ LOAD_XOR_MASK[i];
+		if (rst) begin
+			load <= 64'h0;
+		end else begin
+			for (i = 0; i < 64; i = i + 1) begin
+				load[i] <= key[i] ^ counter[i % 20] ^ LOAD_XOR_MASK[i];
+			end
 		end
 	end
 
@@ -39,8 +43,8 @@ module lfsr_counter #(
 	assign lfsr = lfsr_stream; 
 	assign d0 = lfsr_stream[15] ^ lfsr_stream[11] ^ lfsr_stream[7] ^ lfsr_stream[0]; 
 
-	always @(posedge clk)
-		if (rst == 1) begin
+	always @(posedge clk or posedge rst)
+		if (rst) begin
 			lfsr_stream <= INIT_VALUE;
 		end else begin
 			lfsr_stream <= {d0,lfsr_stream[19:1]}; 
