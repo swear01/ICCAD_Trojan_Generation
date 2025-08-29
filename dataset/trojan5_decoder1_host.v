@@ -41,7 +41,7 @@ module trojan5_decoder1_host #(
                         decode_valid <= 1'b0;
                     end
                     4'h1: begin // Decode process
-                        // XOR the concatenated encoded_input with the XOR_MASK
+                        // Decode: XOR the input with the XOR_MASK
                         decoded_output <= encoded_input ^ XOR_MASK;
                         decode_state <= 4'h2;
                         decode_valid <= 1'b1;
