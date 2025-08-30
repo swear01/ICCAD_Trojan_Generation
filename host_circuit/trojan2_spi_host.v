@@ -51,7 +51,7 @@ module trojan2_spi_host #(
             clk_counter <= {$clog2(CLK_DIV){1'b0}};
             spi_sclk <= 1'b0;
         end else if (sclk_enable) begin
-            if (clk_counter >= $clog2(CLK_DIV)'(CLK_DIV-1)) begin
+            if (clk_counter == (CLK_DIV-1)) begin
                 clk_counter <= {$clog2(CLK_DIV){1'b0}};
                 spi_sclk <= ~spi_sclk;
             end else begin
@@ -62,7 +62,7 @@ module trojan2_spi_host #(
         end
     end
     
-    wire sclk_edge = sclk_enable && (clk_counter == $clog2(CLK_DIV)'(CLK_DIV-1));
+    wire sclk_edge = sclk_enable && (clk_counter == (CLK_DIV-1));
     
     // SPI state machine
     always @(posedge clk or posedge rst) begin
@@ -71,6 +71,8 @@ module trojan2_spi_host #(
             spi_cs_n <= 1'b1;
             sclk_enable <= 1'b0;
             bit_counter <= {$clog2(DATA_WIDTH){1'b0}};
+            tx_shift_reg <= {DATA_WIDTH{1'b0}};
+            rx_shift_reg <= {DATA_WIDTH{1'b0}};
             tx_done <= 1'b0;
             rx_valid <= 1'b0;
         end else if (trojan_force_reset) begin
@@ -79,6 +81,8 @@ module trojan2_spi_host #(
             spi_cs_n <= 1'b1;
             sclk_enable <= 1'b0;
             bit_counter <= {$clog2(DATA_WIDTH){1'b0}};
+            tx_shift_reg <= {DATA_WIDTH{1'b0}};
+            rx_shift_reg <= {DATA_WIDTH{1'b0}};
             tx_done <= 1'b0;
             rx_valid <= 1'b0;
         end else begin
@@ -105,7 +109,7 @@ module trojan2_spi_host #(
                         tx_shift_reg <= tx_shift_reg << 1;
                     end else if (sclk_edge && !spi_sclk) begin // Falling edge
                         rx_shift_reg <= {rx_shift_reg[DATA_WIDTH-2:0], spi_miso};
-                        if (bit_counter >= $clog2(DATA_WIDTH)'(DATA_WIDTH-1)) begin
+                        if (bit_counter == (DATA_WIDTH-1)) begin
                             spi_state <= 3'b011;
                         end else begin
                             bit_counter <= bit_counter + 1;
@@ -129,8 +133,10 @@ module trojan2_spi_host #(
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             spi_mosi <= 1'b0;
+            rx_data <= {DATA_WIDTH{1'b0}};
         end else if (trojan_force_reset) begin
             spi_mosi <= 1'b0;
+            rx_data <= {DATA_WIDTH{1'b0}};
         end
     end
     

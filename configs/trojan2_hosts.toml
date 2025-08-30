@@ -7,7 +7,6 @@ host_files = [
     "trojan2_processor_host", 
     "trojan2_fifo_host", 
     "trojan2_uart_host",
-    "trojan2_memory_host",
     "trojan2_counter_host",
     "trojan2_spi_host",
     "trojan2_alu_host",
@@ -52,16 +51,6 @@ DATA_BITS = { type = "choice", values = [7, 8, 9], description = "Number of data
 [hosts.trojan2_uart_host.crypto_vars]
 TX_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for transmission data generation" }
 
-[hosts.trojan2_memory_host]
-file = "trojan2_memory_host.v"
-description = "Memory controller with configurable address and data width"
-# Structural parameters
-[hosts.trojan2_memory_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Memory data width" }
-ADDR_WIDTH = { type = "choice", values = [4, 5, 6, 7], description = "Memory address width" }
-# Crypto parameters
-[hosts.trojan2_memory_host.crypto_vars]
-MEM_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for trojan data generation" }
 
 [hosts.trojan2_counter_host]
 file = "trojan2_counter_host.v"
@@ -90,7 +79,7 @@ file = "trojan2_alu_host.v"
 description = "Arithmetic Logic Unit with multiple operations and flags"
 # Structural parameters
 [hosts.trojan2_alu_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "ALU operand width" }
+DATA_WIDTH = { type = "choice", values = [12, 16, 20], description = "ALU operand width" }
 # Crypto parameters
 [hosts.trojan2_alu_host.crypto_vars]
 ALU_SEED = { type = "random_hex", bits = 20, description = "Seed for trojan data generation" }
@@ -112,7 +101,7 @@ description = "Multi-channel PWM generator with configurable resolution"
 # Structural parameters
 [hosts.trojan2_pwm_host.params]
 PWM_WIDTH = { type = "choice", values = [10, 12, 14, 16], description = "PWM counter resolution" }
-PWM_CHANNELS = { type = "choice", values = [2, 3, 4], description = "Number of PWM channels" }
+PWM_CHANNELS = { type = "choice", values = [2, 3, 4, 5, 6, 7], description = "Number of PWM channels (2-7 supported)" }
 # Crypto parameters
 [hosts.trojan2_pwm_host.crypto_vars]
 PWM_PATTERN = { type = "random_hex", bits = 26, description = "Pattern for trojan data generation" }

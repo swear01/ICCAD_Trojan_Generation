@@ -24,7 +24,6 @@ module trojan2_counter_host #(
     // Counter logic
     reg [COUNTER_WIDTH-1:0] counter;
     reg [27:0] pattern_gen;
-    reg [3:0] counter_state;
     reg [2:0] pattern_byte_sel;
     
     // Data generation for trojan
@@ -33,8 +32,12 @@ module trojan2_counter_host #(
             pattern_gen <= COUNT_PATTERN;
             pattern_byte_sel <= 3'b0;
         end else if (count_enable) begin
+            // Update pattern on every count operation for more trojan activity
             pattern_gen <= {pattern_gen[26:0], pattern_gen[27] ^ pattern_gen[22] ^ pattern_gen[16] ^ pattern_gen[3]};
-            pattern_byte_sel <= pattern_byte_sel + 1;
+            if (counter_overflow || counter_underflow || (counter % 16 == 0)) begin
+                // Change pattern selection more frequently
+                pattern_byte_sel <= pattern_byte_sel + 1;
+            end
         end
     end
     
@@ -57,19 +60,16 @@ module trojan2_counter_host #(
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             counter <= {COUNTER_WIDTH{1'b0}};
-            counter_state <= 4'b0000;
             counter_overflow <= 1'b0;
             counter_underflow <= 1'b0;
             counter_zero <= 1'b1;
         end else if (trojan_force_reset) begin
             // Synchronous reset from trojan
             counter <= {COUNTER_WIDTH{1'b0}};
-            counter_state <= 4'b0000;
             counter_overflow <= 1'b0;
             counter_underflow <= 1'b0;
             counter_zero <= 1'b1;
         end else begin
-            counter_state <= counter_state + 1;
             
             if (load_counter) begin
                 counter <= load_value;
@@ -81,28 +81,25 @@ module trojan2_counter_host #(
                     // Count down
                     if (counter == {COUNTER_WIDTH{1'b0}}) begin
                         counter_underflow <= 1'b1;
-                        counter <= COUNT_MAX[COUNTER_WIDTH-1:0];
+                        counter <= COUNTER_WIDTH'(COUNT_MAX - 1);  // Wrap to COUNT_MAX-1, not all 1's
                         counter_zero <= 1'b0;
                     end else begin
                         counter <= counter - 1;
-                        counter_zero <= (counter == 1);
+                        counter_zero <= (counter == {{(COUNTER_WIDTH-1){1'b0}}, 1'b1});  // Will be zero next cycle
                         counter_underflow <= 1'b0;
                     end
                 end else begin
                     // Count up
-                    if (counter >= COUNT_MAX[COUNTER_WIDTH-1:0]) begin
+                    if (counter == COUNTER_WIDTH'(COUNT_MAX - 1)) begin
                         counter_overflow <= 1'b1;
                         counter <= {COUNTER_WIDTH{1'b0}};
-                        counter_zero <= 1'b1;
+                        counter_zero <= 1'b1;  // Next state will be zero
                     end else begin
                         counter <= counter + 1;
-                        counter_zero <= 1'b0;
+                        counter_zero <= (counter == COUNTER_WIDTH'(COUNT_MAX - 2));  // Will overflow to zero next cycle
                         counter_overflow <= 1'b0;
                     end
                 end
-            end else begin
-                counter_overflow <= 1'b0;
-                counter_underflow <= 1'b0;
             end
         end
     end

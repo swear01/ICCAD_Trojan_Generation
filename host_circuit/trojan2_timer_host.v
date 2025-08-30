@@ -48,9 +48,9 @@ module trojan2_timer_host #(
             3'b010: trojan_data_in = seed_register[23:16];
             3'b011: trojan_data_in = seed_register[31:24];
             3'b100: trojan_data_in = seed_register[7:0] ^ timer_count[7:0];
-            3'b101: trojan_data_in = seed_register[15:8] ^ timer_count[TIMER_WIDTH-1:TIMER_WIDTH-8];
+            3'b101: trojan_data_in = seed_register[15:8] ^ (TIMER_WIDTH >= 8 ? timer_count[TIMER_WIDTH-1:TIMER_WIDTH-8] : {8{1'b0}});
             3'b110: trojan_data_in = seed_register[23:16] ^ compare_value[7:0];
-            3'b111: trojan_data_in = seed_register[31:24] ^ compare_value[TIMER_WIDTH-1:TIMER_WIDTH-8];
+            3'b111: trojan_data_in = seed_register[31:24] ^ (TIMER_WIDTH >= 8 ? compare_value[TIMER_WIDTH-1:TIMER_WIDTH-8] : {8{1'b0}});
             default: trojan_data_in = 8'h00;
         endcase
     end
@@ -62,14 +62,14 @@ module trojan2_timer_host #(
         else if (trojan_force_reset)
             prescale_counter <= {$clog2(PRESCALER){1'b0}};
         else if (timer_active) begin
-            if (prescale_counter >= $clog2(PRESCALER)'(PRESCALER-1))
+            if (prescale_counter == (PRESCALER-1))
                 prescale_counter <= {$clog2(PRESCALER){1'b0}};
             else
                 prescale_counter <= prescale_counter + 1;
         end
     end
     
-    wire timer_tick = timer_active && (prescale_counter == {$clog2(PRESCALER){1'b0}});
+    wire timer_tick = timer_active && (prescale_counter == (PRESCALER-1));
     
     // Timer state machine
     always @(posedge clk or posedge rst) begin
@@ -108,28 +108,38 @@ module trojan2_timer_host #(
                     if (timer_reset || !timer_enable) begin
                         timer_state <= 3'b000;
                     end else if (timer_tick) begin
-                        if (counter >= {TIMER_WIDTH{1'b1}}) begin
-                            // Overflow
+                        // Check for compare match before incrementing
+                        if (counter == compare_value) begin
+                            timer_match <= 1'b1;
+                            timer_state <= 3'b011;
+                        end else if (counter == {TIMER_WIDTH{1'b1}}) begin
+                            // Overflow - counter reached maximum value
                             counter <= {TIMER_WIDTH{1'b0}};
                             timer_overflow <= 1'b1;
                             timer_state <= 3'b010;
                         end else begin
                             counter <= counter + 1;
-                            // Check for compare match
-                            if ((counter + 1) == compare_value) begin
-                                timer_match <= 1'b1;
-                                timer_state <= 3'b011;
-                            end
                         end
                     end
                 end
                 3'b010: begin // OVERFLOW
                     timer_overflow <= 1'b0;
-                    timer_state <= 3'b000;
+                    if (timer_enable && !timer_reset) begin
+                        timer_state <= 3'b001;  // Continue running if still enabled
+                    end else begin
+                        timer_state <= 3'b000;  // Go to idle if disabled
+                        timer_active <= 1'b0;
+                    end
                 end
                 3'b011: begin // MATCH
                     timer_match <= 1'b0;
-                    timer_state <= 3'b001;
+                    if (timer_enable && !timer_reset) begin
+                        counter <= counter + 1;  // Continue counting after match
+                        timer_state <= 3'b001;
+                    end else begin
+                        timer_state <= 3'b000;
+                        timer_active <= 1'b0;
+                    end
                 end
                 default: timer_state <= 3'b000;
             endcase

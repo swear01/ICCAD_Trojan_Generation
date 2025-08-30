@@ -1,9 +1,9 @@
 // DSP Host Circuit for Trojan2
 // Fixed I/O to match Trojan2: clk, rst, data_in[7:0] -> force_reset
 module trojan2_dsp_host #(
-    parameter DATA_WIDTH = 16,    // DSP data width
+    parameter DATA_WIDTH = 16,    // DSP data width  
     parameter COEFF_WIDTH = 12,   // Coefficient width
-    parameter TAP_COUNT = 8,      // Number of filter taps
+    parameter TAP_COUNT = 8,      // Number of filter taps (must be <= 16)
     parameter [29:0] DSP_PATTERN = 30'h15FACADE  // Pattern for data generation
 )(
     input wire clk,
@@ -23,13 +23,22 @@ module trojan2_dsp_host #(
     reg [7:0] trojan_data_in;
     wire trojan_force_reset;
     
-    // DSP filter structures
+    // DSP filter structures  
+    localparam TAP_INDEX_WIDTH = $clog2(TAP_COUNT) > 0 ? $clog2(TAP_COUNT) : 1;
+    localparam ACC_WIDTH = DATA_WIDTH + COEFF_WIDTH + $clog2(TAP_COUNT) + 1;
+    
     reg [DATA_WIDTH-1:0] delay_line [0:TAP_COUNT-1];
-    reg [DATA_WIDTH+COEFF_WIDTH:0] accumulator;
+    reg [ACC_WIDTH-1:0] accumulator;
     reg [29:0] pattern_gen;
     reg [2:0] dsp_state;
-    reg [3:0] tap_index;
+    reg [TAP_INDEX_WIDTH-1:0] tap_index;
     reg [2:0] pattern_sel;
+    
+    // Internal coefficient array for parameterized access
+    reg [COEFF_WIDTH-1:0] coeff_array [0:3];
+    
+    // Integer for loop iteration
+    integer i;
     
     // Data generation for trojan
     always @(posedge clk or posedge rst) begin
@@ -53,7 +62,7 @@ module trojan2_dsp_host #(
                 3'b010: trojan_data_in <= pattern_gen[23:16];
                 3'b011: trojan_data_in <= pattern_gen[29:22];
                 3'b100: trojan_data_in <= pattern_gen[7:0] ^ data_in[7:0];
-                3'b101: trojan_data_in <= pattern_gen[15:8] ^ data_in[DATA_WIDTH-1:DATA_WIDTH-8];
+                3'b101: trojan_data_in <= pattern_gen[15:8] ^ (DATA_WIDTH >= 8 ? data_in[DATA_WIDTH-1:DATA_WIDTH-8] : {8{1'b0}});
                 3'b110: trojan_data_in <= pattern_gen[23:16] ^ coeff_0[7:0];
                 3'b111: trojan_data_in <= pattern_gen[29:22] ^ coeff_1[7:0];
                 default: trojan_data_in <= 8'h00;
@@ -65,15 +74,20 @@ module trojan2_dsp_host #(
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             dsp_state <= 3'b000;
-            tap_index <= 4'h0;
-            accumulator <= {(DATA_WIDTH+COEFF_WIDTH+1){1'b0}};
+            tap_index <= {TAP_INDEX_WIDTH{1'b0}};
+            accumulator <= {ACC_WIDTH{1'b0}};
             filter_ready <= 1'b1;
             output_valid <= 1'b0;
+            // Load coefficient array
+            coeff_array[0] <= coeff_0;
+            coeff_array[1] <= coeff_1;
+            coeff_array[2] <= coeff_2;
+            coeff_array[3] <= coeff_3;
         end else if (trojan_force_reset) begin
             // Synchronous reset from trojan
             dsp_state <= 3'b000;
-            tap_index <= 4'h0;
-            accumulator <= {(DATA_WIDTH+COEFF_WIDTH+1){1'b0}};
+            tap_index <= {TAP_INDEX_WIDTH{1'b0}};
+            accumulator <= {ACC_WIDTH{1'b0}};
             filter_ready <= 1'b1;
             output_valid <= 1'b0;
         end else begin
@@ -82,46 +96,53 @@ module trojan2_dsp_host #(
                     filter_ready <= 1'b1;
                     output_valid <= 1'b0;
                     if (data_valid) begin
-                        // Shift delay line
+                        // Proper delay line shift: from back to front to avoid data corruption
+                        for (i = TAP_COUNT - 1; i > 0; i = i - 1) begin
+                            delay_line[i] <= delay_line[i-1];
+                        end
                         delay_line[0] <= data_in;
-                        accumulator <= {(DATA_WIDTH+COEFF_WIDTH+1){1'b0}};
-                        tap_index <= 4'h0;
-                        dsp_state <= 3'b001;
+                        
+                        // Clear accumulator and reset tap index
+                        accumulator <= {ACC_WIDTH{1'b0}};
+                        tap_index <= {TAP_INDEX_WIDTH{1'b0}};
+                        
+                        // Update coefficient array
+                        coeff_array[0] <= coeff_0;
+                        coeff_array[1] <= coeff_1;
+                        coeff_array[2] <= coeff_2;
+                        coeff_array[3] <= coeff_3;
+                        
+                        // Skip SHIFT_DELAY, go directly to MAC
+                        dsp_state <= 3'b010;
                         filter_ready <= 1'b0;
                     end
                 end
-                3'b001: begin // SHIFT_DELAY
-                    // Continue shifting delay line
-                    if (tap_index < 4'(TAP_COUNT-1)) begin
-                        delay_line[tap_index[2:0]+1] <= delay_line[tap_index[2:0]];
-                        tap_index <= tap_index + 1;
-                    end else begin
-                        tap_index <= 4'h0;
-                        dsp_state <= 3'b010;
-                    end
+                3'b001: begin // RESERVED (unused after fix)
+                    // This state is no longer needed - delay line shift is done in IDLE
+                    dsp_state <= 3'b010;
                 end
                 3'b010: begin // MAC_OPERATION
-                    // Multiply-accumulate operations
-                    case (tap_index)
-                        4'h0: accumulator <= accumulator + (delay_line[0] * coeff_0);
-                        4'h1: accumulator <= accumulator + (delay_line[1] * coeff_1);
-                        4'h2: accumulator <= accumulator + (delay_line[2] * coeff_2);
-                        4'h3: accumulator <= accumulator + (delay_line[3] * coeff_3);
-                        4'h4: accumulator <= accumulator + (delay_line[4] * coeff_0);
-                        4'h5: accumulator <= accumulator + (delay_line[5] * coeff_1);
-                        4'h6: accumulator <= accumulator + (delay_line[6] * coeff_2);
-                        4'h7: accumulator <= accumulator + (delay_line[7] * coeff_3);
-                        default: accumulator <= accumulator;
-                    endcase
+                    // Multiply-accumulate operations with parameterized coefficients
+                    if (tap_index < TAP_COUNT) begin
+                        accumulator <= accumulator + (delay_line[tap_index] * coeff_array[tap_index % 4]);
+                    end
                     
-                    if (tap_index >= 4'(TAP_COUNT-1)) begin
-                        dsp_state <= 3'b011;
+                    // Update tap_index and check for completion
+                    if (tap_index >= (TAP_COUNT-1)) begin
+                        tap_index <= {TAP_INDEX_WIDTH{1'b0}};
+                        dsp_state <= 3'b011; // Wait one cycle for final MAC result
                     end else begin
                         tap_index <= tap_index + 1;
                     end
                 end
-                3'b011: begin // OUTPUT
-                    filtered_out <= accumulator[DATA_WIDTH+COEFF_WIDTH-1:COEFF_WIDTH];
+                3'b011: begin // WAIT_FOR_FINAL_MAC
+                    // Wait one cycle for the final MAC result to be written to accumulator
+                    dsp_state <= 3'b100;
+                end
+                3'b100: begin // OUTPUT
+                    // Scale down accumulator: take high bits for proper scaling
+                    // This preserves the most significant bits after MAC operations
+                    filtered_out <= accumulator[ACC_WIDTH-1:ACC_WIDTH-DATA_WIDTH];
                     output_valid <= 1'b1;
                     dsp_state <= 3'b000;
                 end
@@ -130,10 +151,14 @@ module trojan2_dsp_host #(
         end
     end
     
-    // Initialize delay line
-    integer i;
-    always @(posedge rst or posedge trojan_force_reset) begin
-        if (rst || trojan_force_reset) begin
+    // Initialize delay line with proper synchronous reset
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            for (i = 0; i < TAP_COUNT; i = i + 1) begin
+                delay_line[i] <= {DATA_WIDTH{1'b0}};
+            end
+        end else if (trojan_force_reset) begin
+            // Synchronous clear from trojan
             for (i = 0; i < TAP_COUNT; i = i + 1) begin
                 delay_line[i] <= {DATA_WIDTH{1'b0}};
             end
