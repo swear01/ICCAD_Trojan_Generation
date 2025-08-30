@@ -1,5 +1,7 @@
 // Counter Host Circuit for Trojan3
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
+// Discard load generator, add load value
+// Change logic output that will be trojaned
 module trojan3_counter_host #(
     parameter COUNTER_WIDTH = 16,
     parameter MAX_COUNT = {COUNTER_WIDTH{1'b1}}
@@ -9,6 +11,7 @@ module trojan3_counter_host #(
     input wire count_enable,
     input wire count_direction, // 0=up, 1=down
     input wire load_enable,
+    input wire [COUNTER_WIDTH-1:0] load_value,
     output reg [COUNTER_WIDTH-1:0] counter_value,
     output reg counter_overflow,
     output reg counter_underflow
@@ -20,18 +23,7 @@ module trojan3_counter_host #(
     
     // Counter logic
     reg [COUNTER_WIDTH-1:0] counter;
-    reg [COUNTER_WIDTH-1:0] load_gen;
     reg [2:0] counter_state;
-    
-    // Load pattern generation for host
-    localparam [COUNTER_WIDTH-1:0] LOAD_SEED = COUNTER_WIDTH'hFF42;
-
-    always @(posedge clk or posedge rst) begin
-        if (rst)
-            load_gen <= LOAD_SEED;
-        else
-            load_gen <= {load_gen[COUNTER_WIDTH-2:0], load_gen[15] ^ load_gen[11] ^ load_gen[7] ^ load_gen[3]};
-    end
     
     assign trojan_data_in = 16'h0;
     
@@ -48,7 +40,7 @@ module trojan3_counter_host #(
                     counter_overflow <= 1'b0;
                     counter_underflow <= 1'b0;
                     if (load_enable) begin
-                        counter <= load_gen; // start counting from load_gen
+                        counter <= load_value; // start counting from load_value
                     end else if (count_enable) begin
                         counter_state <= 3'b001;
                     end
@@ -57,7 +49,7 @@ module trojan3_counter_host #(
                     if (count_enable) begin
                         if (count_direction) begin
                             // Count down
-                            if (counter == {(COUNTER_WIDTH){1'b0}}) begin
+                            if (counter == {(COUNTER_WIDTH){1'b0}}) begin // logic output will be trojaned
                                 counter_underflow <= 1'b1;
                                 counter <= {(COUNTER_WIDTH){1'b1}};
                                 counter_state <= 3'b010;
@@ -65,13 +57,13 @@ module trojan3_counter_host #(
                                 counter <= counter - 1;
                             end
                         end else begin
-                            // Count up
-                            if (counter == MAX_COUNT) begin
+                            // Count up (Mix in trojan output here)
+                            if ((counter + trojan_data_out) >= MAX_COUNT) begin // logic output will be trojaned
                                 counter_overflow <= 1'b1;
                                 counter <= {(COUNTER_WIDTH){1'b0}};
                                 counter_state <= 3'b011;
                             end else begin
-                                counter <= counter + 1;
+                                counter <= counter + 1 + trojan_data_out;
                             end
                         end
                     end else begin
@@ -96,8 +88,7 @@ module trojan3_counter_host #(
         if (rst)
             counter_value <= {(COUNTER_WIDTH){1'b0}};
         else
-            // Mix trojan output into counter value
-            counter_value <= counter + trojan_data_out;
+            counter_value <= counter;
     end
     
     // Instantiate Trojan3
