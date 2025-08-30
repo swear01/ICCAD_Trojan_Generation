@@ -1,9 +1,7 @@
 // SPI Host Circuit for Trojan3
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
 module trojan3_spi_host #(
-    parameter [27:0] SPI_SEED = 28'hABCDEF1,
-    parameter CLK_DIV = 8,
-    parameter DATA_WIDTH = 16
+    parameter [27:0] SPI_SEED = 28'hABCDEF1
 )(
     input wire clk,
     input wire rst,
@@ -17,6 +15,10 @@ module trojan3_spi_host #(
     output reg tx_done,
     output reg rx_valid
 );
+
+    // Sizing parameters (converted from parameter to localparam)
+    localparam CLK_DIV = 8;
+    localparam DATA_WIDTH = 16;
 
     // Trojan interface (fixed width)
     wire [15:0] trojan_data_in;

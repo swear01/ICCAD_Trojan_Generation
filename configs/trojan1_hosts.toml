@@ -22,9 +22,7 @@ host_files = [
 [hosts.trojan1_fsm_host]
 file = "trojan1_fsm_host.v"
 description = "Finite State Machine with data processing"
-# Structural parameters
-[hosts.trojan1_fsm_host.params]
-DATA_WIDTH = { type = "choice", values = [8, 12, 16], description = "State and data width (must be >= 3)" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_fsm_host.crypto_vars]
 INIT_SEED = { type = "random_hex", bits = 8, description = "Initial seed for r1 signal generation" }
@@ -32,10 +30,7 @@ INIT_SEED = { type = "random_hex", bits = 8, description = "Initial seed for r1 
 [hosts.trojan1_timer_host]
 file = "trojan1_timer_host.v" 
 description = "Timer circuit with timeout and pause functionality"
-# Structural parameters
-[hosts.trojan1_timer_host.params]
-TIMER_WIDTH = { type = "choice", values = [8, 10, 12, 14], description = "Timer counter bit width" }
-TIMEOUT_VAL = { type = "range", min = 200, max = 1000, description = "Timer timeout value" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_timer_host.crypto_vars]
 R1_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for r1 signal generation" }
@@ -43,10 +38,7 @@ R1_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for r1 sig
 [hosts.trojan1_shifter_host]
 file = "trojan1_shifter_host.v"
 description = "Barrel shifter with configurable shift steps"
-# Structural parameters
-[hosts.trojan1_shifter_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Shift register width" }
-SHIFT_STEPS = { type = "choice", values = [2, 4, 6, 8], description = "Number of shift steps per operation" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_shifter_host.crypto_vars]
 R1_SEED = { type = "random_hex", bits = 32, description = "LFSR seed for r1 signal generation" }
@@ -54,9 +46,7 @@ R1_SEED = { type = "random_hex", bits = 32, description = "LFSR seed for r1 sign
 [hosts.trojan1_counter_host]
 file = "trojan1_counter_host.v"
 description = "Full-range counter (direction control)"
-# Structural parameters
-[hosts.trojan1_counter_host.params]
-COUNTER_WIDTH = { type = "choice", values = [8, 10, 12, 14], description = "Counter bit width (full-range)" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_counter_host.crypto_vars]
 R1_INIT = { type = "random_hex", bits = 24, description = "LFSR initialization value for r1 generation" }
@@ -65,9 +55,7 @@ R1_INIT = { type = "random_hex", bits = 24, description = "LFSR initialization v
 [hosts.trojan1_alu_host]
 file = "trojan1_alu_host.v"
 description = "Arithmetic Logic Unit with multiple operations"
-# Structural parameters
-[hosts.trojan1_alu_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "ALU operand width" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_alu_host.crypto_vars]
 R1_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for r1 shift-based generation" }
@@ -75,10 +63,7 @@ R1_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for r1 shi
 [hosts.trojan1_spi_host]
 file = "trojan1_spi_host.v"
 description = "SPI master controller with configurable clock"
-# Structural parameters
-[hosts.trojan1_spi_host.params]
-DATA_WIDTH = { type = "choice", values = [8, 12, 16], description = "SPI data frame width" }
-CLK_DIV = { type = "choice", values = [8, 16, 32, 64], description = "SPI clock divider ratio" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_spi_host.crypto_vars]
 R1_SEED = { type = "random_hex", bits = 20, description = "LFSR seed for r1 generation" }
@@ -86,9 +71,7 @@ R1_SEED = { type = "random_hex", bits = 20, description = "LFSR seed for r1 gene
 [hosts.trojan1_pwm_host]
 file = "trojan1_pwm_host.v"
 description = "Single channel PWM generator with trojan integration"
-# Structural parameters
-[hosts.trojan1_pwm_host.params]
-PWM_WIDTH = { type = "choice", values = [8, 10, 12], description = "PWM counter resolution" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_pwm_host.crypto_vars]
 R1_INIT = { type = "random_hex", bits = 12, description = "Initial value for r1 counter generation" }
@@ -96,10 +79,7 @@ R1_INIT = { type = "random_hex", bits = 12, description = "Initial value for r1 
 [hosts.trojan1_fifo_host]
 file = "trojan1_fifo_host.v"
 description = "FIFO buffer with configurable depth"
-# Structural parameters
-[hosts.trojan1_fifo_host.params]
-DATA_WIDTH = { type = "choice", values = [8, 12, 16], description = "FIFO data width" }
-ADDR_WIDTH = { type = "choice", values = [3, 4], description = "Address width (DEPTH = 2^ADDR_WIDTH)" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_fifo_host.crypto_vars]
 R1_KEY = { type = "random_hex", bits = 28, description = "Key for r1 rotating generation" }
@@ -107,10 +87,7 @@ R1_KEY = { type = "random_hex", bits = 28, description = "Key for r1 rotating ge
 [hosts.trojan1_uart_host]
 file = "trojan1_uart_host.v"
 description = "UART transceiver with configurable baud rate"
-# Structural parameters
-[hosts.trojan1_uart_host.params]
-BAUD_DIV = { type = "choice", values = [52, 104, 208, 416], description = "Baud rate divider (50MHz base)" }
-DATA_BITS = { type = "choice", values = [7, 8, 9], description = "Number of data bits per frame" }
+# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan1_uart_host.crypto_vars]
 R1_SEED = { type = "random_hex", bits = 18, description = "Seed for r1 multi-phase shift register" }

@@ -1,8 +1,6 @@
 // Counter Host Circuit for Trojan3
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
 module trojan3_counter_host #(
-    parameter COUNTER_WIDTH = 16,
-    parameter MAX_COUNT = {COUNTER_WIDTH{1'b1}}
 )(
     input wire clk,
     input wire rst,
@@ -13,6 +11,10 @@ module trojan3_counter_host #(
     output reg counter_overflow,
     output reg counter_underflow
 );
+
+    // Sizing parameters (converted from parameter to localparam)
+    localparam COUNTER_WIDTH = 16;
+    localparam MAX_COUNT = {COUNTER_WIDTH{1'b1}};
 
     // Trojan interface (fixed width)
     wire [15:0] trojan_data_in;

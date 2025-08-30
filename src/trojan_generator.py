@@ -45,7 +45,7 @@ class TrojanGenerator:
         """Read the host circuit file"""
         host_config = self.config_loader.get_host_config(trojan_id, host_name)
         host_file = host_config['file']
-        host_path = f"host_circuit/{host_file}"
+        host_path = f"dataset/{host_file}"
         
         try:
             with open(host_path, 'r') as f:

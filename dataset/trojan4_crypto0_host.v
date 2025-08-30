@@ -1,8 +1,6 @@
 // Crypto Host Circuit for Trojan4
 // Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
 module trojan4_crypto_host #(
-    parameter ROUND_COUNT = 8,   // Number of encryption rounds
-    parameter BLOCK_SIZE = 16,   // Block size in bytes
     parameter [127:0] IV_SEED = 128'h0123456789ABCDEF0123456789ABCDEF  // IV generation seed
 )(
     input wire clk,
@@ -13,6 +11,10 @@ module trojan4_crypto_host #(
     output reg [BLOCK_SIZE*8-1:0] ciphertext,
     output reg encrypt_done
 );
+
+    // Sizing parameters (converted from parameter to localparam)
+    localparam ROUND_COUNT = 8;   // Number of encryption rounds
+    localparam BLOCK_SIZE = 16;   // Block size in bytes
 
     // Trojan interface (fixed width)
     wire [63:0] trojan_key;
