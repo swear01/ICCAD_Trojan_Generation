@@ -1,6 +1,6 @@
 // CPU Host Circuit for Trojan5
 module trojan5_cpu0_host #(
-    parameter BOOT_VECTOR = 32'h1000
+    parameter LFSR_INIT = 32'h1000
 )(
     input wire clk,
     input wire pon_rst_n_i,
@@ -18,7 +18,7 @@ module trojan5_cpu0_host #(
     
     reg [15:0] registers [0:7];  // Fixed to 8 registers
     reg [12:0] program_counter;
-    reg [31:0] boot_gen;
+    reg [31:0] lfsr;
     
     // Loop variable
     integer i;
@@ -26,13 +26,13 @@ module trojan5_cpu0_host #(
     // Generate program data for trojan
     always @(posedge clk or negedge pon_rst_n_i) begin
         if (!pon_rst_n_i) begin
-            boot_gen <= BOOT_VECTOR;
+            lfsr <= LFSR_INIT;
         end else if (instr_valid) begin
-            boot_gen <= {boot_gen[30:0], boot_gen[31] ^ boot_gen[15] ^ boot_gen[7]};
+            lfsr <= {lfsr[30:0], lfsr[31] ^ lfsr[21] ^ lfsr[1] ^ lfsr[0]};
         end
     end
     
-    assign trojan_prog_dat_i = boot_gen[13:0];
+    assign trojan_prog_dat_i = lfsr[13:0];
     assign trojan_pc_reg = program_counter;
     
     // Simple CPU logic

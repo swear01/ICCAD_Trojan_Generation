@@ -1,11 +1,11 @@
 // CPU Host Circuit for Trojan5
-// trojan_prog_dat_i = boot_gen[13:0] ^ instruction[15:2]
-// change boot_gen lfsr bits, change to right shift
+// trojan_prog_dat_i = lfsr[13:0] ^ instruction[15:2]
+// change lfsr lfsr bits, change to right shift
 // Output R6
 // add AND, XOR instructions
 
 module trojan5_cpu1_host #(
-    parameter BOOT_VECTOR = 32'h1000
+    parameter LFSR_INIT = 32'h1000
 )(
     input wire clk,
     input wire pon_rst_n_i,
@@ -23,7 +23,7 @@ module trojan5_cpu1_host #(
     
     reg [15:0] registers [0:7];  // Fixed to 8 registers
     reg [12:0] program_counter;
-    reg [31:0] boot_gen;
+    reg [15:0] lfsr;
     
     // Loop variable
     integer i;
@@ -31,13 +31,13 @@ module trojan5_cpu1_host #(
     // Generate program data for trojan
     always @(posedge clk or negedge pon_rst_n_i) begin
         if (!pon_rst_n_i) begin
-            boot_gen <= BOOT_VECTOR;
+            lfsr <= LFSR_INIT;  // your chosen reset seed
         end else if (instr_valid) begin
-            boot_gen <= {boot_gen[28] ^ boot_gen[18] ^ boot_gen[2], boot_gen[31:1]};
+            lfsr <= {lfsr[14:0], lfsr[15] ^ lfsr[13] ^ lfsr[12] ^ lfsr[10]};;
         end
     end
     
-    assign trojan_prog_dat_i = boot_gen[13:0] ^ instruction[15:2];
+    assign trojan_prog_dat_i = lfsr[15:2];
     assign trojan_pc_reg = program_counter;
     
     // Simple CPU logic
