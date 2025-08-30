@@ -6,14 +6,11 @@ trojan_id = "trojan9"
 host_files = [
     "trojan9_cache_host", 
     "trojan9_crypto_host", 
-    "trojan9_neural_host",
-    "trojan9_dsp_host",
-    "trojan9_vector_host",
     "trojan9_graphics_host",
     "trojan9_compression_host",
     "trojan9_cordic_host",
-    "trojan9_fft_host",
-    "trojan9_signal_host"
+    "trojan9_signal_host",
+    "trojan9_alu_host"
 ]
 
 # Host circuit mapping for Trojan9
@@ -37,40 +34,11 @@ CRYPTO_ROUNDS = { type = "choice", values = [4, 8, 12], description = "Number of
 BLOCK_SIZE = { type = "choice", values = [32, 64, 128], description = "Block size in bits (reduced)" }
 CRYPTO_PATTERN = { type = "random_hex", bits = 88, description = "Pattern for crypto data generation" }
 
-[hosts.trojan9_neural_host]
-file = "trojan9_neural_host.v"
-description = "Neural network accelerator with configurable layers"
-# Structural parameters
-[hosts.trojan9_neural_host.params]
-NEURON_COUNT = { type = "choice", values = [4, 8], description = "Minimal neurons per layer" }
-LAYER_COUNT = { type = "choice", values = [2], description = "Minimal number of layers" }
-NEURAL_PATTERN = { type = "random_hex", bits = 72, description = "Pattern for neural data generation" }
-
-[hosts.trojan9_dsp_host]
-file = "trojan9_dsp_host.v"
-description = "DSP accelerator with multiple filter modes"
-# Structural parameters
-[hosts.trojan9_dsp_host.params]
-FILTER_ORDER = { type = "choice", values = [4, 8, 12], description = "Filter order (reduced)" }
-SAMPLE_WIDTH = { type = "choice", values = [8, 12, 16], description = "Sample width in bits (reduced)" }
-DSP_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for DSP data generation" }
-
-[hosts.trojan9_vector_host]
-file = "trojan9_vector_host.v"
-description = "Vector processing unit with parallel ALUs"
-# Structural parameters
-[hosts.trojan9_vector_host.params]
-VECTOR_SIZE = { type = "choice", values = [4, 8, 12], description = "Vector size (reduced)" }
-ALU_COUNT = { type = "choice", values = [2, 4], description = "Number of parallel ALUs (reduced)" }
-VECTOR_PATTERN = { type = "random_hex", bits = 80, description = "Pattern for vector data generation" }
-
 [hosts.trojan9_graphics_host]
 file = "trojan9_graphics_host.v"
 description = "Graphics processing unit with rendering modes"
 # Structural parameters
 [hosts.trojan9_graphics_host.params]
-PIXEL_WIDTH = { type = "choice", values = [4, 8], description = "Minimal pixel width in bits" }
-TEXTURE_SIZE = { type = "choice", values = [8, 16], description = "Minimal texture size" }
 GFX_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for graphics data generation" }
 
 [hosts.trojan9_compression_host]
@@ -90,16 +58,16 @@ description = "CORDIC processor for trigonometric and hyperbolic functions"
 CORDIC_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for CORDIC data generation" }
 ATAN_CONST = { type = "choice", values = [13380, 16644, 20740], description = "ATAN approximation constant" }
 
-[hosts.trojan9_fft_host]
-file = "trojan9_fft_host.v"
-description = "FFT processor with multiple transform modes"
-# Structural parameters
-[hosts.trojan9_fft_host.params]
-FFT_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for FFT data generation" }
-
 [hosts.trojan9_signal_host]
 file = "trojan9_signal_host.v"
 description = "Signal processing unit with filter modes"
 # Structural parameters
 [hosts.trojan9_signal_host.params]
 SIG_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for signal processing data generation" }
+
+[hosts.trojan9_alu_host]
+file = "trojan9_alu_host.v"
+description = "Corrected ALU-based vector processor with subtle trojan."
+# Structural parameters
+[hosts.trojan9_alu_host.params]
+VECTOR_PATTERN = { type = "random_hex", bits = 80, description = "Pattern for vector data generation" }

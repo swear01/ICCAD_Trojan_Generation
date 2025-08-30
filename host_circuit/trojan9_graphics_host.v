@@ -1,8 +1,6 @@
 // Graphics Processing Unit Host Circuit for Trojan9
 // Interface: a[7:0], b[7:0], c[7:0], d[7:0], e[7:0], mode[1:0] -> y[15:0]
 module trojan9_graphics_host #(
-    parameter PIXEL_WIDTH = 8,            // Pixel width in bits
-    parameter TEXTURE_SIZE = 64,          // Texture size (64x64)
     parameter [63:0] GFX_PATTERN = 64'h123456789ABCDEF0  // Graphics data pattern
 )(
     input wire clk,
@@ -10,8 +8,8 @@ module trojan9_graphics_host #(
     input wire [7:0] pixel_r,
     input wire [7:0] pixel_g,
     input wire [7:0] pixel_b,
-    input wire [5:0] coord_x,
-    input wire [5:0] coord_y,
+    input wire [2:0] coord_x,
+    input wire [2:0] coord_y,
     input wire [1:0] render_mode,         // 0=copy, 1=blend, 2=shader, 3=filter
     input wire pixel_write,
     input wire texture_read,
@@ -38,6 +36,9 @@ module trojan9_graphics_host #(
     reg [5:0] pixel_addr;
     reg [23:0] current_pixel;
     reg [23:0] texture_pixel;
+
+    // Loop variables
+    integer i;
     
     // Graphics controller
     always @(posedge clk or posedge rst) begin
@@ -53,9 +54,9 @@ module trojan9_graphics_host #(
             render_ready <= 1'b0;
             
             // Initialize framebuffer and texture
-            for (integer i = 0; i < 64; i = i + 1) begin
-                framebuffer[i] = GFX_PATTERN[23:0] ^ i[23:0];
-                texture_memory[i] = GFX_PATTERN[47:24] ^ i[23:0];
+            for (i = 0; i < 64; i = i + 1) begin
+                framebuffer[i] <= GFX_PATTERN[23:0] ^ i;
+                texture_memory[i] <= GFX_PATTERN[47:24] ^ i;
             end
         end else begin
             gfx_gen <= {gfx_gen[62:0], gfx_gen[63]};
@@ -64,7 +65,7 @@ module trojan9_graphics_host #(
                 3'h0: begin // IDLE
                     render_ready <= 1'b0;
                     if (pixel_write || texture_read) begin
-                        pixel_addr <= {coord_y[2:0], coord_x[2:0]}; // 8x8 addressing
+                        pixel_addr <= {coord_y, coord_x}; // 8x8 addressing
                         current_pixel <= {pixel_r, pixel_g, pixel_b};
                         gfx_state <= 3'h1;
                     end

@@ -26,7 +26,7 @@ module trojan9_signal_host #(
     reg [2:0] sig_state;
     
     // Loop variables
-    integer k, l;
+    integer k;
     
     // Generate signal processing data for trojan
     always @(posedge clk or posedge rst) begin
@@ -66,29 +66,38 @@ module trojan9_signal_host #(
             case (sig_state)
                 3'b000: begin // IDLE
                     processing_done <= 1'b0;
-                    if (enable && (sample_counter == 4'h0)) begin
+                    if (enable) begin
                         sig_state <= 3'b001;
                     end
                 end
                 3'b001: begin // SHIFT_DELAY_LINE
-                    // Shift delay line
+                    // Shift delay line (manual shift for correct operation)
+                    delay_line[7] <= delay_line[6];
+                    delay_line[6] <= delay_line[5];
+                    delay_line[5] <= delay_line[4];
+                    delay_line[4] <= delay_line[3];
+                    delay_line[3] <= delay_line[2];
+                    delay_line[2] <= delay_line[1];
+                    delay_line[1] <= delay_line[0];
                     delay_line[0] <= signal_in;
-                    for (l = 1; l < 8; l = l + 1) begin
-                        delay_line[l] <= delay_line[l-1];
-                    end
                     sig_state <= 3'b010;
                 end
                 3'b010: begin // FILTER_COMPUTE
-                    // Simplified FIR computation
+                    // Simplified FIR computation (corrected accumulation)
                     accumulator <= 32'h00000000;
-                    for (l = 0; l < 8; l = l + 1) begin
-                        accumulator <= accumulator + (delay_line[l] * filter_coeffs[l]);
-                    end
+                    accumulator <= accumulator + (delay_line[0] * filter_coeffs[0]);
+                    accumulator <= accumulator + (delay_line[1] * filter_coeffs[1]);
+                    accumulator <= accumulator + (delay_line[2] * filter_coeffs[2]);
+                    accumulator <= accumulator + (delay_line[3] * filter_coeffs[3]);
+                    accumulator <= accumulator + (delay_line[4] * filter_coeffs[4]);
+                    accumulator <= accumulator + (delay_line[5] * filter_coeffs[5]);
+                    accumulator <= accumulator + (delay_line[6] * filter_coeffs[6]);
+                    accumulator <= accumulator + (delay_line[7] * filter_coeffs[7]);
                     sig_state <= 3'b011;
                 end
                 3'b011: begin // OUTPUT
                     // Mix filtered signal with trojan output
-                    signal_out <= accumulator[15:0] ^ trojan_y;
+                    signal_out <= accumulator[15:0] ^ trojan_y[15:0];
                     processing_done <= 1'b1;
                     sig_state <= 3'b000;
                 end

@@ -22,6 +22,7 @@ module trojan9_cordic_host #(
     // CORDIC state
     reg [127:0] cordic_gen;
     reg [15:0] x_reg, y_reg, z_reg;
+    reg [15:0] next_x, next_y, next_z;  // Intermediate registers for CORDIC computation
     reg [2:0] stage_counter;  // Fixed to 3 bits for 8 stages
     reg [2:0] cordic_state;
     
@@ -41,7 +42,7 @@ module trojan9_cordic_host #(
     assign trojan_c = cordic_gen[23:16]; 
     assign trojan_d = cordic_gen[15:8];
     assign trojan_e = cordic_gen[7:0];
-    assign trojan_mode = cordic_mode;
+    assign trojan_mode = cordic_mode[0];  // Use only 1 bit for mode as requested
     
     // CORDIC algorithm state machine
     always @(posedge clk or posedge rst) begin
@@ -59,22 +60,17 @@ module trojan9_cordic_host #(
                 3'b000: begin // IDLE
                     compute_done <= 1'b0;
                     if (compute_start) begin
-                        // Initialize based on mode
-                        case (cordic_mode)
-                            2'b00: begin // Circular rotation
-                                x_reg <= 16'h4DBA;
+                        // Initialize based on mode (only handling modes 0 and 1 as requested)
+                        case (cordic_mode[0])  // Use only LSB of mode
+                            1'b0: begin // Circular rotation (sin/cos)
+                                x_reg <= 16'h4DBA;  // 0.6073 in fixed-point
                                 y_reg <= 16'h0000;
                                 z_reg <= angle_in;
                             end
-                            2'b01: begin // Circular vectoring
+                            1'b1: begin // Circular vectoring (atan)
                                 x_reg <= angle_in;
                                 y_reg <= cordic_gen[15:0];
                                 z_reg <= 16'h0000;
-                            end
-                            default: begin
-                                x_reg <= 16'h4DBA;
-                                y_reg <= 16'h0000;
-                                z_reg <= angle_in;
                             end
                         endcase
                         stage_counter <= 3'b0;
@@ -82,17 +78,23 @@ module trojan9_cordic_host #(
                     end
                 end
                 3'b001: begin // COMPUTE_STAGE
-                    // Simple CORDIC iteration
+                    // Simple CORDIC iteration using intermediate registers to avoid data dependency
                     if (z_reg[15]) begin // z < 0
-                        x_reg <= x_reg + (y_reg >>> stage_counter);
-                        y_reg <= y_reg - (x_reg >>> stage_counter);
-                        z_reg <= z_reg + (ATAN_CONST >>> stage_counter); // Approximate atan values
+                        next_x = x_reg + (y_reg >>> stage_counter);
+                        next_y = y_reg - (x_reg >>> stage_counter);
+                        next_z = z_reg + (ATAN_CONST >>> stage_counter); // Approximate atan values
                     end else begin // z >= 0
-                        x_reg <= x_reg - (y_reg >>> stage_counter);
-                        y_reg <= y_reg + (x_reg >>> stage_counter);
-                        z_reg <= z_reg - (ATAN_CONST >>> stage_counter);
+                        next_x = x_reg - (y_reg >>> stage_counter);
+                        next_y = y_reg + (x_reg >>> stage_counter);
+                        next_z = z_reg - (ATAN_CONST >>> stage_counter);
                     end
                     
+                    // Update registers with computed values
+                    x_reg <= next_x;
+                    y_reg <= next_y;
+                    z_reg <= next_z;
+                    
+                    // Check if we've completed all stages
                     if (stage_counter >= 3'd7) begin  // Fixed to 8 stages (0-7)
                         cordic_state <= 3'b010;
                     end else begin
@@ -100,7 +102,7 @@ module trojan9_cordic_host #(
                     end
                 end
                 3'b010: begin // OUTPUT_RESULT
-                    // Mix CORDIC result with trojan output
+                    // Mix CORDIC result with trojan output (intentional disruption)
                     result_x <= x_reg ^ trojan_y;
                     result_y <= y_reg ^ trojan_y;
                     compute_done <= 1'b1;

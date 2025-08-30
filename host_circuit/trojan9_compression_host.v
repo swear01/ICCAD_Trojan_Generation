@@ -31,26 +31,34 @@ module trojan9_compression_host #(
     reg [7:0] dictionary [0:15];          // Fixed to 16 bytes dictionary
     reg [55:0] comp_gen;
     reg [2:0] comp_state;
-    reg [5:0] input_ptr;
+    reg [5:0] input_length;               // Length of input data
+    reg [5:0] read_ptr;                   // Pointer for reading input data
     reg [4:0] output_ptr;
     reg [3:0] dict_ptr;
     reg [7:0] current_byte;
+    reg [7:0] previous_byte;              // Store previous byte for RLE
     reg [3:0] run_length;
     reg [3:0] match_length;
     reg [3:0] match_offset;
+    reg rle_active;                       // Flag to indicate RLE processing
+    reg lz77_match_found;                 // Flag for LZ77 match
     
     // Compression controller
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             comp_gen <= COMP_PATTERN;
             comp_state <= 3'h0;
-            input_ptr <= 6'h0;
+            input_length <= 6'h0;
+            read_ptr <= 6'h0;
             output_ptr <= 5'h0;
             dict_ptr <= 4'h0;
             current_byte <= 8'h0;
+            previous_byte <= 8'h0;
             run_length <= 4'h0;
             match_length <= 4'h0;
             match_offset <= 4'h0;
+            rle_active <= 1'b0;
+            lz77_match_found <= 1'b0;
             data_out <= 8'h0;
             comp_length <= 5'h0;
             compress_done <= 1'b0;
@@ -70,59 +78,95 @@ module trojan9_compression_host #(
                 3'h0: begin // IDLE
                     compress_done <= 1'b0;
                     if (data_valid) begin
-                        input_buffer[input_ptr[4:0]] <= data_in ^ trojan_y[7:0];
-                        input_ptr <= input_ptr + 1;
+                        input_buffer[input_length[4:0]] <= data_in ^ trojan_y[7:0];
+                        input_length <= input_length + 1;
                     end else if (compress_start) begin
-                        input_ptr <= 6'h0;
+                        read_ptr <= 6'h0;
                         output_ptr <= 5'h0;
+                        dict_ptr <= 4'h0;
+                        rle_active <= 1'b0;
+                        run_length <= 4'h1;
+                        lz77_match_found <= 1'b0;
                         comp_state <= 3'h1;
                     end
                 end
                 3'h1: begin // ANALYZE
-                    if (input_ptr < BUFFER_SIZE) begin
-                        current_byte <= input_buffer[input_ptr[4:0]];
+                    if (read_ptr < input_length) begin
+                        previous_byte <= current_byte;
+                        current_byte <= input_buffer[read_ptr[4:0]];
                         comp_state <= 3'h2;
                     end else begin
-                        comp_state <= 3'h4;
+                        // Handle final RLE sequence if active
+                        if (rle_active) begin
+                            if (run_length > 1) begin
+                                // Output run length and byte
+                                output_buffer[output_ptr] <= {4'h0, run_length} ^ trojan_y[7:0];
+                                output_buffer[output_ptr+1] <= previous_byte ^ trojan_y[15:8];
+                                output_ptr <= output_ptr + 2;
+                            end else begin
+                                // Output single byte
+                                output_buffer[output_ptr] <= previous_byte ^ trojan_y[7:0];
+                                output_ptr <= output_ptr + 1;
+                            end
+                            rle_active <= 1'b0;
+                        end
+                        comp_state <= 3'h4;  // OUTPUT
                     end
                 end
                 3'h2: begin // COMPRESS
                     case (comp_mode)
                         2'b00: begin // RLE (Run Length Encoding)
-                            if (input_ptr > 0 && current_byte == input_buffer[input_ptr-1]) begin
+                            if (!rle_active) begin
+                                // Start new sequence
+                                rle_active <= 1'b1;
+                                run_length <= 4'h1;
+                                read_ptr <= read_ptr + 1;
+                                comp_state <= 3'h1;  // Go back to ANALYZE
+                            end else if (current_byte == previous_byte && run_length < 15) begin
+                                // Continue sequence
                                 run_length <= run_length + 1;
+                                read_ptr <= read_ptr + 1;
+                                comp_state <= 3'h1;  // Go back to ANALYZE
                             end else begin
+                                // End of sequence
                                 if (run_length > 1) begin
+                                    // Output run length and byte
                                     output_buffer[output_ptr] <= {4'h0, run_length} ^ trojan_y[7:0];
-                                    output_buffer[output_ptr+1] <= current_byte ^ trojan_y[15:8];
+                                    output_buffer[output_ptr+1] <= previous_byte ^ trojan_y[15:8];
                                     output_ptr <= output_ptr + 2;
                                 end else begin
-                                    output_buffer[output_ptr] <= current_byte ^ trojan_y[7:0];
+                                    // Output single byte
+                                    output_buffer[output_ptr] <= previous_byte ^ trojan_y[7:0];
                                     output_ptr <= output_ptr + 1;
                                 end
+                                rle_active <= 1'b0;
                                 run_length <= 4'h1;
+                                comp_state <= 3'h1;  // Go back to ANALYZE
                             end
                         end
                         2'b01: begin // LZ77 (simplified)
-                            // Search in dictionary
-                            match_length <= 4'h0;
-                            match_offset <= 4'h0;
+                            // Search in dictionary for match
+                            lz77_match_found <= 1'b0;
                             for (integer k = 0; k < 16; k = k + 1) begin
                                 if (dictionary[k] == current_byte) begin
                                     match_offset <= k[3:0];
-                                    match_length <= 4'h1;
+                                    lz77_match_found <= 1'b1;
                                 end
                             end
-                            if (match_length > 0) begin
+                            
+                            if (lz77_match_found) begin
                                 output_buffer[output_ptr] <= {4'h0, match_offset} ^ trojan_y[7:0];
-                                output_buffer[output_ptr+1] <= {4'h0, match_length} ^ trojan_y[15:8];
+                                output_buffer[output_ptr+1] <= 8'h01 ^ trojan_y[15:8];  // Fixed length of 1
                                 output_ptr <= output_ptr + 2;
                             end else begin
                                 output_buffer[output_ptr] <= current_byte ^ trojan_y[7:0];
+                                // Update dictionary with FIFO approach
                                 dictionary[dict_ptr] <= current_byte;
-                                dict_ptr <= dict_ptr + 1;
+                                dict_ptr <= (dict_ptr + 1) % 16;
                                 output_ptr <= output_ptr + 1;
                             end
+                            read_ptr <= read_ptr + 1;
+                            comp_state <= 3'h1;  // Go back to ANALYZE
                         end
                         2'b10: begin // Huffman (simplified)
                             // Simple frequency-based encoding
@@ -132,20 +176,24 @@ module trojan9_compression_host #(
                                 output_buffer[output_ptr] <= current_byte ^ trojan_y[7:0]; // Full byte
                             end
                             output_ptr <= output_ptr + 1;
+                            read_ptr <= read_ptr + 1;
+                            comp_state <= 3'h1;  // Go back to ANALYZE
                         end
                         2'b11: begin // Custom compression
                             output_buffer[output_ptr] <= current_byte ^ comp_gen[7:0] ^ trojan_y[7:0];
                             output_ptr <= output_ptr + 1;
+                            read_ptr <= read_ptr + 1;
+                            comp_state <= 3'h1;  // Go back to ANALYZE
                         end
                     endcase
-                    input_ptr <= input_ptr + 1;
-                    comp_state <= 3'h3;
-                end
-                3'h3: begin // NEXT
-                    comp_state <= 3'h1;
                 end
                 3'h4: begin // OUTPUT
-                    data_out <= output_buffer[0] ^ trojan_y[7:0];
+                    // Output the first byte of compressed data
+                    if (output_ptr > 0) begin
+                        data_out <= output_buffer[0] ^ trojan_y[7:0];
+                    end else begin
+                        data_out <= 8'h0;
+                    end
                     comp_length <= output_ptr;
                     compress_done <= 1'b1;
                     comp_state <= 3'h0;
@@ -159,7 +207,7 @@ module trojan9_compression_host #(
     assign trojan_a = comp_gen[7:0];
     assign trojan_b = data_in;
     assign trojan_c = current_byte;
-    assign trojan_d = {2'h0, input_ptr};
+    assign trojan_d = {2'h0, read_ptr};
     assign trojan_e = {6'h0, comp_mode};
     assign trojan_mode = comp_state[1:0];
     
