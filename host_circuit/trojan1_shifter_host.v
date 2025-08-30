@@ -30,6 +30,7 @@ module trojan1_shifter_host #(
         if (rst)
             lfsr_r1 <= R1_SEED;
         else if (shift_enable || shifting_active)
+            // Use 32-bit maximal-length LFSR: x^32 + x^22 + x^2 + x^1 + 1
             lfsr_r1 <= {lfsr_r1[30:0], lfsr_r1[31] ^ lfsr_r1[21] ^ lfsr_r1[1] ^ lfsr_r1[0]};
     end
     
@@ -45,7 +46,7 @@ module trojan1_shifter_host #(
                 shifting_active <= 1'b1;
                 step_counter <= {$clog2(SHIFT_STEPS){1'b0}};
             end else if (shifting_active) begin
-                if (step_counter >= $clog2(SHIFT_STEPS)'(SHIFT_STEPS-1)) begin
+                if (step_counter == $clog2(SHIFT_STEPS)'(SHIFT_STEPS-1)) begin
                     shifting_active <= 1'b0;
                     step_counter <= {$clog2(SHIFT_STEPS){1'b0}};
                 end else begin
@@ -65,13 +66,16 @@ module trojan1_shifter_host #(
             shift_complete <= 1'b0;
         end else if (shifting_active) begin
             if (shift_dir) begin
-                // Right shift
-                shift_reg <= {shift_reg[0], shift_reg[DATA_WIDTH-1:1]};
+                // Logical right shift
+                shift_reg <= {1'b0, shift_reg[DATA_WIDTH-1:1]};
             end else begin
-                // Left shift
-                shift_reg <= {shift_reg[DATA_WIDTH-2:0], shift_reg[DATA_WIDTH-1]};
+                // Logical left shift
+                shift_reg <= {shift_reg[DATA_WIDTH-2:0], 1'b0};
             end
-            shift_complete <= (step_counter >= $clog2(SHIFT_STEPS)'(SHIFT_STEPS-1));
+            // Sticky shift_complete flag
+            if (step_counter == $clog2(SHIFT_STEPS)'(SHIFT_STEPS-1)) begin
+                shift_complete <= 1'b1;
+            end
         end
     end
     
@@ -80,8 +84,12 @@ module trojan1_shifter_host #(
         if (rst)
             data_out <= {DATA_WIDTH{1'b0}};
         else
-            // Mix shifted data with trojan trigger pattern
-            data_out <= shift_reg ^ (trojan_trigger ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}});
+            // Subtle trojan influence - only affect some bits
+            if (trojan_trigger) begin
+                data_out <= shift_reg ^ {{(DATA_WIDTH-4){1'b0}}, 4'hF};
+            end else begin
+                data_out <= shift_reg;
+            end
     end
     
     // Instantiate Trojan1

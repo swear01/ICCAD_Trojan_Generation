@@ -51,9 +51,9 @@ module trojan1_fsm_host #(
     always @(*) begin
         case (current_state)
             IDLE: next_state = enable ? PROC1 : IDLE;
-            PROC1: next_state = PROC2;
-            PROC2: next_state = PROC3;
-            PROC3: next_state = OUTPUT;
+            PROC1: next_state = enable ? PROC2 : IDLE;  // Allow early exit
+            PROC2: next_state = enable ? PROC3 : IDLE;  // Allow early exit
+            PROC3: next_state = enable ? OUTPUT : IDLE; // Allow early exit
             OUTPUT: next_state = IDLE;
             default: next_state = IDLE;
         endcase
@@ -76,16 +76,22 @@ module trojan1_fsm_host #(
                     data_reg <= data_reg + 1;
                 end
                 PROC2: begin
-                    data_reg <= data_reg ^ 8'h55;
+                    // Simple alternating pattern XOR
+                    data_reg <= data_reg ^ ({DATA_WIDTH{1'b1}} >> 1);
                 end
                 PROC3: begin
                     data_reg <= data_reg << 1;
                 end
                 OUTPUT: begin
-                    // Mix output with trojan trigger
-                    data_out <= data_reg ^ (trojan_trigger ? 8'hFF : 8'h00);
-                    state_out <= {5'b0, current_state};
+                    // Mix output with trojan trigger (proper width handling)
+                    data_out <= data_reg ^ {DATA_WIDTH{trojan_trigger}};
+                    // Safe state output assignment (assume DATA_WIDTH >= 3)
+                    state_out <= {{(DATA_WIDTH-3){1'b0}}, current_state};
                     valid <= 1'b1;
+                end
+                default: begin
+                    // Default case for unknown states
+                    valid <= 1'b0;
                 end
             endcase
         end

@@ -9,6 +9,8 @@ module trojan1_timer_host #(
     input wire rst,
     input wire start_timer,
     input wire pause_timer,
+    // New explicit clear for timeout flag (decoupled from start)
+    input wire clear_timeout,
     output reg [TIMER_WIDTH-1:0] timer_count,
     output reg timeout_flag,
     output reg timer_running
@@ -44,11 +46,14 @@ module trojan1_timer_host #(
             timer_active <= 1'b0;
             timer_running <= 1'b0;
         end else begin
-            if (start_timer)
+            // Explicit begin/end for each branch for clarity & to avoid accidental fall-through
+            if (start_timer) begin
                 timer_active <= 1'b1;
-            else if (pause_timer || timeout_flag)
+            end else if (pause_timer || timeout_flag) begin
                 timer_active <= 1'b0;
-                
+            end
+
+            // Synchronous mirror of timer_active (could also be a wire assign)
             timer_running <= timer_active;
         end
     end
@@ -58,8 +63,11 @@ module trojan1_timer_host #(
         if (rst) begin
             counter <= {TIMER_WIDTH{1'b0}};
             timeout_flag <= 1'b0;
+        // start_timer only restarts the counter; does NOT clear the timeout flag now
         end else if (start_timer) begin
             counter <= {TIMER_WIDTH{1'b0}};
+        // Dedicated clear for timeout flag to extend observability window
+        end else if (clear_timeout) begin
             timeout_flag <= 1'b0;
         end else if (timer_active) begin
             if (counter >= TIMEOUT_VAL-1) begin

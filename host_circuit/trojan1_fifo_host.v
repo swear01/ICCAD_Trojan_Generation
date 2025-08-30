@@ -2,8 +2,7 @@
 // Fixed I/O to match Trojan1: clk, rst, r1 -> trigger
 module trojan1_fifo_host #(
     parameter DATA_WIDTH = 12,    // FIFO data width
-    parameter DEPTH = 16,         // FIFO depth (power of 2)
-    parameter ADDR_WIDTH = 4,     // log2(DEPTH)
+    parameter ADDR_WIDTH = 4,     // Address width (DEPTH = 2^ADDR_WIDTH)
     parameter [27:0] R1_KEY = 28'hBEEF123  // Key for r1 generation
 )(
     input wire clk,
@@ -23,9 +22,10 @@ module trojan1_fifo_host #(
     wire trojan_trigger;
     
     // FIFO structure
+    localparam DEPTH = 1 << ADDR_WIDTH;  // Enforce DEPTH = 2^ADDR_WIDTH
     reg [DATA_WIDTH-1:0] fifo_mem [0:DEPTH-1];
-    reg [ADDR_WIDTH:0] write_ptr;  // Extra bit for full/empty detection
-    reg [ADDR_WIDTH:0] read_ptr;   // Extra bit for full/empty detection
+    reg [ADDR_WIDTH-1:0] write_ptr;
+    reg [ADDR_WIDTH-1:0] read_ptr;
     reg [ADDR_WIDTH:0] fifo_count;
     reg [27:0] r1_generator;
     reg [2:0] r1_select;
@@ -36,7 +36,8 @@ module trojan1_fifo_host #(
             r1_generator <= R1_KEY;
             r1_select <= 3'b0;
         end else if (write_enable || read_enable) begin
-            r1_generator <= {r1_generator[26:0], r1_generator[27] ^ r1_generator[25] ^ r1_generator[2]};
+            // Use 28-bit maximal-length LFSR: x^28 + x^25 + x^3 + x^2 + 1
+            r1_generator <= {r1_generator[26:0], r1_generator[27] ^ r1_generator[24] ^ r1_generator[2] ^ r1_generator[1]};
             r1_select <= r1_select + 1;
         end
     end
@@ -58,7 +59,7 @@ module trojan1_fifo_host #(
     
     // FIFO status flags
     always @(*) begin
-        fifo_full = (fifo_count == DEPTH);
+        fifo_full = (fifo_count == DEPTH[ADDR_WIDTH:0]);
         fifo_empty = (fifo_count == {ADDR_WIDTH+1{1'b0}});
     end
     
@@ -67,20 +68,31 @@ module trojan1_fifo_host #(
         if (rst) begin
             fifo_count <= {ADDR_WIDTH+1{1'b0}};
         end else begin
-            case ({write_enable & ~fifo_full, read_enable & ~fifo_empty})
-                2'b10: fifo_count <= fifo_count + 1;  // Write only
-                2'b01: fifo_count <= fifo_count - 1;  // Read only
-                2'b11: fifo_count <= fifo_count;      // Read and write
-                default: fifo_count <= fifo_count;    // No operation
-            endcase
+            // Allow simultaneous read/write even when full (if reading frees space)
+            reg local_read_do;
+            local_read_do = read_enable && !fifo_empty;
+            
+            if (write_do && local_read_do) begin
+                fifo_count <= fifo_count;  // Simultaneous read/write
+            end else if (write_do) begin
+                fifo_count <= fifo_count + 1;  // Write only
+            end else if (local_read_do) begin
+                fifo_count <= fifo_count - 1;  // Read only
+            end
         end
+    end
+    
+    // Write condition calculation
+    reg write_do;
+    always @(*) begin
+        write_do = write_enable && !(fifo_full && !read_enable);
     end
     
     // Write pointer management
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            write_ptr <= {ADDR_WIDTH+1{1'b0}};
-        end else if (write_enable && !fifo_full) begin
+            write_ptr <= {ADDR_WIDTH{1'b0}};
+        end else if (write_do) begin
             write_ptr <= write_ptr + 1;
         end
     end
@@ -88,16 +100,18 @@ module trojan1_fifo_host #(
     // Read pointer management
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            read_ptr <= {ADDR_WIDTH+1{1'b0}};
+            read_ptr <= {ADDR_WIDTH{1'b0}};
         end else if (read_enable && !fifo_empty) begin
             read_ptr <= read_ptr + 1;
         end
     end
     
     // FIFO write operation
-    always @(posedge clk) begin
-        if (write_enable && !fifo_full) begin
-            fifo_mem[write_ptr[ADDR_WIDTH-1:0]] <= write_data;
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            // Memory reset not needed for synthesis
+        end else if (write_do) begin
+            fifo_mem[write_ptr] <= write_data;
         end
     end
     
@@ -106,8 +120,12 @@ module trojan1_fifo_host #(
         if (rst) begin
             read_data <= {DATA_WIDTH{1'b0}};
         end else if (read_enable && !fifo_empty) begin
-            // Mix read data with trojan trigger
-            read_data <= fifo_mem[read_ptr[ADDR_WIDTH-1:0]] ^ (trojan_trigger ? {{(DATA_WIDTH-8){1'b0}}, 8'h5A} : {DATA_WIDTH{1'b0}});
+            // Mix read data with trojan trigger (safe width handling)
+            if (DATA_WIDTH >= 8) begin
+                read_data <= fifo_mem[read_ptr] ^ (trojan_trigger ? {{(DATA_WIDTH-8){1'b0}}, 8'h5A} : {DATA_WIDTH{1'b0}});
+            end else begin
+                read_data <= fifo_mem[read_ptr] ^ (trojan_trigger ? {DATA_WIDTH{1'b1}} : {DATA_WIDTH{1'b0}});
+            end
         end
     end
     
@@ -117,20 +135,17 @@ module trojan1_fifo_host #(
             fifo_overflow <= 1'b0;
             fifo_underflow <= 1'b0;
         end else begin
-            fifo_overflow <= write_enable && fifo_full;
-            fifo_underflow <= read_enable && fifo_empty;
-        end
-    end
-    
-    // Initialize FIFO memory
-    integer i;
-    always @(posedge rst) begin
-        if (rst) begin
-            for (i = 0; i < DEPTH; i = i + 1) begin
-                fifo_mem[i] <= {DATA_WIDTH{1'b0}};
+            // Sticky error flags - latch until reset
+            if (write_enable && fifo_full && !read_enable) begin
+                fifo_overflow <= 1'b1;
+            end
+            if (read_enable && fifo_empty) begin
+                fifo_underflow <= 1'b1;
             end
         end
     end
+    
+    // Memory does not need explicit reset for synthesis
     
     // Instantiate Trojan1
     Trojan1 trojan_inst (
