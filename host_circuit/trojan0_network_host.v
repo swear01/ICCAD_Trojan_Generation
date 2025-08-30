@@ -22,7 +22,7 @@ module trojan0_network_host #(
     // Network state
     reg [PACKET_SIZE*8-1:0] packet_buffer_0, packet_buffer_1, packet_buffer_2, packet_buffer_3;
     reg [127:0] key_generator;
-    reg [3:0] buffer_head, buffer_tail;
+    reg [1:0] buffer_head, buffer_tail;
     reg [3:0] packet_count;
     reg [2:0] network_state;
     reg buffer_full, buffer_empty;
@@ -39,15 +39,15 @@ module trojan0_network_host #(
     
     // Buffer management
     always @(*) begin
-        buffer_full = (packet_count == 4'(BUFFER_DEPTH));
+        buffer_full = (packet_count == BUFFER_DEPTH[3:0]);
         buffer_empty = (packet_count == 4'h0);
     end
     
     // Network processing state machine
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            buffer_head <= 4'h0;
-            buffer_tail <= 4'h0;
+            buffer_head <= 2'b00;
+            buffer_tail <= 2'b00;
             packet_count <= 4'h0;
             network_state <= 3'b000;
             packet_ready <= 1'b0;
@@ -60,11 +60,11 @@ module trojan0_network_host #(
                     if (packet_valid && !buffer_full) begin
                         network_state <= 3'b001;
                     end else if (packet_valid && buffer_full) begin
-                        route_error <= 1'b1;
+                        route_error <= 1'b1; // Buffer overflow error
                     end
                 end
                 3'b001: begin // RECEIVE_PACKET
-                    case (buffer_tail[1:0])
+                    case (buffer_tail)
                         2'b00: packet_buffer_0 <= packet_in;
                         2'b01: packet_buffer_1 <= packet_in;
                         2'b10: packet_buffer_2 <= packet_in;
@@ -82,11 +82,11 @@ module trojan0_network_host #(
                     end
                 end
                 3'b011: begin // SEND_PACKET
-                    case (buffer_head[1:0])
-                        2'b00: packet_out <= packet_buffer_0 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
-                        2'b01: packet_out <= packet_buffer_1 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
-                        2'b10: packet_out <= packet_buffer_2 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
-                        2'b11: packet_out <= packet_buffer_3 ^ {{PACKET_SIZE*8-64{1'b0}}, trojan_load};
+                    case (buffer_head)
+                        2'b00: packet_out <= packet_buffer_0 ^ (PACKET_SIZE*8)'(trojan_load);
+                        2'b01: packet_out <= packet_buffer_1 ^ (PACKET_SIZE*8)'(trojan_load);
+                        2'b10: packet_out <= packet_buffer_2 ^ (PACKET_SIZE*8)'(trojan_load);
+                        2'b11: packet_out <= packet_buffer_3 ^ (PACKET_SIZE*8)'(trojan_load);
                     endcase
                     buffer_head <= buffer_head + 1;
                     packet_count <= packet_count - 1;
@@ -98,15 +98,6 @@ module trojan0_network_host #(
         end
     end
     
-    // Initialize packet buffers
-    always @(posedge rst) begin
-        if (rst) begin
-            packet_buffer_0 <= {PACKET_SIZE*8{1'b0}};
-            packet_buffer_1 <= {PACKET_SIZE*8{1'b0}};
-            packet_buffer_2 <= {PACKET_SIZE*8{1'b0}};
-            packet_buffer_3 <= {PACKET_SIZE*8{1'b0}};
-        end
-    end
     
     // Instantiate Trojan0
     Trojan0 trojan_inst (
