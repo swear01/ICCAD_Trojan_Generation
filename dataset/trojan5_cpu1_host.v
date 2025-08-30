@@ -1,11 +1,9 @@
 // CPU Host Circuit for Trojan5
-// trojan_prog_dat_i = lfsr[13:0] ^ instruction[15:2]
-// change lfsr lfsr bits, change to right shift
-// Output R6
+// 16 bit lfsr
 // add AND, XOR instructions
-
 module trojan5_cpu1_host #(
-    parameter LFSR_INIT = 32'h1000
+    parameter [15:0] LFSR_INIT = 16'h1000,
+    parameter [3:0] OUT_REG = 4'h6
 )(
     input wire clk,
     input wire pon_rst_n_i,
@@ -28,7 +26,7 @@ module trojan5_cpu1_host #(
     // Loop variable
     integer i;
     
-    // Generate program data for trojan
+    // lfsr generation
     always @(posedge clk or negedge pon_rst_n_i) begin
         if (!pon_rst_n_i) begin
             lfsr <= LFSR_INIT;  // your chosen reset seed
@@ -97,7 +95,7 @@ module trojan5_cpu1_host #(
         end else begin
             // Use trojan address output for PC
             pc_out <= trojan_prog_adr_o;
-            reg_data_out <= registers[6]; // Output R6
+            reg_data_out <= registers[OUT_REG];
         end
     end
     

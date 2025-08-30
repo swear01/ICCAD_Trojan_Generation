@@ -1,6 +1,6 @@
 // Decoder Host Circuit for Trojan5
 module trojan5_decoder0_host #(
-    parameter DECODE_PATTERN = 128'hFEDCBA9876543210FEDCBA9876543210
+    parameter LFSR_INIT = 128'hFEDCBA9876543210FEDCBA9876543210
 )(
     input wire clk,
     input wire pon_rst_n_i,
@@ -16,19 +16,19 @@ module trojan5_decoder0_host #(
     wire [12:0] trojan_pc_reg;
     wire [12:0] trojan_prog_adr_o;
     
-    reg [127:0] pattern_gen;
+    reg [127:0] lfsr;
     reg [12:0] address_counter;
     reg [3:0] decode_state;
     
-    assign trojan_prog_dat_i = pattern_gen[13:0];
+    assign trojan_prog_dat_i = lfsr[13:0];
     assign trojan_pc_reg = address_counter;
     
-    // Generate program data for trojan from decoder input
+    // lfsr generation
     always @(posedge clk or negedge pon_rst_n_i) begin
         if (!pon_rst_n_i) begin
-            pattern_gen <= DECODE_PATTERN;
+            lfsr <= LFSR_INIT;
         end else if (decode_enable) begin
-            pattern_gen <= {pattern_gen[126:0], pattern_gen[127] ^ pattern_gen[95] ^ encoded_input[0]};
+            lfsr <= {lfsr[126:0], lfsr[127] ^ lfsr[6] ^ lfsr[1] ^ lfsr[0]};
         end
     end
 
