@@ -1,2 +1,3 @@
 # TODO
-- fix 0, 1, 2, 6, 7, 8, 9 host config toml files
+- paramaterize host circuits
+- fix lfsr taps (maybe no need?)

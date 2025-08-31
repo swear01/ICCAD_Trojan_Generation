@@ -4,112 +4,55 @@ trojan_id = "trojan6"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan6_router_host", 
-    "trojan6_memory_host", 
-    "trojan6_bus_host",
-    "trojan6_processor_host",
-    "trojan6_cache_host",
-    "trojan6_dma_host",
-    "trojan6_interrupt_host",
-    "trojan6_timer_host",
-    "trojan6_uart_host",
-    "trojan6_spi_host"
+    "trojan6_processor0_host",
+    "trojan6_processor1_host", 
+    "trojan6_bus0_host",
+    "trojan6_bus1_host"
 ]
 
 # Host circuit mapping for Trojan6
 [hosts]
 
-[hosts.trojan6_router_host]
-file = "trojan6_router_host.v"
-description = "Packet router with configurable ports and routing table"
-# Structural parameters
-[hosts.trojan6_router_host.params]
-ADDR_WIDTH = { type = "choice", values = [6, 7, 8, 10], description = "Router address width" }
-PORT_COUNT = { type = "choice", values = [2, 4, 6, 8], description = "Number of router ports" }
+[hosts.trojan6_processor0_host]
+file = "trojan6_processor0_host.v"
+description = "Processor with instruction execution and register file (128-bit LFSR)"
 # Crypto parameters
-[hosts.trojan6_router_host.crypto_vars]
-ROUTE_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for routing data generation" }
+[hosts.trojan6_processor0_host.crypto_vars]
+LFSR_INIT = { type = "random_hex", bits = 128, description = "128-bit LFSR initialization value" }
 
-[hosts.trojan6_memory_host]
-file = "trojan6_memory_host.v" 
-description = "Memory controller with configurable size and cache"
-# Structural parameters
-[hosts.trojan6_memory_host.params]
-MEM_SIZE = { type = "choice", values = [32, 64, 128, 256], description = "Memory size (number of entries)" }
-CACHE_SIZE = { type = "choice", values = [4, 8, 16, 32], description = "Cache size" }
-MEM_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for memory data generation" }
 
-[hosts.trojan6_bus_host]
-file = "trojan6_bus_host.v"
-description = "Bus arbiter with configurable masters and slaves"
-# Structural parameters
-[hosts.trojan6_bus_host.params]
-MASTER_COUNT = { type = "choice", values = [2, 3, 4, 6], description = "Number of bus masters" }
-SLAVE_COUNT = { type = "choice", values = [2, 4, 6, 8], description = "Number of bus slaves" }
-BUS_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for bus data generation" }
+[hosts.trojan6_processor1_host]
+file = "trojan6_processor1_host.v"
+description = "Processor with instruction execution and register file (32-bit LFSR)"
+# Crypto parameters
+[hosts.trojan6_processor1_host.crypto_vars]
+LFSR_INIT = { type = "random_hex", bits = 32, description = "32-bit LFSR initialization value" }
 
-[hosts.trojan6_processor_host]
-file = "trojan6_processor_host.v"
-description = "Processor with instruction execution and register file"
-# Structural parameters
-[hosts.trojan6_processor_host.params]
-REG_COUNT = { type = "choice", values = [8, 16, 32], description = "Number of processor registers" }
-OPCODE_WIDTH = { type = "choice", values = [4, 6, 8], description = "Instruction opcode width" }
-PROC_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for processor data generation" }
 
-[hosts.trojan6_cache_host]
-file = "trojan6_cache_host.v"
-description = "Cache memory with tag checking and miss handling"
-# Structural parameters
-[hosts.trojan6_cache_host.params]
-CACHE_LINES = { type = "choice", values = [16, 32, 64], description = "Number of cache lines" }
-TAG_WIDTH = { type = "choice", values = [20, 24, 28], description = "Tag bit width" }
-INDEX_WIDTH = { type = "choice", values = [4, 5, 6], description = "Index bit width" }
-CACHE_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for cache data generation" }
+[hosts.trojan6_bus0_host]
+file = "trojan6_bus0_host.v"
+description = "Bus arbiter with 4 slave registers and 128-bit LFSR"
+# Crypto parameters
+[hosts.trojan6_bus0_host.crypto_vars]
+REG1_INIT = { type = "random_hex", bits = 128, description = "Slave register 1 initialization value" }
+REG2_INIT = { type = "random_hex", bits = 128, description = "Slave register 2 initialization value" }
+REG3_INIT = { type = "random_hex", bits = 128, description = "Slave register 3 initialization value" }
+REG4_INIT = { type = "random_hex", bits = 128, description = "Slave register 4 initialization value" }
+LFSR_INIT = { type = "random_hex", bits = 128, description = "128-bit LFSR initialization value" }
 
-[hosts.trojan6_dma_host]
-file = "trojan6_dma_host.v"
-description = "DMA controller with multi-channel support"
-# Structural parameters
-[hosts.trojan6_dma_host.params]
-CHANNEL_COUNT = { type = "choice", values = [2, 4, 6, 8], description = "Number of DMA channels" }
-BURST_SIZE = { type = "choice", values = [4, 8, 16, 32], description = "DMA burst size" }
-DMA_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for DMA data generation" }
 
-[hosts.trojan6_interrupt_host]
-file = "trojan6_interrupt_host.v"
-description = "Interrupt controller with priority handling"
-# Structural parameters
-[hosts.trojan6_interrupt_host.params]
-IRQ_COUNT = { type = "choice", values = [8, 16, 32], description = "Number of interrupt lines" }
-PRIORITY_LEVELS = { type = "choice", values = [2, 4, 8], description = "Number of priority levels" }
-BASE_VECTOR = { type = "choice", values = ["32'h1000", "32'h2000", "32'h4000"], description = "Base interrupt vector address" }
-INT_PATTERN = { type = "random_hex", bits = 224, description = "Pattern for interrupt data generation" }
-
-[hosts.trojan6_timer_host]
-file = "trojan6_timer_host.v"
-description = "Timer with prescaler and compare match"
-# Structural parameters
-[hosts.trojan6_timer_host.params]
-TIMER_COUNT = { type = "choice", values = [2, 4, 8], description = "Number of timers" }
-PRESCALER_MAX = { type = "choice", values = [128, 256, 512], description = "Maximum prescaler value" }
-TIMER_PATTERN = { type = "random_hex", bits = 256, description = "Pattern for timer data generation" }
-
-[hosts.trojan6_uart_host]
-file = "trojan6_uart_host.v"
-description = "UART with FIFO buffers and baud rate generation"
-# Structural parameters
-[hosts.trojan6_uart_host.params]
-BAUD_DIV = { type = "choice", values = [2604, 5208, 10417, 434], description = "Baud rate divider (50MHz/baud_rate)" }
-FIFO_DEPTH = { type = "choice", values = [8, 16, 32], description = "FIFO depth" }
-UART_PATTERN = { type = "random_hex", bits = 288, description = "Pattern for UART data generation" }
-
-[hosts.trojan6_spi_host]
-file = "trojan6_spi_host.v"
-description = "SPI master with multi-slave support"
-# Structural parameters
-[hosts.trojan6_spi_host.params]
-SLAVES = { type = "choice", values = [2, 4, 8, 16], description = "Number of SPI slaves" }
-CLK_DIV = { type = "choice", values = [8, 16, 32, 64], description = "SPI clock divider" }
-FIFO_SIZE = { type = "choice", values = [16, 32, 64], description = "SPI buffer size" }
-SPI_PATTERN = { type = "random_hex", bits = 320, description = "Pattern for SPI data generation" }
+[hosts.trojan6_bus1_host]
+file = "trojan6_bus1_host.v"
+description = "Bus arbiter with 8 slave registers and 32-bit LFSR"
+# Crypto parameters
+[hosts.trojan6_bus1_host.crypto_vars]
+REG1_INIT = { type = "random_hex", bits = 128, description = "Slave register 1 initialization value" }
+REG2_INIT = { type = "random_hex", bits = 128, description = "Slave register 2 initialization value" }
+REG3_INIT = { type = "random_hex", bits = 128, description = "Slave register 3 initialization value" }
+REG4_INIT = { type = "random_hex", bits = 128, description = "Slave register 4 initialization value" }
+REG5_INIT = { type = "random_hex", bits = 128, description = "Slave register 5 initialization value" }
+REG6_INIT = { type = "random_hex", bits = 128, description = "Slave register 6 initialization value" }
+REG7_INIT = { type = "random_hex", bits = 128, description = "Slave register 7 initialization value" }
+REG8_INIT = { type = "random_hex", bits = 128, description = "Slave register 8 initialization value" }
+LFSR_INIT = { type = "random_hex", bits = 32, description = "32-bit LFSR initialization value" }
+XOR_MASK = { type = "random_hex", bits = 32, description = "32-bit XOR mask for data encryption" }

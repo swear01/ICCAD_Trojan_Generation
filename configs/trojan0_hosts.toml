@@ -22,90 +22,78 @@ host_files = [
 [hosts.trojan0_datapath_host]
 file = "trojan0_datapath_host.v"
 description = "Simple datapath with ALU operations"
-# Structural parameters (adjustable circuit complexity)
-# All sizing parameters moved to localparam - no tunable params for this host
-
-# Crypto parameters for host circuit
+# Crypto parameters
 [hosts.trojan0_datapath_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Initial key generation value" }
+
 
 [hosts.trojan0_pwm_host]
 file = "trojan0_pwm_host.v"
 description = "PWM generator with configurable duty cycle and frequency"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_pwm_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "PWM key generator seed" }
 
+
 [hosts.trojan0_counter_host]
 file = "trojan0_counter_host.v"
 description = "Counter circuit with overflow and pulse generation" 
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
-
+# Crypto parameters
 [hosts.trojan0_counter_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Counter key generator seed" }
+
 
 [hosts.trojan0_crypto_host]
 file = "trojan0_crypto_host.v"
 description = "Cryptographic processor with encryption rounds"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_crypto_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Crypto key generator seed" }
 
+
 [hosts.trojan0_network_host]
 file = "trojan0_network_host.v"
 description = "Network packet processor with routing"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_network_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Network key generator seed" }
 
+
 [hosts.trojan0_spi_host]
 file = "trojan0_spi_host.v"
 description = "SPI Controller with configurable data width"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_spi_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "SPI key generator seed" }
 
+
 [hosts.trojan0_cache_host]
 file = "trojan0_cache_host.v"
 description = "Cache memory with tag-based lookup"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_cache_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Cache key generator seed" }
 
+
 [hosts.trojan0_uart_host]
 file = "trojan0_uart_host.v"
 description = "UART transceiver with configurable baud rate"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_uart_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "UART key generator seed" }
 
+
 [hosts.trojan0_timer_host]
 file = "trojan0_timer_host.v"
 description = "Programmable timer with prescaler"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_timer_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Timer key generator seed" }
 
+
 [hosts.trojan0_fifo_host]
 file = "trojan0_fifo_host.v"
 description = "FIFO buffer with configurable depth"
-# Structural parameters
-# All sizing parameters moved to localparam - no tunable params for this host
 # Crypto parameters
 [hosts.trojan0_fifo_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "FIFO key generator seed" }
