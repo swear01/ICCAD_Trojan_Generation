@@ -4,7 +4,6 @@ trojan_id = "trojan9"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan9_crypto_host",
     "trojan9_compression_host",
     "trojan9_cordic_host",
     "trojan9_signal_host",
@@ -13,14 +12,6 @@ host_files = [
 
 # Host circuit mapping for Trojan9
 [hosts]
-
-[hosts.trojan9_crypto_host]
-file = "trojan9_crypto_host.v"
-description = "Cryptographic controller with multiple cipher modes"
-# Crypto parameters
-[hosts.trojan9_crypto_host.crypto_vars]
-CRYPTO_PATTERN = { type = "random_hex", bits = 88, description = "Crypto data pattern" }
-
 
 [hosts.trojan9_compression_host]
 file = "trojan9_compression_host.v"

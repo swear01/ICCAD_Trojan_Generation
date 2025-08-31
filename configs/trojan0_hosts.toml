@@ -12,8 +12,7 @@ host_files = [
     "trojan0_spi_host",
     "trojan0_cache_host",
     "trojan0_uart_host",
-    "trojan0_timer_host",
-    "trojan0_fifo_host"
+    "trojan0_timer_host"
 ]
 
 # Host circuit mapping for Trojan0
@@ -89,11 +88,3 @@ description = "Programmable timer with prescaler"
 # Crypto parameters
 [hosts.trojan0_timer_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Timer key generator seed" }
-
-
-[hosts.trojan0_fifo_host]
-file = "trojan0_fifo_host.v"
-description = "FIFO buffer with configurable depth"
-# Crypto parameters
-[hosts.trojan0_fifo_host.crypto_vars]
-KEY_INIT = { type = "random_hex", bits = 128, description = "FIFO key generator seed" }
