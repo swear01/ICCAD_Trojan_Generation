@@ -12,6 +12,10 @@ host_files = [
     "trojan0_cache_host",
     "trojan0_uart_host",
     "trojan0_timer_host"
+    "trojan0_crypto0_host", 
+    "trojan0_crypto1_host",
+    "trojan0_rsa0_host",
+    "trojan0_rsa1_host"
 ]
 
 # Host circuit mapping for Trojan0
@@ -79,3 +83,34 @@ description = "Programmable timer with prescaler"
 # Crypto parameters
 [hosts.trojan0_timer_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Timer key generator seed" }
+
+[hosts.trojan0_crypto0_host]
+file = "trojan0_crypto0_host.v"
+description = "Block cipher encryption with configurable rounds"
+# Crypto parameters
+[hosts.trojan0_crypto0_host.crypto_vars]
+IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
+
+
+[hosts.trojan0_crypto1_host]
+file = "trojan0_crypto1_host.v"
+description = "Block cipher encryption with configurable rounds"
+# Crypto parameters
+[hosts.trojan0_crypto1_host.crypto_vars]
+IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
+
+
+[hosts.trojan0_rsa0_host]
+file = "trojan0_rsa0_host.v"
+description = "RSA modular exponentiation with configurable modulus width"
+# Crypto parameters
+[hosts.trojan0_rsa0_host.crypto_vars]
+PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
+
+
+[hosts.trojan0_rsa1_host]
+file = "trojan0_rsa1_host.v"
+description = "RSA modular exponentiation with configurable modulus width"
+# Crypto parameters
+[hosts.trojan0_rsa1_host.crypto_vars]
+PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
