@@ -1,6 +1,6 @@
 // Counter Host Circuit for Trojan3
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
-module trojan3_counter_host #(
+module trojan3_counter0_host #(
 )(
     input wire clk,
     input wire rst,

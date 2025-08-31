@@ -4,119 +4,33 @@ trojan_id = "trojan3"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan3_arithmetic_host", 
-    "trojan3_filter_host", 
-    "trojan3_cache_host",
-    "trojan3_memory_host",
-    "trojan3_processor_host",
-    "trojan3_uart_host",
-    "trojan3_counter_host",
-    "trojan3_spi_host",
-    "trojan3_timer_host",
-    "trojan3_dma_host"
+    "trojan3_counter0_host",
+    "trojan3_counter1_host",
+    "trojan3_spi0_host",
+    "trojan3_spi1_host"
 ]
 
 # Host circuit mapping for Trojan3
 [hosts]
 
-[hosts.trojan3_arithmetic_host]
-file = "trojan3_arithmetic_host.v"
-description = "Pipelined arithmetic unit with multiple operations"
-# Structural parameters
-# Structural parameters
-[hosts.trojan3_arithmetic_host.params]
-PIPELINE_STAGES = { type = "choice", values = [2, 3, 4, 5], description = "Number of pipeline stages" }
-# Crypto parameters
-[hosts.trojan3_arithmetic_host.crypto_vars]
-MULT_SEED = { type = "random_hex", bits = 32, description = "Seed for data generation" }
-
-[hosts.trojan3_filter_host]
-file = "trojan3_filter_host.v" 
-description = "FIR filter with configurable taps and coefficients"
-# Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# TAP_WIDTH = 16 (fixed)
-# NUM_TAPS = 8 (fixed)
-# COEFF_SEED = fixed constants (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan3_cache_host]
-file = "trojan3_cache_host.v"
-description = "Cache memory with configurable size and associativity"
-# Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# CACHE_SIZE = 64 (fixed)
-# TAG_WIDTH = 4 (fixed) 
-# DATA_WIDTH = 16 (fixed)
-# ADDR_PATTERN = fixed constants (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan3_memory_host]
-file = "trojan3_memory_host.v"
-description = "Memory controller with configurable memory size"
-# Structural parameters
-[hosts.trojan3_memory_host.params]
-MEM_SIZE = { type = "choice", values = [128, 256, 512, 1024], description = "Memory array size" }
-# Crypto parameters
-[hosts.trojan3_memory_host.crypto_vars]
-ADDR_SEED = { type = "random_hex", bits = 32, description = "Seed for address pattern generation" }
-
-[hosts.trojan3_processor_host]
-file = "trojan3_processor_host.v"
-description = "Simple processor with configurable register count"
-# Structural parameters
-[hosts.trojan3_processor_host.params]
-REG_COUNT = { type = "choice", values = [4, 8, 16, 32], description = "Number of processor registers" }
-# Crypto parameters
-[hosts.trojan3_processor_host.crypto_vars]
-INSTR_PATTERN = { type = "random_hex", bits = 24, description = "Pattern for instruction sequence generation" }
-
-[hosts.trojan3_uart_host]
-file = "trojan3_uart_host.v"
-description = "UART transceiver with fixed baud rate and 8-bit data"
-# Structural parameters - using fixed constants
-# BAUD_DIV = 104 (fixed)
-# DATA_BITS = 8 (fixed)
-# Crypto parameters
-[hosts.trojan3_uart_host.crypto_vars]
-BAUD_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for baud timing generation" }
-
-[hosts.trojan3_counter_host]
-file = "trojan3_counter_host.v"
+[hosts.trojan3_counter0_host]
+file = "trojan3_counter0_host.v"
 description = "16-bit up/down counter with overflow detection"
-# Structural parameters - using fixed constants
-# COUNTER_WIDTH = 16 (fixed)
-# MAX_COUNT = 65535 (fixed)
-# Crypto parameters
-[hosts.trojan3_counter_host.crypto_vars]
-COUNT_SEED = { type = "random_hex", bits = 32, description = "Seed for count pattern generation" }
 
-[hosts.trojan3_spi_host]
-file = "trojan3_spi_host.v"
+
+[hosts.trojan3_counter1_host]
+file = "trojan3_counter1_host.v"
+description = "16-bit up/down counter with overflow detection"
+
+
+[hosts.trojan3_spi0_host]
+file = "trojan3_spi0_host.v"
 description = "SPI master controller with configurable clock division"
-# Structural parameters
-[hosts.trojan3_spi_host.params]
-CLK_DIV = { type = "choice", values = [4, 8, 16, 32], description = "SPI clock divider ratio" }
+
+
+[hosts.trojan3_spi1_host]
+file = "trojan3_spi1_host.v"
+description = "SPI master controller with configurable clock division"
 # Crypto parameters
-[hosts.trojan3_spi_host.crypto_vars]
+[hosts.trojan3_spi1_host.crypto_vars]
 SPI_SEED = { type = "random_hex", bits = 28, description = "Seed for SPI timing pattern generation" }
-
-[hosts.trojan3_timer_host]
-file = "trojan3_timer_host.v"
-description = "16-bit timer with configurable prescaler maximum"
-# Structural parameters
-[hosts.trojan3_timer_host.params]
-PRESCALER_MAX = { type = "choice", values = [127, 255, 511, 1023], description = "Maximum prescaler value" }
-# Crypto parameters
-[hosts.trojan3_timer_host.crypto_vars]
-TIMER_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for timer sequence generation" }
-
-[hosts.trojan3_dma_host]
-file = "trojan3_dma_host.v"
-description = "DMA controller with memory-to-memory transfers"
-# Structural parameters - using fixed constants
-# ADDR_WIDTH = 16 (fixed)
-# LENGTH_WIDTH = 8 (fixed)
-# Crypto parameters
-[hosts.trojan3_dma_host.crypto_vars]
-DMA_SEED = { type = "random_hex", bits = 32, description = "Seed for DMA transfer pattern generation" }

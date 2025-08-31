@@ -1,7 +1,7 @@
 // CPU Host Circuit for Trojan5
 module trojan5_cpu0_host #(
     parameter [32:0] LFSR_INIT = 32'hABCD1000,
-    parameter [3:0] OUT_REG = 4'h0
+    parameter [2:0] OUT_REG = 3'h0
 )(
     input wire clk,
     input wire pon_rst_n_i,

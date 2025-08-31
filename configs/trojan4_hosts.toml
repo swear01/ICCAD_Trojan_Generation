@@ -4,128 +4,42 @@ trojan_id = "trojan4"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan4_crypto_host", 
-    "trojan4_hash_host", 
-    "trojan4_rng_host",
-    "trojan4_aes_host",
-    "trojan4_rsa_host",
-    "trojan4_ecc_host",
-    "trojan4_des_host",
-    "trojan4_hmac_host",
-    "trojan4_sha_host",
-    "trojan4_chacha_host"
+    "trojan4_crypto0_host", 
+    "trojan4_crypto1_host",
+    "trojan4_rsa0_host",
+    "trojan4_rsa1_host"
 ]
 
 # Host circuit mapping for Trojan4
 [hosts]
 
-[hosts.trojan4_crypto_host]
-file = "trojan4_crypto_host.v"
+[hosts.trojan4_crypto0_host]
+file = "trojan4_crypto0_host.v"
 description = "Block cipher encryption with configurable rounds"
-# Structural parameters
-[hosts.trojan4_crypto_host.params]
-ROUND_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of encryption rounds" }
-BLOCK_SIZE = { type = "choice", values = [8, 12, 16, 20], description = "Block size in bytes" }
 # Crypto parameters
-[hosts.trojan4_crypto_host.crypto_vars]
+[hosts.trojan4_crypto0_host.crypto_vars]
 IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
 
-[hosts.trojan4_hash_host]
-file = "trojan4_hash_host.v" 
-description = "Hash function with configurable message blocks"
-# Structural parameters
-[hosts.trojan4_hash_host.params]
-HASH_WIDTH = { type = "choice", values = [16, 20, 24, 32], description = "Hash output width" }
-MSG_BLOCKS = { type = "choice", values = [2, 4, 6, 8], description = "Number of message blocks" }
-# Crypto parameters
-[hosts.trojan4_hash_host.crypto_vars]
-SALT_VALUE = { type = "random_hex", bits = 256, description = "Salt value for hashing" }
 
-[hosts.trojan4_rng_host]
-file = "trojan4_rng_host.v"
-description = "LFSR-based random number generator"
-# Structural parameters
-[hosts.trojan4_rng_host.params]
-SEED_WIDTH = { type = "choice", values = [16, 24, 32, 40], description = "Random seed bit width" }
-OUTPUT_WIDTH = { type = "choice", values = [8, 12, 16, 24], description = "Random output bit width" }
+[hosts.trojan4_crypto1_host]
+file = "trojan4_crypto1_host.v"
+description = "Block cipher encryption with configurable rounds"
 # Crypto parameters
-[hosts.trojan4_rng_host.crypto_vars]
-ENTROPY_SOURCE = { type = "random_hex", bits = 96, description = "Entropy source for seeding" }
+[hosts.trojan4_crypto1_host.crypto_vars]
+IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
 
-[hosts.trojan4_aes_host]
-file = "trojan4_aes_host.v"
-description = "AES block cipher with configurable key size and rounds"
-# Structural parameters
-[hosts.trojan4_aes_host.params]
-KEY_SIZE = { type = "choice", values = [32, 48, 64], description = "Reduced AES key size in bits" }
-ROUNDS = { type = "choice", values = [2, 3, 4], description = "Reduced number of AES rounds" }
-# Crypto parameters
-[hosts.trojan4_aes_host.crypto_vars]
-SBOX_INIT = { type = "random_hex", bits = 256, description = "S-box initialization vector" }
 
-[hosts.trojan4_rsa_host]
-file = "trojan4_rsa_host.v"
+[hosts.trojan4_rsa0_host]
+file = "trojan4_rsa0_host.v"
 description = "RSA modular exponentiation with configurable modulus width"
-# Structural parameters
-[hosts.trojan4_rsa_host.params]
-MODULUS_WIDTH = { type = "choice", values = [12, 16], description = "Minimal RSA modulus bit width" }
-EXPONENT_WIDTH = { type = "choice", values = [3, 4], description = "Minimal RSA exponent bit width" }
 # Crypto parameters
-[hosts.trojan4_rsa_host.crypto_vars]
+[hosts.trojan4_rsa0_host.crypto_vars]
 PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
 
-[hosts.trojan4_ecc_host]
-file = "trojan4_ecc_host.v"
-description = "Elliptic curve cryptography with scalar multiplication"
-# Structural parameters
-[hosts.trojan4_ecc_host.params]
-FIELD_WIDTH = { type = "choice", values = [8], description = "Minimal ECC field bit width" }
-SCALAR_WIDTH = { type = "choice", values = [8], description = "Minimal ECC scalar bit width" }
-# Crypto parameters
-[hosts.trojan4_ecc_host.crypto_vars]
-CURVE_PARAM = { type = "random_hex", bits = 128, description = "Elliptic curve parameters" }
 
-[hosts.trojan4_des_host]
-file = "trojan4_des_host.v"
-description = "DES block cipher with Feistel network"
-# Structural parameters
-[hosts.trojan4_des_host.params]
-ROUNDS = { type = "choice", values = [4, 6, 8], description = "Reduced number of DES rounds" }
+[hosts.trojan4_rsa1_host]
+file = "trojan4_rsa1_host.v"
+description = "RSA modular exponentiation with configurable modulus width"
 # Crypto parameters
-[hosts.trojan4_des_host.crypto_vars]
-PERM_INIT = { type = "random_hex", bits = 256, description = "Permutation initialization vector" }
-
-[hosts.trojan4_hmac_host]
-file = "trojan4_hmac_host.v"
-description = "HMAC with configurable hash and key widths"
-# Structural parameters
-[hosts.trojan4_hmac_host.params]
-HASH_WIDTH = { type = "choice", values = [8, 12, 16], description = "Reduced HMAC hash output width" }
-KEY_WIDTH = { type = "choice", values = [16, 24, 32], description = "Reduced HMAC key width" }
-MSG_WIDTH = { type = "choice", values = [32, 48, 64], description = "Reduced message width" }
-# Crypto parameters
-[hosts.trojan4_hmac_host.crypto_vars]
-OPAD_INIT = { type = "random_hex", bits = 512, description = "OPAD initialization vector" }
-
-[hosts.trojan4_sha_host]
-file = "trojan4_sha_host.v"
-description = "SHA-1 hash function with configurable parameters"
-# Structural parameters
-[hosts.trojan4_sha_host.params]
-DIGEST_WIDTH = { type = "choice", values = [16, 24, 32], description = "Reduced SHA digest width" }
-BLOCK_SIZE = { type = "choice", values = [64, 96, 128], description = "Reduced SHA block size" }
-ROUNDS = { type = "choice", values = [8, 12, 16], description = "Reduced number of SHA rounds" }
-# Crypto parameters
-[hosts.trojan4_sha_host.crypto_vars]
-H_INIT = { type = "random_hex", bits = 160, description = "SHA hash initialization values" }
-
-[hosts.trojan4_chacha_host]
-file = "trojan4_chacha_host.v"
-description = "ChaCha stream cipher with configurable rounds"
-# Structural parameters
-[hosts.trojan4_chacha_host.params]
-ROUNDS = { type = "choice", values = [4, 6, 8], description = "Reduced number of ChaCha rounds" }
-BLOCK_SIZE = { type = "choice", values = [128, 192, 256], description = "Reduced ChaCha block size" }
-# Crypto parameters
-[hosts.trojan4_chacha_host.crypto_vars]
-CONSTANT_INIT = { type = "random_hex", bits = 512, description = "ChaCha constant initialization" }
+[hosts.trojan4_rsa1_host.crypto_vars]
+PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }

@@ -3,7 +3,7 @@
 // add AND, XOR instructions
 module trojan5_cpu1_host #(
     parameter [15:0] LFSR_INIT = 16'h1000,
-    parameter [3:0] OUT_REG = 4'h6
+    parameter [2:0] OUT_REG = 3'h6
 )(
     input wire clk,
     input wire pon_rst_n_i,

@@ -1,7 +1,7 @@
 // RSA Host Circuit for Trojan4
 // Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
 // Change exp_counter from right shift to minus 1 (discard square step)
-module trojan4_rsa_host #(
+module trojan4_rsa1_host #(
     parameter [127:0] PRIME_SEED = 128'h123456789ABCDEF0FEDCBA9876543210
 )(
     input wire clk,

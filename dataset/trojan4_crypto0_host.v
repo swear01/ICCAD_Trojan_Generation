@@ -1,6 +1,6 @@
 // Crypto Host Circuit for Trojan4
 // Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
-module trojan4_crypto_host #(
+module trojan4_crypto0_host #(
     parameter [127:0] IV_SEED = 128'h0123456789ABCDEF0123456789ABCDEF  // IV generation seed
 )(
     input wire clk,
