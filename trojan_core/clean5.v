@@ -17,7 +17,7 @@ module Trojan5 #(
     input wire [12:0] pc_reg,
     output wire [12:0] prog_adr_o
 );
-    // Clean version - always pass through PC unchanged (no trojan behavior)
+    // clean version - always pass through PC unchanged (no trojan behavior)
     assign prog_adr_o = pc_reg;
 
 endmodule
