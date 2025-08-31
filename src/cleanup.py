@@ -7,9 +7,9 @@ Deletes result{x}.txt files from data/label/ and design{x}.v files from data/net
 # ==================== CONFIG VARIABLES ====================
 # Modify these variables as needed:
 
-# Number range to delete (inclusive)
-START_NUMBER = 30
-END_NUMBER = 371
+# Number range to KEEP (inclusive) - files outside this range will be deleted
+KEEP_START = 0
+KEEP_END = 29
 
 # Set to True to only show what would be deleted (dry run)
 # Set to False to actually delete the files
@@ -28,9 +28,10 @@ import glob
 from pathlib import Path
 
 
-def delete_files_in_range(directory, pattern, start_num, end_num, dry_run=True):
+def delete_files_outside_range(directory, pattern, keep_start, keep_end, dry_run=True):
     """
-    Delete files matching the pattern with numbers in the specified range.
+    Delete files matching the pattern with numbers OUTSIDE the specified keep range.
+    Files with numbers in [keep_start, keep_end] will be preserved.
     """
     if not os.path.exists(directory):
         print(f"Warning: Directory {directory} does not exist")
@@ -55,7 +56,8 @@ def delete_files_in_range(directory, pattern, start_num, end_num, dry_run=True):
         
         try:
             file_number = int(number_str)
-            if start_num <= file_number <= end_num:
+            # Delete files that are OUTSIDE the keep range
+            if file_number < keep_start or file_number > keep_end:
                 if dry_run:
                     print(f"Would delete: {file_path}")
                 else:
@@ -73,14 +75,15 @@ def main():
     print("=" * 60)
     print("FILE DELETION SCRIPT")
     print("=" * 60)
-    print(f"Number range: {START_NUMBER} to {END_NUMBER}")
+    print(f"Keeping files in range: {KEEP_START} to {KEEP_END}")
+    print(f"Files OUTSIDE this range will be deleted")
     print(f"Dry run: {DRY_RUN}")
     print(f"Label only: {LABEL_ONLY}")
     print(f"Netlist only: {NETLIST_ONLY}")
     print("-" * 60)
     
-    if START_NUMBER > END_NUMBER:
-        print("Error: START_NUMBER must be less than or equal to END_NUMBER")
+    if KEEP_START > KEEP_END:
+        print("Error: KEEP_START must be less than or equal to KEEP_END")
         return
     
     # Get the current directory (assuming script is in root)
@@ -97,11 +100,11 @@ def main():
     if not NETLIST_ONLY:
         label_dir = data_dir / "label"
         print(f"\nProcessing label directory: {label_dir}")
-        deleted_label = delete_files_in_range(
+        deleted_label = delete_files_outside_range(
             str(label_dir), 
             "result*.txt", 
-            START_NUMBER, 
-            END_NUMBER, 
+            KEEP_START, 
+            KEEP_END, 
             DRY_RUN
         )
         print(f"Label files to be deleted: {len(deleted_label)}")
@@ -111,11 +114,11 @@ def main():
     if not LABEL_ONLY:
         netlist_dir = data_dir / "netlist"
         print(f"\nProcessing netlist directory: {netlist_dir}")
-        deleted_netlist = delete_files_in_range(
+        deleted_netlist = delete_files_outside_range(
             str(netlist_dir), 
             "design*.v", 
-            START_NUMBER, 
-            END_NUMBER, 
+            KEEP_START, 
+            KEEP_END, 
             DRY_RUN
         )
         print(f"Netlist files to be deleted: {len(deleted_netlist)}")
@@ -127,7 +130,7 @@ def main():
     if DRY_RUN and total_deleted > 0:
         print("\nTo actually delete these files, set DRY_RUN = False in the config variables")
     elif total_deleted == 0:
-        print("\nNo files found in the specified range")
+        print("\nNo files found outside the keep range")
     
     print("=" * 60)
 
