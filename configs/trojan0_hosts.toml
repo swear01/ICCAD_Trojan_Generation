@@ -7,7 +7,6 @@ host_files = [
     "trojan0_datapath_host", 
     "trojan0_pwm_host", 
     "trojan0_counter_host",
-    "trojan0_crypto_host",
     "trojan0_network_host", 
     "trojan0_spi_host",
     "trojan0_cache_host",
@@ -40,14 +39,6 @@ description = "Counter circuit with overflow and pulse generation"
 # Crypto parameters
 [hosts.trojan0_counter_host.crypto_vars]
 KEY_INIT = { type = "random_hex", bits = 128, description = "Counter key generator seed" }
-
-
-[hosts.trojan0_crypto_host]
-file = "trojan0_crypto_host.v"
-description = "Cryptographic processor with encryption rounds"
-# Crypto parameters
-[hosts.trojan0_crypto_host.crypto_vars]
-KEY_INIT = { type = "random_hex", bits = 128, description = "Crypto key generator seed" }
 
 
 [hosts.trojan0_network_host]
