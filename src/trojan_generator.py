@@ -138,10 +138,13 @@ class TrojanGenerator:
             # Format parameter value preserving original format
             param_str = self.format_parameter_value(param_name, param_value, verilog_code, all_params)
             
-            # Replace parameter default values
-            pattern = rf"parameter\s+{param_name}\s*=\s*[^,\)\s]+"
+            # More robust pattern to match parameter declarations
+            # Handles: parameter NAME = VALUE, parameter [WIDTH:0] NAME = VALUE, etc.
+            pattern = rf"parameter\s+(?:\[[^\]]+\]\s+)?{re.escape(param_name)}\s*=\s*[^,\)\n]+"
             replacement = f"parameter {param_name} = {param_str}"
-            verilog_code = re.sub(pattern, replacement, verilog_code)
+            
+            # Use count=1 to replace only the first occurrence
+            verilog_code = re.sub(pattern, replacement, verilog_code, count=1)
         
         return verilog_code
 
