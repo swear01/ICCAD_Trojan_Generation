@@ -31,7 +31,7 @@ from tqdm import tqdm
 DEFAULT_LIB_PATH = "cell.lib"
 DEFAULT_MAP_PATH = "map.v"  # Map file for ALDFF to DFF primitive
 DEFAULT_SCRIPT_PATH = "syn.ys"
-DEFAULT_COUNT_START = 201
+DEFAULT_COUNT_START = 198
 DEFAULT_RTL_DIR = "generated_circuits/clean"
 DEFAULT_NETLIST_OUT_DIR = "data/netlist/"
 DEFAULT_LABEL_OUT_DIR = "data/label/"

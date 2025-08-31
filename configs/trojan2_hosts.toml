@@ -11,8 +11,7 @@ host_files = [
     "trojan2_spi_host",
     "trojan2_alu_host",
     "trojan2_timer_host",
-    "trojan2_pwm_host",
-    "trojan2_dsp_host"
+    "trojan2_pwm_host"
 ]
 
 # Host circuit mapping for Trojan2
@@ -80,11 +79,3 @@ description = "Multi-channel PWM generator with configurable resolution"
 # Crypto parameters
 [hosts.trojan2_pwm_host.crypto_vars]
 PWM_PATTERN = { type = "random_hex", bits = 26, description = "Pattern for data generation" }
-
-
-[hosts.trojan2_dsp_host]
-file = "trojan2_dsp_host.v"
-description = "Digital signal processor with FIR filter implementation"
-# Crypto parameters
-[hosts.trojan2_dsp_host.crypto_vars]
-DSP_PATTERN = { type = "random_hex", bits = 30, description = "Pattern for data generation" }
