@@ -8,11 +8,15 @@ host_files = [
     "trojan1_timer_host", 
     "trojan1_shifter_host",
     "trojan1_counter_host",
+    "trojan1_counter0_host",
+    "trojan1_counter1_host",
     "trojan1_alu_host",
     "trojan1_spi_host",
     "trojan1_pwm_host",
     "trojan1_fifo_host",
-    "trojan1_uart_host"
+    "trojan1_uart_host",
+    "trojan1_decoder0_host",
+    "trojan1_decoder1_host"
 ]
 
 # Host circuit mapping for Trojan1
@@ -48,6 +52,16 @@ description = "Full-range counter (direction control)"
 # Crypto parameters
 [hosts.trojan1_counter_host.crypto_vars]
 R1_INIT = { type = "random_hex", bits = 24, description = "LFSR initialization value for r1 generation" }
+
+
+[hosts.trojan1_counter0_host]
+file = "trojan1_counter0_host.v"
+description = "16-bit up/down counter with overflow detection"
+
+
+[hosts.trojan1_counter1_host]
+file = "trojan1_counter1_host.v"
+description = "16-bit up/down counter with overflow detection"
 
 
 [hosts.trojan1_alu_host]
@@ -88,3 +102,19 @@ description = "UART transceiver with configurable baud rate"
 # Crypto parameters
 [hosts.trojan1_uart_host.crypto_vars]
 R1_SEED = { type = "random_hex", bits = 18, description = "Seed for r1 multi-phase shift register" }
+
+
+[hosts.trojan1_decoder0_host]
+file = "trojan1_decoder0_host.v" 
+description = "Binary decoder with configurable output count"
+# Crypto parameters
+[hosts.trojan1_decoder0_host.crypto_vars]
+LFSR_INIT = { type = "random_hex", bits = 128, description = "Seed for LFSR" }
+
+
+[hosts.trojan1_decoder1_host]
+file = "trojan1_decoder1_host.v"
+description = "Binary decoder with configurable output count"
+# Crypto parameters
+[hosts.trojan1_decoder1_host.crypto_vars]
+XOR_MASK = { type = "random_hex", bits = 16, description = "XOR mask for decoder" }
