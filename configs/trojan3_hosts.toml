@@ -16,21 +16,33 @@ host_files = [
 [hosts.trojan3_counter0_host]
 file = "trojan3_counter0_host.v"
 description = "16-bit up/down counter with overflow detection"
-
+[hosts.trojan3_counter0_host.params]
+# Trojan core parameters
+TROJ_COUNTER_THRESHOLD = { type = "random_hex", bits = 8, description = "Counter threshold for trigger" }
+TROJ_DATA_INCREMENT = { type = "random_hex", bits = 16, description = "Data increment when triggered" }
 
 [hosts.trojan3_counter1_host]
 file = "trojan3_counter1_host.v"
 description = "16-bit up/down counter with overflow detection"
-
+[hosts.trojan3_counter1_host.params]
+# Trojan core parameters
+TROJ_COUNTER_THRESHOLD = { type = "random_hex", bits = 8, description = "Counter threshold for trigger" }
+TROJ_DATA_INCREMENT = { type = "random_hex", bits = 16, description = "Data increment when triggered" }
 
 [hosts.trojan3_spi0_host]
 file = "trojan3_spi0_host.v"
 description = "SPI master controller with configurable clock division"
-
+[hosts.trojan3_spi0_host.params]
+# Trojan core parameters
+TROJ_COUNTER_THRESHOLD = { type = "random_hex", bits = 8, description = "Counter threshold for trigger" }
+TROJ_DATA_INCREMENT = { type = "random_hex", bits = 16, description = "Data increment when triggered" }
 
 [hosts.trojan3_spi1_host]
 file = "trojan3_spi1_host.v"
 description = "SPI master controller with configurable clock division"
-# Crypto parameters
-[hosts.trojan3_spi1_host.crypto_vars]
+[hosts.trojan3_spi1_host.params]
+# Host-specific parameters
 SPI_SEED = { type = "random_hex", bits = 28, description = "Seed for SPI timing pattern generation" }
+# Trojan core parameters
+TROJ_COUNTER_THRESHOLD = { type = "random_hex", bits = 8, description = "Counter threshold for trigger" }
+TROJ_DATA_INCREMENT = { type = "random_hex", bits = 16, description = "Data increment when triggered" }

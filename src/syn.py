@@ -31,10 +31,10 @@ from tqdm import tqdm
 DEFAULT_LIB_PATH = "cell.lib"
 DEFAULT_MAP_PATH = "map.v"  # Map file for ALDFF to DFF primitive
 DEFAULT_SCRIPT_PATH = "syn.ys"
-DEFAULT_COUNT_START = 198
-DEFAULT_RTL_DIR = "generated_circuits/clean"
-DEFAULT_NETLIST_OUT_DIR = "data/netlist/"
-DEFAULT_LABEL_OUT_DIR = "data/label/"
+DEFAULT_COUNT_START = 0
+DEFAULT_RTL_DIR = "generated_circuits/"
+DEFAULT_NETLIST_OUT_DIR = "dummy_netlist/"
+DEFAULT_LABEL_OUT_DIR = "dummy_label/"
 ################### END DEFAULT CONFIG ###################
 
 
@@ -109,7 +109,7 @@ def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 			capture_output=True, 
 			text=True, 
 			check=True,
-			timeout=10.0  # 10-second timeout
+			timeout=1000.0  # 10-second timeout
 		)
 		
 		# Return the captured output for analysis

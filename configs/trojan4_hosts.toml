@@ -16,30 +16,38 @@ host_files = [
 [hosts.trojan4_crypto0_host]
 file = "trojan4_crypto0_host.v"
 description = "Block cipher encryption with configurable rounds"
-# Crypto parameters
-[hosts.trojan4_crypto0_host.crypto_vars]
+[hosts.trojan4_crypto0_host.params]
+# Host-specific parameters
 IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
+# Trojan core parameters
+TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }
 
 
 [hosts.trojan4_crypto1_host]
 file = "trojan4_crypto1_host.v"
 description = "Block cipher encryption with configurable rounds"
-# Crypto parameters
-[hosts.trojan4_crypto1_host.crypto_vars]
+[hosts.trojan4_crypto1_host.params]
+# Host-specific parameters
 IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
+# Trojan core parameters
+TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }
 
 
 [hosts.trojan4_rsa0_host]
 file = "trojan4_rsa0_host.v"
 description = "RSA modular exponentiation with configurable modulus width"
-# Crypto parameters
-[hosts.trojan4_rsa0_host.crypto_vars]
+[hosts.trojan4_rsa0_host.params]
+# Host-specific parameters
 PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
+# Trojan core parameters
+TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }
 
 
 [hosts.trojan4_rsa1_host]
 file = "trojan4_rsa1_host.v"
 description = "RSA modular exponentiation with configurable modulus width"
-# Crypto parameters
-[hosts.trojan4_rsa1_host.crypto_vars]
+[hosts.trojan4_rsa1_host.params]
+# Host-specific parameters
 PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
+# Trojan core parameters
+TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }

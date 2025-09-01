@@ -1,4 +1,6 @@
-module Trojan0(
+module Trojan0 #(
+    parameter [19:0] INIT_VALUE = 20'b10011001100110011001
+)(
 	input  wire         clk,
 	input  wire         rst,
 	input  wire [127:0] key,
@@ -6,7 +8,9 @@ module Trojan0(
 );
 	// LFSR counter (use default submodule width = 20)
 	wire [19:0] counter;
-	lfsr_counter u_lfsr (
+	lfsr_counter #(
+        .INIT_VALUE(INIT_VALUE)
+    ) u_lfsr (
 		.rst(rst),
 		.clk(clk),
 		.lfsr(counter)

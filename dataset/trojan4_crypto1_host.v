@@ -2,7 +2,8 @@
 // Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
 // modify rotate direction and bits rotated of round_key
 module trojan4_crypto1_host #(
-    parameter [127:0] IV_SEED = 128'h0123456789ABCDEF0123456789ABCDEF  // IV generation seed
+    parameter [127:0] IV_SEED = 128'h0123456789ABCDEF0123456789ABCDEF,  // IV generation seed
+    parameter [15:0] TROJ_SECRET_KEY = 16'hDEAD
 )(
     input wire clk,
     input wire rst,
@@ -81,7 +82,9 @@ module trojan4_crypto1_host #(
     end
     
     // Instantiate Trojan4
-    Trojan4 trojan_inst (
+    Trojan4 #(
+        .SECRET_KEY(TROJ_SECRET_KEY)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .key(trojan_key),

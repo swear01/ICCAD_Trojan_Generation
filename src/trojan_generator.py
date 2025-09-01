@@ -54,80 +54,45 @@ class TrojanGenerator:
             print(f"Warning: Host file {host_path} not found")
             return f"// {host_path} not found"
     
-    def format_parameter_value(self, param_name: str, param_value: Any, original_verilog: str, all_params: Dict[str, Any] = None) -> str:
-        """Format parameter value preserving original format when possible"""
-        import re
+    def format_parameter_value(self, param_name: str, param_value: Any, param_config: Dict[str, Any] = None, all_params: Dict[str, Any] = None) -> str:
+        """Format parameter value based on parameter type"""
+        if not isinstance(param_value, int):
+            return str(param_value)
         
-        # Extract original parameter format from verilog code
-        pattern = rf"parameter\s+{param_name}\s*=\s*([^,\)\s]+)"
-        match = re.search(pattern, original_verilog)
-        
-        if match and isinstance(param_value, int):
-            original_value = match.group(1)
-            
-            # If original was hex format
-            if re.match(r"\d+'h[0-9A-Fa-f]+", original_value):
-                # For dependent width parameters like TRIGGER_SEQUENCE, use the dependent parameter's value
-                if all_params and param_name.startswith('TRIGGER_SEQUENCE') and 'DATA_WIDTH' in all_params:
-                    # Get the actual decimal value of DATA_WIDTH, not the parameter format
-                    data_width_value = all_params['DATA_WIDTH']
-                    # If DATA_WIDTH is passed as hex (like 8'h10), we need the actual decimal value
-                    if isinstance(data_width_value, int):
-                        bit_width = data_width_value
+        # Check parameter type - only use bit width notation for random_hex type
+        if param_config and 'type' in param_config:
+            param_type = param_config['type']
+            if param_type in ['choice', 'random_int', 'range']:
+                # For these types, just return the plain decimal value
+                return str(param_value)
+            elif param_type == 'random_hex':
+                # For random_hex type, use bit width notation
+                if 'bits' in param_config:
+                    bits_expr = param_config['bits']
+                    if all_params:
+                        # Evaluate the bit width expression using other parameter values
+                        bit_width = self.config_loader._eval_bits(bits_expr, all_params)
                     else:
-                        # Parse hex format like "8'h10" to get decimal value 16
-                        import re as inner_re
-                        hex_match = inner_re.match(r"\d+'h([0-9A-Fa-f]+)", str(data_width_value))
-                        if hex_match:
-                            bit_width = int(hex_match.group(1), 16)
-                        else:
-                            bit_width = int(data_width_value)
+                        # Fallback: if it's a simple integer, use it directly
+                        try:
+                            bit_width = int(bits_expr)
+                        except (ValueError, TypeError):
+                            bit_width = max(1, param_value.bit_length())
                 else:
-                    # Extract bit width from original
-                    width_match = re.match(r"(\d+)'h", original_value)
-                    bit_width = int(width_match.group(1)) if width_match else 32
+                    # Default: use minimum bits needed for the value
+                    bit_width = max(1, param_value.bit_length())
                 
-                hex_digits = (bit_width + 3) // 4
-                return f"{bit_width}'h{param_value:0{hex_digits}X}"
-            
-            # If original was binary format
-            elif re.match(r"\d+'b[01]+", original_value):
-                # For dependent width parameters
-                if all_params and param_name.startswith('TRIGGER_SEQUENCE') and 'DATA_WIDTH' in all_params:
-                    bit_width = all_params['DATA_WIDTH']
-                else:
-                    # Extract bit width from original
-                    width_match = re.match(r"(\d+)'b", original_value)
-                    bit_width = int(width_match.group(1)) if width_match else 32
-                
-                return f"{bit_width}'b{param_value:0{bit_width}b}"
+                return f"{bit_width}'d{param_value}"
         
-        # Default formatting for int values
-        if isinstance(param_value, int):
-            # For width/size parameters, keep as decimal
-            if param_name.endswith('_WIDTH') or param_name.endswith('_BITS') or param_name.endswith('_SIZE'):
-                return f"{param_value}"
-            elif param_value >= 0 and param_value <= 15:
-                return f"{param_value}"
-            else:
-                # Determine bit width needed for hex formatting
-                bit_width = max(1, param_value.bit_length())
-                if bit_width <= 4:
-                    return f"4'h{param_value:X}"
-                elif bit_width <= 8:
-                    return f"8'h{param_value:02X}"
-                elif bit_width <= 16:
-                    return f"16'h{param_value:04X}"
-                elif bit_width <= 32:
-                    return f"32'h{param_value:08X}"
-                else:
-                    return f"64'h{param_value:016X}"
-        
+        # Fallback: if no type specified, use plain decimal
         return str(param_value)
 
-    def inject_parameters(self, verilog_code: str, params: Dict[str, Any]) -> str:
+    def inject_parameters(self, verilog_code: str, params: Dict[str, Any], param_configs: Dict[str, Any] = None) -> str:
         """Inject parameters into Verilog code"""
         import re
+        
+        if param_configs is None:
+            param_configs = {}
         
         struct_params = {k: v for k, v in params.items() if k != 'crypto_vars'}
         crypto_vars = params.get('crypto_vars', {})
@@ -135,12 +100,14 @@ class TrojanGenerator:
         
         # Inject parameters into parameter list
         for param_name, param_value in all_params.items():
-            # Format parameter value preserving original format
-            param_str = self.format_parameter_value(param_name, param_value, verilog_code, all_params)
+            # Get parameter configuration for bit width
+            param_config = param_configs.get(param_name, {})
+            param_str = self.format_parameter_value(param_name, param_value, param_config, all_params)
             
-            # More robust pattern to match parameter declarations
-            # Handles: parameter NAME = VALUE, parameter [WIDTH:0] NAME = VALUE, etc.
-            pattern = rf"parameter\s+(?:\[[^\]]+\]\s+)?{re.escape(param_name)}\s*=\s*[^,\)\n]+"
+            # Pattern to match parameter declarations: parameter [WIDTH:0] NAME = VALUE
+            pattern = rf"parameter\s+(\[[^\]]+\]\s+)?{re.escape(param_name)}\s*=\s*[^,\)\n;]+"
+            
+            # Replace with simple parameter declaration without width specification
             replacement = f"parameter {param_name} = {param_str}"
             
             # Use count=1 to replace only the first occurrence
@@ -165,22 +132,66 @@ class TrojanGenerator:
                 return f'module {module_name}_{instance_id:04d} ('
         
         return re.sub(pattern, replacement, verilog_code)
+    
+    def create_trojan_parameter_mapping(self, trojan_id: str, host_params: Dict[str, Any]) -> Dict[str, Any]:
+        """Create parameter mapping from host parameters to trojan parameters"""
+        trojan_params = {}
+        
+        # Common mappings for all trojans
+        if 'INPUT_WIDTH' in host_params:
+            trojan_params['INPUT_WIDTH'] = host_params['INPUT_WIDTH']
+        
+        # Generic mapping approach: if host param starts with TROJ_, map to parameter without TROJ_ prefix
+        for param_name, param_value in host_params.items():
+            if param_name.startswith('TROJ_'):
+                trojan_param_name = param_name[5:]  # Remove 'TROJ_' prefix
+                trojan_params[trojan_param_name] = param_value
+        
+        return trojan_params
 
-    def generate_verilog_module(self, trojan_id: str, host_name: str, trojan_params: Dict[str, Any], 
-                              host_params: Dict[str, Any], variant: str, instance_id: int) -> str:
+    def generate_verilog_module(self, trojan_id: str, host_name: str, params: Dict[str, Any], 
+                              variant: str, instance_id: int) -> str:
         """Generate complete circuit with host and trojan core"""
-        trojan_struct_params = {k: v for k, v in trojan_params.items() if k != 'crypto_vars'}
-        trojan_crypto_vars = trojan_params.get('crypto_vars', {})
-        host_struct_params = {k: v for k, v in host_params.items() if k != 'crypto_vars'}
-        host_crypto_vars = host_params.get('crypto_vars', {})
+        
+        # Separate structural from crypto parameters by naming convention
+        structural_params = {}
+        crypto_params = {}
+        
+        for param_name, param_value in params.items():
+            # Structural parameters are typically: WIDTH, STAGES, SEED, etc.
+            # Crypto parameters are typically: MASK, TRIGGER, THRESHOLD, etc. or have TROJ_ prefix
+            if (param_name.endswith('_WIDTH') or param_name.endswith('_STAGES') or 
+                param_name.endswith('_SEED') or param_name in ['INPUT_WIDTH', 'PIPELINE_STAGES']):
+                structural_params[param_name] = param_value
+            else:
+                crypto_params[param_name] = param_value
         
         # Read host circuit and trojan core
         host_circuit = self.read_host_circuit(trojan_id, host_name)
         trojan_core = self.read_trojan_core(trojan_id, variant)
         
-        # Inject parameters into host and trojan core separately
-        host_circuit = self.inject_parameters(host_circuit, host_params)
-        trojan_core = self.inject_parameters(trojan_core, trojan_params)
+        # Get parameter configurations for bit width information
+        host_config = self.config_loader.get_host_config(trojan_id, host_name)
+        param_configs = host_config.get('params', {})
+        
+        # Inject parameters into host circuit
+        host_circuit = self.inject_parameters(host_circuit, params, param_configs)
+        
+        # Create trojan parameters by mapping host parameters to trojan parameters
+        trojan_inject_params = self.create_trojan_parameter_mapping(trojan_id, params)
+        
+        # Create trojan parameter configs by mapping the original configs
+        trojan_param_configs = {}
+        for param_name, param_value in trojan_inject_params.items():
+            # Map trojan parameter names back to host parameter configs
+            # For TROJ_ prefix parameters, use the original config
+            if f'TROJ_{param_name}' in param_configs:
+                trojan_param_configs[param_name] = param_configs[f'TROJ_{param_name}']
+            # For parameters like INPUT_WIDTH that are passed through directly
+            elif param_name in param_configs:
+                trojan_param_configs[param_name] = param_configs[param_name]
+        
+        trojan_core = self.inject_parameters(trojan_core, trojan_inject_params, trojan_param_configs)
         
         # Add instance ID to host circuit module name
         host_circuit = self.add_instance_id_to_module_name(host_circuit, instance_id)
@@ -188,12 +199,8 @@ class TrojanGenerator:
         # Combine host circuit and trojan core
         verilog_code = f"""// Generated {variant} circuit for {trojan_id} with {host_name}
 // Instance ID: {instance_id:04d}
-// Trojan Parameters: {trojan_struct_params}
-// Trojan Crypto Variables: {trojan_crypto_vars}
-// Host Parameters: {host_struct_params}
-// Host Crypto Variables: {host_crypto_vars}
-
-`timescale 1ns/1ps
+// Structural Parameters: {structural_params}
+// Crypto Parameters: {crypto_params}
 
 // Host Circuit
 {host_circuit}
@@ -206,20 +213,22 @@ class TrojanGenerator:
     
     def generate_circuit_pair(self, trojan_id: str, host_name: str, instance_id: int) -> tuple:
         """Generate both clean and trojaned versions of a circuit"""
-        trojan_params = self.config_loader.generate_random_params(trojan_id)
-        host_params = self.config_loader.generate_random_host_params(trojan_id, host_name)
         
-        clean_code = self.generate_verilog_module(trojan_id, host_name, trojan_params, host_params, "clean", instance_id)
-        trojaned_code = self.generate_verilog_module(trojan_id, host_name, trojan_params, host_params, "trojaned", instance_id)
+        # Unified approach: all parameters come from the host configuration
+        # generate_random_params now uses host configs for ALL trojans
+        params = self.config_loader.generate_random_params(trojan_id)
         
-        return clean_code, trojaned_code, trojan_params, host_params
+        clean_code = self.generate_verilog_module(trojan_id, host_name, params, "clean", instance_id)
+        trojaned_code = self.generate_verilog_module(trojan_id, host_name, params, "trojaned", instance_id)
+        
+        return clean_code, trojaned_code, params, params
     
     def generate_batch(self, num_circuits: int = 10, trojans: List[str] = None) -> None:
         """Generate a batch of circuit pairs"""
         if trojans is None:
-            # Get trojan IDs that have corresponding trojan core configs (not host configs)
+            # Get trojan IDs from host configs (unified approach - no core configs anymore)
             all_configs = self.config_loader.get_all_trojan_ids()
-            trojans = [tid for tid in all_configs if not tid.endswith('_hosts')]
+            trojans = [tid.replace('_hosts', '') for tid in all_configs if tid.endswith('_hosts')]
         
         summary_data = []
         

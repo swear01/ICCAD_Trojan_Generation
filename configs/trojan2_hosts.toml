@@ -20,62 +20,86 @@ host_files = [
 [hosts.trojan2_processor_host]
 file = "trojan2_processor_host.v"
 description = "Simple processor with ALU operations and program counter"
-# Crypto parameters
-[hosts.trojan2_processor_host.crypto_vars]
+[hosts.trojan2_processor_host.params]
+# Host-specific parameters
 DATA_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for data generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
 
 
 [hosts.trojan2_fifo_host]
 file = "trojan2_fifo_host.v" 
 description = "FIFO buffer with configurable depth and data width"
-# Crypto parameters
-[hosts.trojan2_fifo_host.crypto_vars]
+[hosts.trojan2_fifo_host.params]
+# Host-specific parameters
 SEQUENCE_SEED = { type = "random_hex", bits = 24, description = "Seed for data sequence generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
 
 
 [hosts.trojan2_uart_host]
 file = "trojan2_uart_host.v"
 description = "UART transceiver with configurable baud rate"
-# Crypto parameters
-[hosts.trojan2_uart_host.crypto_vars]
+[hosts.trojan2_uart_host.params]
+# Host-specific parameters
 TX_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for transmission data generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
 
 
 [hosts.trojan2_counter_host]
 file = "trojan2_counter_host.v"
 description = "Configurable up/down counter with overflow detection"
-# Crypto parameters
-[hosts.trojan2_counter_host.crypto_vars]
+[hosts.trojan2_counter_host.params]
+# Host-specific parameters
 COUNT_PATTERN = { type = "random_hex", bits = 28, description = "Pattern for data generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
 
 
 [hosts.trojan2_spi_host]
 file = "trojan2_spi_host.v"
 description = "SPI master controller with configurable frame width"
-# Crypto parameters
-[hosts.trojan2_spi_host.crypto_vars]
+[hosts.trojan2_spi_host.params]
+# Host-specific parameters
 SPI_PATTERN = { type = "random_hex", bits = 24, description = "Pattern for data generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
 
 
 [hosts.trojan2_alu_host]
 file = "trojan2_alu_host.v"
 description = "Arithmetic Logic Unit with multiple operations and flags"
-# Crypto parameters
-[hosts.trojan2_alu_host.crypto_vars]
+[hosts.trojan2_alu_host.params]
+# Host-specific parameters
 ALU_SEED = { type = "random_hex", bits = 20, description = "Seed for data generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
 
 
 [hosts.trojan2_timer_host]
 file = "trojan2_timer_host.v"
 description = "Configurable timer with prescaler and compare match"
-# Crypto parameters
-[hosts.trojan2_timer_host.crypto_vars]
+[hosts.trojan2_timer_host.params]
+# Host-specific parameters
 TIMER_SEED = { type = "random_hex", bits = 32, description = "Seed for data generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
 
 
 [hosts.trojan2_pwm_host]
 file = "trojan2_pwm_host.v"
 description = "Multi-channel PWM generator with configurable resolution"
-# Crypto parameters
-[hosts.trojan2_pwm_host.crypto_vars]
+[hosts.trojan2_pwm_host.params]
+# Host-specific parameters
 PWM_PATTERN = { type = "random_hex", bits = 26, description = "Pattern for data generation" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }

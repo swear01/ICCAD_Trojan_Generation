@@ -1,7 +1,9 @@
 // UART Host Circuit for Trojan2
 // Fixed I/O to match Trojan2: clk, rst, data_in[7:0] -> force_reset
 module trojan2_uart_host #(
-    parameter [31:0] TX_PATTERN = 32'h5A5A5A5A  // Pattern for transmission data generation
+    parameter [31:0] TX_PATTERN = 32'h5A5A5A5A,  // Pattern for transmission data generation
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_1 = 8'hAA,
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_2 = 8'h55
 )(
     input wire clk,
     input wire rst,
@@ -192,7 +194,10 @@ module trojan2_uart_host #(
     end
     
     // Instantiate Trojan2
-    Trojan2 trojan_inst (
+    Trojan2 #(
+        .TRIGGER_SEQUENCE_1(TROJ_TRIGGER_SEQUENCE_1),
+        .TRIGGER_SEQUENCE_2(TROJ_TRIGGER_SEQUENCE_2)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .data_in(trojan_data_in),

@@ -4,67 +4,21 @@ trojan_id = "trojan8"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan8_processor_host",
-    "trojan8_dma_host",
-    "trojan8_uart_host",
-    "trojan8_spi_host",
-    "trojan8_dsp_host",
-    "trojan8_matrix_host",
-    "trojan8_vector_host"
+    "trojan8_dsp0_host"
 ]
 
 # Host circuit mapping for Trojan8
 [hosts]
 
-[hosts.trojan8_processor_host]
-file = "trojan8_processor_host.v"
-description = "Processor with cache and ALU operations"
-# Crypto parameters
-[hosts.trojan8_processor_host.crypto_vars]
-PROC_PATTERN = { type = "random_hex", bits = 64, description = "Processor data pattern" }
-
-
-[hosts.trojan8_dma_host]
-file = "trojan8_dma_host.v"
-description = "DMA controller with multi-channel support"
-# Crypto parameters
-[hosts.trojan8_dma_host.crypto_vars]
-DMA_PATTERN = { type = "random_hex", bits = 112, description = "DMA transfer pattern" }
-
-
-[hosts.trojan8_uart_host]
-file = "trojan8_uart_host.v"
-description = "UART controller with FIFO and baud control"
-# Crypto parameters
-[hosts.trojan8_uart_host.crypto_vars]
-UART_PATTERN = { type = "random_hex", bits = 88, description = "UART data pattern" }
-
-
-[hosts.trojan8_spi_host]
-file = "trojan8_spi_host.v"
-description = "SPI controller with multi-slave support"
-# Crypto parameters
-[hosts.trojan8_spi_host.crypto_vars]
-SPI_PATTERN = { type = "random_hex", bits = 72, description = "SPI data pattern" }
-
-
-[hosts.trojan8_dsp_host]
-file = "trojan8_dsp_host.v"
+[hosts.trojan8_dsp0_host]
+file = "trojan8_dsp0_host.v"
 description = "DSP processor with signal processing operations"
-# No external parameters - all patterns are defined as localparams inside the module
-
-
-[hosts.trojan8_matrix_host]
-file = "trojan8_matrix_host.v"
-description = "Matrix processor with linear algebra operations"
-# Crypto parameters
-[hosts.trojan8_matrix_host.crypto_vars]
-MAT_PATTERN = { type = "random_hex", bits = 96, description = "Matrix data generation pattern" }
-
-
-[hosts.trojan8_vector_host]
-file = "trojan8_vector_host.v"
-description = "Vector processor with parallel operations"
-# Crypto parameters
-[hosts.trojan8_vector_host.crypto_vars]
-VEC_PATTERN = { type = "random_hex", bits = 64, description = "Vector data generation pattern" }
+[hosts.trojan8_dsp0_host.params]
+# Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [4, 6, 8, 12], description = "Input width"}
+PIPELINE_STAGES = { type = "choice", values = [3, 4, 5, 6, 7], description = "Number of pipeline stages"}
+DSP_SEED = { type = "random_hex", bits = "INPUT_WIDTH", description = "DSP key generator seed" }
+# Trojan core parameters
+TROJ_MASK1 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 1"}
+TROJ_MASK2 = { type = "random_hex", bits = "INPUT_WIDTH", description = "Trojan mask 2"}
+TROJ_MASK3 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 3"}

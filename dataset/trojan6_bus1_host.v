@@ -11,7 +11,12 @@ module trojan6_bus1_host #(
     parameter [127:0] REG7_INIT = 128'h1234567890ABCD102939489289ABCDEF,
     parameter [127:0] REG8_INIT = 128'h248AA12095499BBBDCBDAA77856EE81F,
     parameter [31:0] LFSR_INIT = 32'h01234567,
-    parameter [31:0] XOR_MASK = 32'h123AD60B
+    parameter [31:0] XOR_MASK = 32'h123AD60B,
+    parameter [31:0] TROJ_TRIGGER_STATE_1 = 32'h00000000,
+    parameter [31:0] TROJ_TRIGGER_STATE_2 = 32'h354A7B6C,
+    parameter [31:0] TROJ_TRIGGER_STATE_3 = 32'hEAAAD8FF,
+    parameter [31:0] TROJ_TRIGGER_STATE_4 = 32'h0AAA5C5C,
+    parameter [1:0] TROJ_PAYLOAD_BITS = 2'b11
 )(
     input wire clk,
     input wire rst,
@@ -89,7 +94,13 @@ module trojan6_bus1_host #(
     end
     
     // Instantiate Trojan6
-    Trojan6 trojan_inst (
+    Trojan6 #(
+        .TRIGGER_STATE_1(TROJ_TRIGGER_STATE_1),
+        .TRIGGER_STATE_2(TROJ_TRIGGER_STATE_2),
+        .TRIGGER_STATE_3(TROJ_TRIGGER_STATE_3),
+        .TRIGGER_STATE_4(TROJ_TRIGGER_STATE_4),
+        .PAYLOAD_BITS(TROJ_PAYLOAD_BITS)
+    ) trojan_inst (
         .m0_data_o(trojan_m0_data_o),
         .i_s15_data_o(trojan_i_s15_data_o),
         .i_s15_data_o_TrojanPayload(trojan_i_s15_data_o_TrojanPayload)

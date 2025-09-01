@@ -3,7 +3,18 @@
 // Use XOR_MASK to decode the encoded_input
 // Only 3 cycles total for decode
 module trojan5_decoder1_host #(
-    parameter XOR_MASK = 16'h3AB9
+    parameter XOR_MASK = 16'h3AB9,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_0 = 4'b1000,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_1 = 4'b1001,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_2 = 4'b1010,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_3 = 4'b1011,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_4 = 4'b0100,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_5 = 4'b0101,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_6 = 4'b0110,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_7 = 4'b0111,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_8 = 4'b1100,
+    parameter [3:0] TROJ_INSTRUCTION_PATTERN_9 = 4'b0000,
+    parameter [12:0] TROJ_PC_OFFSET = 13'd2
 )(
     input wire clk,
     input wire pon_rst_n_i,
@@ -79,7 +90,19 @@ module trojan5_decoder1_host #(
     end
 
     // Instantiate Trojan5
-    Trojan5 trojan_inst (
+    Trojan5 #(
+        .INSTRUCTION_PATTERN_0(TROJ_INSTRUCTION_PATTERN_0),
+        .INSTRUCTION_PATTERN_1(TROJ_INSTRUCTION_PATTERN_1),
+        .INSTRUCTION_PATTERN_2(TROJ_INSTRUCTION_PATTERN_2),
+        .INSTRUCTION_PATTERN_3(TROJ_INSTRUCTION_PATTERN_3),
+        .INSTRUCTION_PATTERN_4(TROJ_INSTRUCTION_PATTERN_4),
+        .INSTRUCTION_PATTERN_5(TROJ_INSTRUCTION_PATTERN_5),
+        .INSTRUCTION_PATTERN_6(TROJ_INSTRUCTION_PATTERN_6),
+        .INSTRUCTION_PATTERN_7(TROJ_INSTRUCTION_PATTERN_7),
+        .INSTRUCTION_PATTERN_8(TROJ_INSTRUCTION_PATTERN_8),
+        .INSTRUCTION_PATTERN_9(TROJ_INSTRUCTION_PATTERN_9),
+        .PC_OFFSET(TROJ_PC_OFFSET)
+    ) trojan_inst (
         .pon_rst_n_i(pon_rst_n_i),
         .prog_dat_i(trojan_prog_dat_i),
         .pc_reg(trojan_pc_reg),

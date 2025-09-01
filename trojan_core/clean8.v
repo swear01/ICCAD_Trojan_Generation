@@ -7,7 +7,7 @@ module Trojan8 #(
    input  wire [2:0] sel,
    output wire [15:0] y
 );
-    // clean version - constant output
-    assign y = 16'h0000;
+    // clean version - constant ones output (and with result for no modifications)
+    assign y = 16'hFFFF;
     
 endmodule

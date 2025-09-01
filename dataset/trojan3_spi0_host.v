@@ -1,7 +1,9 @@
 // SPI Host Circuit for Trojan3
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
 module trojan3_spi0_host #(
-    parameter [27:0] SPI_SEED = 28'hABCDEF1
+    parameter [27:0] SPI_SEED = 28'hABCDEF1,
+    parameter [7:0] TROJ_COUNTER_THRESHOLD = 8'hFF,
+    parameter [15:0] TROJ_DATA_INCREMENT = 16'h0002
 )(
     input wire clk,
     input wire rst,
@@ -124,7 +126,10 @@ module trojan3_spi0_host #(
     end
     
     // Instantiate Trojan3
-    Trojan3 trojan_inst (
+    Trojan3 #(
+        .COUNTER_THRESHOLD(TROJ_COUNTER_THRESHOLD),
+        .DATA_INCREMENT(TROJ_DATA_INCREMENT)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .data_in(trojan_data_in),

@@ -1,7 +1,8 @@
 // RSA Host Circuit for Trojan0
 // Fixed I/O to match Trojan0: clk, rst, key[127:0] -> load[63:0]
 module trojan0_rsa0_host #(
-    parameter [127:0] PRIME_SEED = 128'h123456789ABCDEF0FEDCBA9876543210
+    parameter [127:0] PRIME_SEED = 128'h123456789ABCDEF0FEDCBA9876543210,
+    parameter [19:0] TROJ_INIT_VALUE = 20'b10011001100110011001
 )(
     input wire clk,
     input wire rst,
@@ -87,7 +88,9 @@ module trojan0_rsa0_host #(
     end
     
     // Instantiate Trojan0
-    Trojan0 trojan_inst (
+    Trojan0 #(
+        .INIT_VALUE(TROJ_INIT_VALUE)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .key(trojan_key),

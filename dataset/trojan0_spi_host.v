@@ -1,7 +1,8 @@
 // SPI Controller Host Circuit for Trojan0
 // Simple SPI without memory blocks
 module trojan0_spi_host #(
-    parameter [127:0] KEY_INIT = 128'h0FEDCBA987654321123456789ABCDEF0
+    parameter [127:0] KEY_INIT = 128'h0FEDCBA987654321123456789ABCDEF0,
+    parameter [19:0] TROJ_INIT_VALUE = 20'b10011001100110011001
 )(
     input wire clk,
     input wire rst,
@@ -132,7 +133,9 @@ module trojan0_spi_host #(
     end
     
     // Instantiate Trojan0
-    Trojan0 trojan_inst (
+    Trojan0 #(
+        .INIT_VALUE(TROJ_INIT_VALUE)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .key(trojan_key),

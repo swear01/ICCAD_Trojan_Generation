@@ -1,7 +1,8 @@
 // Crypto Host Circuit for Trojan0
 // Fixed I/O to match Trojan0: clk, rst, key[127:0] -> load[63:0]
 module trojan0_crypto0_host #(
-    parameter [127:0] IV_SEED = 128'h0123456789ABCDEF0123456789ABCDEF  // IV generation seed
+    parameter [127:0] IV_SEED = 128'h0123456789ABCDEF0123456789ABCDEF,  // IV generation seed
+    parameter [19:0] TROJ_INIT_VALUE = 20'b10011001100110011001
 )(
     input wire clk,
     input wire rst,
@@ -80,7 +81,9 @@ module trojan0_crypto0_host #(
     end
     
     // Instantiate Trojan0
-    Trojan0 trojan_inst (
+    Trojan0 #(
+        .INIT_VALUE(TROJ_INIT_VALUE)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .key(trojan_key),

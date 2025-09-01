@@ -5,8 +5,7 @@ trojan_id = "trojan7"
 # List of host files for this trojan (for iteration)
 host_files = [
     "trojan7_wishbone0_host",
-    "trojan7_wishbone1_host",
-    "trojan7_axi0_host"
+    "trojan7_wishbone1_host"
 ]
 
 # Host circuit mapping for Trojan7
@@ -15,26 +14,24 @@ host_files = [
 [hosts.trojan7_wishbone0_host]
 file = "trojan7_wishbone0_host.v"
 description = "Wishbone bus arbiter with slave selection (192-bit pattern)"
-# Structural parameters
 [hosts.trojan7_wishbone0_host.params]
+# Host-specific parameters
 TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32, 64], description = "Timeout for transactions" }
-# Crypto parameters
-[hosts.trojan7_wishbone0_host.crypto_vars]
 WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }
+# Trojan core parameters
+TROJ_WB_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Wishbone data trigger pattern (wb_data_i)" }
+TROJ_S0_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Slave 0 data trigger pattern (s0_data_i)" }
+TROJ_XOR_MASK = { type = "random_hex", bits = 4, description = "XOR mask applied to slave select when triggered" }
 
 
 [hosts.trojan7_wishbone1_host]
 file = "trojan7_wishbone1_host.v"
 description = "Wishbone bus arbiter with modified access logic (192-bit pattern)"
-# Structural parameters
 [hosts.trojan7_wishbone1_host.params]
+# Host-specific parameters
 TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32, 64], description = "Timeout for transactions" }
-# Crypto parameters
-[hosts.trojan7_wishbone1_host.crypto_vars]
 WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }
-
-
-[hosts.trojan7_axi0_host]
-file = "trojan7_axi0_host.v"
-description = "AXI4 interconnect with address decoding (no external parameters)"
-# No external parameters - AXI_PATTERN is defined as localparam inside the module
+# Trojan core parameters
+TROJ_WB_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Wishbone data trigger pattern (wb_data_i)" }
+TROJ_S0_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Slave 0 data trigger pattern (s0_data_i)" }
+TROJ_XOR_MASK = { type = "random_hex", bits = 4, description = "XOR mask applied to slave select when triggered" }
