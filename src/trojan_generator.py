@@ -214,9 +214,8 @@ class TrojanGenerator:
     def generate_circuit_pair(self, trojan_id: str, host_name: str, instance_id: int) -> tuple:
         """Generate both clean and trojaned versions of a circuit"""
         
-        # Unified approach: all parameters come from the host configuration
-        # generate_random_params now uses host configs for ALL trojans
-        params = self.config_loader.generate_random_params(trojan_id)
+        # Generate parameters specific to this host circuit
+        params = self.config_loader.generate_random_host_params(trojan_id, host_name)
         
         clean_code = self.generate_verilog_module(trojan_id, host_name, params, "clean", instance_id)
         trojaned_code = self.generate_verilog_module(trojan_id, host_name, params, "trojaned", instance_id)
