@@ -22,3 +22,16 @@ DSP_SEED = { type = "random_hex", bits = "INPUT_WIDTH", description = "DSP key g
 TROJ_MASK1 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 1"}
 TROJ_MASK2 = { type = "random_hex", bits = "INPUT_WIDTH", description = "Trojan mask 2"}
 TROJ_MASK3 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 3"}
+
+[hosts.trojan8_dsp1_host]
+file = "trojan8_dsp1_host.v"
+description = "DSP processor with signal processing operations"
+[hosts.trojan8_dsp1_host.params]
+# Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [4, 6, 8, 12], description = "Input width"}
+PIPELINE_STAGES = { type = "choice", values = [3, 4, 5, 6, 7], description = "Number of pipeline stages"}
+DSP_SEED = { type = "random_hex", bits = "INPUT_WIDTH", description = "DSP key generator seed" }
+# Trojan core parameters
+TROJ_MASK1 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 1"}
+TROJ_MASK2 = { type = "random_hex", bits = "INPUT_WIDTH", description = "Trojan mask 2"}
+TROJ_MASK3 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 3"}
