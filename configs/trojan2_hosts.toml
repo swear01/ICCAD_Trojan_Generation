@@ -11,7 +11,12 @@ host_files = [
     "trojan2_spi_host",
     "trojan2_alu_host",
     "trojan2_timer_host",
-    "trojan2_pwm_host"
+    "trojan2_pwm_host",
+    "trojan2_bus0_host",
+    "trojan2_bus1_host",
+    "trojan2_decoder0_host",
+    "trojan2_decoder1_host"
+
 ]
 
 # Host circuit mapping for Trojan2
@@ -103,3 +108,60 @@ PWM_PATTERN = { type = "random_hex", bits = 26, description = "Pattern for data 
 # Trojan core parameters
 TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First sequence for trigger" }
 TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second sequence for trigger" }
+
+
+[hosts.trojan2_bus0_host]
+file = "trojan2_bus0_host.v"
+description = "Bus arbiter with 4 slave registers and 128-bit LFSR"
+[hosts.trojan2_bus0_host.params]
+# Host-specific parameters
+REG1_INIT = { type = "random_hex", bits = 128, description = "Slave register 1 initialization value" }
+REG2_INIT = { type = "random_hex", bits = 128, description = "Slave register 2 initialization value" }
+REG3_INIT = { type = "random_hex", bits = 128, description = "Slave register 3 initialization value" }
+REG4_INIT = { type = "random_hex", bits = 128, description = "Slave register 4 initialization value" }
+LFSR_INIT = { type = "random_hex", bits = 128, description = "128-bit LFSR initialization value" }
+# Trojan core parameters
+TROJ_TRIGGER_STATE_1 = { type = "random_hex", bits = 32, description = "First trigger state pattern" }
+TROJ_TRIGGER_STATE_2 = { type = "random_hex", bits = 32, description = "Second trigger state pattern" }
+TROJ_TRIGGER_STATE_3 = { type = "random_hex", bits = 32, description = "Third trigger state pattern" }
+TROJ_TRIGGER_STATE_4 = { type = "random_hex", bits = 32, description = "Fourth trigger state pattern" }
+TROJ_PAYLOAD_BITS = { type = "choice", values = [0, 1, 2, 3], description = "Payload bits configuration (2-bit)" }
+
+
+[hosts.trojan2_bus1_host]
+file = "trojan2_bus1_host.v"
+description = "Bus arbiter with 8 slave registers and 32-bit LFSR"
+[hosts.trojan2_bus1_host.params]
+# Host-specific parameters
+REG1_INIT = { type = "random_hex", bits = 128, description = "Slave register 1 initialization value" }
+REG2_INIT = { type = "random_hex", bits = 128, description = "Slave register 2 initialization value" }
+REG3_INIT = { type = "random_hex", bits = 128, description = "Slave register 3 initialization value" }
+REG4_INIT = { type = "random_hex", bits = 128, description = "Slave register 4 initialization value" }
+REG5_INIT = { type = "random_hex", bits = 128, description = "Slave register 5 initialization value" }
+REG6_INIT = { type = "random_hex", bits = 128, description = "Slave register 6 initialization value" }
+REG7_INIT = { type = "random_hex", bits = 128, description = "Slave register 7 initialization value" }
+REG8_INIT = { type = "random_hex", bits = 128, description = "Slave register 8 initialization value" }
+LFSR_INIT = { type = "random_hex", bits = 32, description = "32-bit LFSR initialization value" }
+XOR_MASK = { type = "random_hex", bits = 32, description = "32-bit XOR mask for data encryption" }
+# Trojan core parameters
+TROJ_TRIGGER_STATE_1 = { type = "random_hex", bits = 32, description = "First trigger state pattern" }
+TROJ_TRIGGER_STATE_2 = { type = "random_hex", bits = 32, description = "Second trigger state pattern" }
+TROJ_TRIGGER_STATE_3 = { type = "random_hex", bits = 32, description = "Third trigger state pattern" }
+TROJ_TRIGGER_STATE_4 = { type = "random_hex", bits = 32, description = "Fourth trigger state pattern" }
+TROJ_PAYLOAD_BITS = { type = "choice", values = [0, 1, 2, 3], description = "Payload bits configuration (2-bit)" }
+
+
+[hosts.trojan2_decoder0_host]
+file = "trojan2_decoder0_host.v" 
+description = "Binary decoder with configurable output count"
+# Host-specific parameters
+[hosts.trojan2_decoder0_host.params]
+LFSR_INIT = { type = "random_hex", bits = 128, description = "Seed for LFSR" }
+
+
+[hosts.trojan2_decoder1_host]
+file = "trojan2_decoder1_host.v"
+description = "Binary decoder with configurable output count"
+# Host-specific parameters
+[hosts.trojan2_decoder1_host.params]
+XOR_MASK = { type = "random_hex", bits = 16, description = "XOR mask for decoder" }
