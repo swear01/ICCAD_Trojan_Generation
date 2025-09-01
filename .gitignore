@@ -128,3 +128,6 @@ syn.ys
 
 # venv
 venv/
+
+# test
+dummy/

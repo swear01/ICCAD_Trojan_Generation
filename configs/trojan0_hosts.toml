@@ -4,14 +4,6 @@ trojan_id = "trojan0"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan0_datapath_host", 
-    "trojan0_pwm_host", 
-    "trojan0_counter_host",
-    "trojan0_network_host", 
-    "trojan0_spi_host",
-    "trojan0_cache_host",
-    "trojan0_uart_host",
-    "trojan0_timer_host",
     "trojan0_crypto0_host", 
     "trojan0_crypto1_host",
     "trojan0_rsa0_host",
@@ -20,88 +12,6 @@ host_files = [
 
 # Host circuit mapping for Trojan0
 [hosts]
-
-[hosts.trojan0_datapath_host]
-file = "trojan0_datapath_host.v"
-description = "Simple datapath with ALU operations"
-[hosts.trojan0_datapath_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "Initial key generation value" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
-
-[hosts.trojan0_pwm_host]
-file = "trojan0_pwm_host.v"
-description = "PWM generator with configurable duty cycle and frequency"
-# Crypto parameters
-[hosts.trojan0_pwm_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "PWM key generator seed" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
-
-[hosts.trojan0_counter_host]
-file = "trojan0_counter_host.v"
-description = "Counter circuit with overflow and pulse generation" 
-# Crypto parameters
-[hosts.trojan0_counter_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "Counter key generator seed" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
-
-[hosts.trojan0_network_host]
-file = "trojan0_network_host.v"
-description = "Network packet processor with routing"
-[hosts.trojan0_network_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "Network key generator seed" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
-
-[hosts.trojan0_spi_host]
-file = "trojan0_spi_host.v"
-description = "SPI Controller with configurable data width"
-[hosts.trojan0_spi_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "SPI key generator seed" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
-
-[hosts.trojan0_cache_host]
-file = "trojan0_cache_host.v"
-description = "Cache memory with tag-based lookup"
-[hosts.trojan0_cache_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "Cache key generator seed" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
-
-[hosts.trojan0_uart_host]
-file = "trojan0_uart_host.v"
-description = "UART transceiver with configurable baud rate"
-[hosts.trojan0_uart_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "UART key generator seed" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
-
-[hosts.trojan0_timer_host]
-file = "trojan0_timer_host.v"
-description = "Programmable timer with prescaler"
-[hosts.trojan0_timer_host.params]
-# Host-specific parameters
-KEY_INIT = { type = "random_hex", bits = 128, description = "Timer key generator seed" }
-# Trojan core parameters
-TROJ_INIT_VALUE = { type = "random_hex", bits = 20, description = "LFSR initial value" }
-
 
 [hosts.trojan0_crypto0_host]
 file = "trojan0_crypto0_host.v"

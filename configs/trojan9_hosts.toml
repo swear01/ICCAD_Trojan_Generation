@@ -6,45 +6,5 @@ trojan_id = "trojan9"
 host_files = [
 ]
 
-# # Host circuit mapping for Trojan9
-# [hosts]
-
-# [hosts.trojan9_compression_host]
-# file = "trojan9_compression_host.v"
-# description = "Data compression unit with multiple algorithms"
-# [hosts.trojan9_compression_host.params]
-# # Host-specific parameters
-# COMP_PATTERN = { type = "random_hex", bits = 56, description = "Compression data pattern" }
-# # Trojan core parameters
-# TROJ_MASK_0F = { type = "random_hex", bits = 8, description = "Mask applied to e in m3 computation" }
-
-
-# [hosts.trojan9_cordic_host]
-# file = "trojan9_cordic_host.v"
-# description = "CORDIC processor for trigonometric and hyperbolic functions"
-# [hosts.trojan9_cordic_host.params]
-# # Host-specific parameters
-# ATAN_CONST = { type = "choice", values = [13380, 16644, 20740], description = "ATAN approximation constant" }
-# CORDIC_PATTERN = { type = "random_hex", bits = 128, description = "CORDIC data pattern" }
-# # Trojan core parameters
-# TROJ_MASK_0F = { type = "random_hex", bits = 8, description = "Mask applied to e in m3 computation" }
-
-
-# [hosts.trojan9_signal_host]
-# file = "trojan9_signal_host.v"
-# description = "Signal processing unit with filter modes"
-# [hosts.trojan9_signal_host.params]
-# # Host-specific parameters
-# SIG_PATTERN = { type = "random_hex", bits = 192, description = "Signal processing data pattern" }
-# # Trojan core parameters
-# TROJ_MASK_0F = { type = "random_hex", bits = 8, description = "Mask applied to e in m3 computation" }
-
-
-# [hosts.trojan9_alu_host]
-# file = "trojan9_alu_host.v"
-# description = "Corrected ALU-based vector processor with subtle trojan"
-# [hosts.trojan9_alu_host.params]
-# # Host-specific parameters
-# VECTOR_PATTERN = { type = "random_hex", bits = 80, description = "Vector data pattern" }
-# # Trojan core parameters
-# TROJ_MASK_0F = { type = "random_hex", bits = 8, description = "Mask applied to e in m3 computation" }
+# Host circuit mapping for Trojan9
+[hosts]

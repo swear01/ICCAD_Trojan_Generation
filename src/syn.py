@@ -33,8 +33,8 @@ DEFAULT_MAP_PATH = "map.v"  # Map file for ALDFF to DFF primitive
 DEFAULT_SCRIPT_PATH = "syn.ys"
 DEFAULT_COUNT_START = 0
 DEFAULT_RTL_DIR = "generated_circuits/"
-DEFAULT_NETLIST_OUT_DIR = "dummy_netlist/"
-DEFAULT_LABEL_OUT_DIR = "dummy_label/"
+DEFAULT_NETLIST_OUT_DIR = "dummy/netlist/"
+DEFAULT_LABEL_OUT_DIR = "dummy/label/"
 ################### END DEFAULT CONFIG ###################
 
 

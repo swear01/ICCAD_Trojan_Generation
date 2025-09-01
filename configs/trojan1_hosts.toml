@@ -4,14 +4,6 @@ trojan_id = "trojan1"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan1_fsm_host", 
-    "trojan1_timer_host", 
-    "trojan1_shifter_host",
-    "trojan1_alu_host",
-    "trojan1_spi_host",
-    "trojan1_pwm_host",
-    "trojan1_fifo_host",
-    "trojan1_uart_host",
     "trojan1_counter0_host",
     "trojan1_counter1_host",
     "trojan1_decoder0_host",
@@ -20,70 +12,6 @@ host_files = [
 
 # Host circuit mapping for Trojan1
 [hosts]
-
-[hosts.trojan1_fsm_host]
-file = "trojan1_fsm_host.v"
-description = "Finite State Machine with data processing"
-[hosts.trojan1_fsm_host.params]
-# Host-specific parameters
-INIT_SEED = { type = "random_hex", bits = 8, description = "Initial seed for r1 signal generation" }
-
-
-[hosts.trojan1_timer_host]
-file = "trojan1_timer_host.v" 
-description = "Timer circuit with timeout and pause functionality"
-[hosts.trojan1_timer_host.params]
-# Host-specific parameters
-R1_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for r1 signal generation" }
-
-
-[hosts.trojan1_shifter_host]
-file = "trojan1_shifter_host.v"
-description = "Barrel shifter with configurable shift steps"
-[hosts.trojan1_shifter_host.params]
-# Host-specific parameters
-R1_SEED = { type = "random_hex", bits = 32, description = "LFSR seed for r1 signal generation" }
-
-
-[hosts.trojan1_alu_host]
-file = "trojan1_alu_host.v"
-description = "Arithmetic Logic Unit with multiple operations"
-[hosts.trojan1_alu_host.params]
-# Host-specific parameters
-R1_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for r1 shift-based generation" }
-
-
-[hosts.trojan1_spi_host]
-file = "trojan1_spi_host.v"
-description = "SPI master controller with configurable clock"
-[hosts.trojan1_spi_host.params]
-# Host-specific parameters
-R1_SEED = { type = "random_hex", bits = 20, description = "LFSR seed for r1 generation" }
-
-
-[hosts.trojan1_pwm_host]
-file = "trojan1_pwm_host.v"
-description = "Single channel PWM generator with trojan integration"
-[hosts.trojan1_pwm_host.params]
-# Host-specific parameters
-R1_INIT = { type = "random_hex", bits = 12, description = "Initial value for r1 counter generation" }
-
-
-[hosts.trojan1_fifo_host]
-file = "trojan1_fifo_host.v"
-description = "FIFO buffer with configurable depth"
-[hosts.trojan1_fifo_host.params]
-# Host-specific parameters
-R1_KEY = { type = "random_hex", bits = 28, description = "Key for r1 rotating generation" }
-
-
-[hosts.trojan1_uart_host]
-file = "trojan1_uart_host.v"
-description = "UART transceiver with configurable baud rate"
-[hosts.trojan1_uart_host.params]
-# Host-specific parameters
-R1_SEED = { type = "random_hex", bits = 18, description = "Seed for r1 multi-phase shift register" }
-
 
 [hosts.trojan1_counter0_host]
 file = "trojan1_counter0_host.v"
