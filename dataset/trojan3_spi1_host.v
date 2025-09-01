@@ -2,7 +2,6 @@
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
 // Modify spi_mosi output and tx data shifting instead of rx data
 module trojan3_spi1_host #(
-    parameter [27:0] SPI_SEED = 28'hABCDEF1,
     parameter [7:0] TROJ_COUNTER_THRESHOLD = 8'hFF,
     parameter [15:0] TROJ_DATA_INCREMENT = 16'h0002
 )(
