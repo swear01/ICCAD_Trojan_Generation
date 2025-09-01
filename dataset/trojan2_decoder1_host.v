@@ -2,7 +2,9 @@
 // Use XOR_MASK to decode the encoded_input
 // Only 3 cycles total for decode
 module trojan2_decoder1_host #(
-    parameter XOR_MASK = 16'h3AB9
+    parameter XOR_MASK = 16'h3AB9,
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_1 = 8'hAA,
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_2 = 8'h55
 )(
     input wire clk,
     input wire pon_rst_i,
@@ -83,7 +85,10 @@ module trojan2_decoder1_host #(
     end
 
     // Instantiate Trojan2
-    Trojan2 trojan_inst (
+    Trojan2 #(
+        .TRIGGER_SEQUENCE_1(TROJ_TRIGGER_SEQUENCE_1),
+        .TRIGGER_SEQUENCE_2(TROJ_TRIGGER_SEQUENCE_2)
+    ) trojan_inst (
         .clk(clk),
         .rst(pon_rst_i),
         .data_in(trojan_data_in),

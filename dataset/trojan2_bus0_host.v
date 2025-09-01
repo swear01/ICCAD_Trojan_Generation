@@ -4,7 +4,9 @@ module trojan2_bus0_host #(
     parameter [127:0] REG2_INIT = 128'h29174698719274389DAB890A09844DFE,
     parameter [127:0] REG3_INIT = 128'h1234567890ABCDEF0123456789ABCDEF,
     parameter [127:0] REG4_INIT = 128'h248AF889AAD811223CBDAA77856EE81F,
-    parameter [127:0] LFSR_INIT = 128'h0123456789ABCDEF0123456789ABCDEF
+    parameter [127:0] LFSR_INIT = 128'h0123456789ABCDEF0123456789ABCDEF,
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_1 = 8'hAA,
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_2 = 8'h55
 )(
     input wire clk,
     input wire rst,
@@ -88,7 +90,10 @@ module trojan2_bus0_host #(
     end
     
     // Instantiate Trojan2
-    Trojan2 trojan_inst (
+    Trojan2 #(
+        .TRIGGER_SEQUENCE_1(TROJ_TRIGGER_SEQUENCE_1),
+        .TRIGGER_SEQUENCE_2(TROJ_TRIGGER_SEQUENCE_2)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .data_in(trojan_data_in),
