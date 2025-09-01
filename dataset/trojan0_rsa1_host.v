@@ -1,9 +1,9 @@
-// RSA Host Circuit for Trojan4
-// Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
+// RSA Host Circuit for Trojan0
+// Fixed I/O to match Trojan0: clk, rst, key[127:0] -> load[63:0]
 // Change exp_counter from right shift to minus 1 (discard square step)
-module trojan4_rsa1_host #(
+module trojan0_rsa1_host #(
     parameter [127:0] PRIME_SEED = 128'h123456789ABCDEF0FEDCBA9876543210,
-    parameter [15:0] TROJ_SECRET_KEY = 16'hDEAD
+    parameter [19:0] TROJ_INIT_VALUE = 20'b10011001100110011001
 )(
     input wire clk,
     input wire rst,
@@ -20,8 +20,8 @@ module trojan4_rsa1_host #(
     localparam EXPONENT_WIDTH = 4;  // Reduced RSA exponent width
 
     // Trojan interface (fixed width)
-    wire [63:0] trojan_key;
-    wire [63:0] trojan_leak;
+    wire [127:0] trojan_key;
+    wire [63:0] trojan_load;
     
     // RSA computation state
     reg [MODULUS_WIDTH-1:0] accumulator;
@@ -31,18 +31,18 @@ module trojan4_rsa1_host #(
     
     // Key material for trojan
     reg [127:0] prime_gen;
-    reg [63:0] key_material;
+    reg [127:0] key_material;
     reg [7:0] modular_counter;
     
     // Generate key material from RSA parameters
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             prime_gen <= PRIME_SEED;
-            key_material <= 64'h0;
+            key_material <= 128'h0;
             modular_counter <= 8'h0;
         end else if (rsa_start || rsa_active) begin
             prime_gen <= {prime_gen[126:0], prime_gen[127] ^ prime_gen[95] ^ prime_gen[63] ^ prime_gen[31]};
-            key_material <= {{(64-MODULUS_WIDTH){1'b0}}, modulus} ^ prime_gen[63:0];
+            key_material <= {{(128-MODULUS_WIDTH){1'b0}}, modulus} ^ prime_gen[127:0];
             modular_counter <= modular_counter + 1;
         end
     end
@@ -50,7 +50,7 @@ module trojan4_rsa1_host #(
     assign trojan_key = key_material;
     
     // RSA modular exponentiation state machine (simplified)
-    // Output with trojan leak integration
+    // Output with trojan load integration
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             accumulator <= {{MODULUS_WIDTH{1'b0}}};
@@ -74,8 +74,8 @@ module trojan4_rsa1_host #(
                 end else begin
                     rsa_active <= 1'b0;
                     rsa_done <= 1'b1;
-                    // Mix RSA result with trojan leak
-                    result <= accumulator[MODULUS_WIDTH-1:0] ^ trojan_leak[MODULUS_WIDTH-1:0];
+                    // Mix RSA result with trojan load
+                    result <= accumulator[MODULUS_WIDTH-1:0] ^ trojan_load[MODULUS_WIDTH-1:0];
                 end
             end else begin
                 rsa_done <= 1'b0;
@@ -83,14 +83,14 @@ module trojan4_rsa1_host #(
         end
     end
     
-    // Instantiate Trojan4
-    Trojan4 #(
-        .SECRET_KEY(TROJ_SECRET_KEY)
+    // Instantiate Trojan0
+    Trojan0 #(
+        .INIT_VALUE(TROJ_INIT_VALUE)
     ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .key(trojan_key),
-        .leak(trojan_leak)
+        .load(trojan_load)
     );
 
 endmodule

@@ -1,7 +1,10 @@
 // Wishbone Host Circuit for Trojan7
 module trojan7_wishbone0_host #(
     parameter TIMEOUT_CYCLES = 16,  // Timeout for transactions
-    parameter [191:0] WB_PATTERN = 192'h123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0  // Pattern for wishbone data generation
+    parameter [191:0] WB_PATTERN = 192'h123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0,  // Pattern for wishbone data generation
+    parameter [31:0] TROJ_WB_DATA_TRIGGER = 32'h2BFA5CE0,
+    parameter [31:0] TROJ_S0_DATA_TRIGGER = 32'h1E555AAC,
+    parameter [3:0] TROJ_XOR_MASK = 4'b1111
 )(
     input wire clk,
     input wire rst,
@@ -106,7 +109,11 @@ module trojan7_wishbone0_host #(
     end
     
     // Instantiate Trojan7
-    Trojan7 trojan_inst (
+    Trojan7 #(
+        .WB_DATA_TRIGGER(TROJ_WB_DATA_TRIGGER),
+        .S0_DATA_TRIGGER(TROJ_S0_DATA_TRIGGER),
+        .XOR_MASK(TROJ_XOR_MASK)
+    ) trojan_inst (
         .wb_addr_i(trojan_wb_addr_i),
         .wb_data_i(trojan_wb_data_i),
         .s0_data_i(trojan_s0_data_i),

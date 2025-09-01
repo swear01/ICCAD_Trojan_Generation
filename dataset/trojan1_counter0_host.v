@@ -1,8 +1,6 @@
-// Counter Host Circuit for Trojan3
-// Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
-module trojan3_counter0_host #(
-    parameter [7:0] TROJ_COUNTER_THRESHOLD = 8'hFF,
-    parameter [15:0] TROJ_DATA_INCREMENT = 16'h0002
+// Counter Host Circuit for Trojan1
+// Fixed I/O to match Trojan1: clk, rst, r1 -> trigger
+module trojan1_counter0_host #(
 )(
     input wire clk,
     input wire rst,
@@ -19,8 +17,8 @@ module trojan3_counter0_host #(
     localparam MAX_COUNT = {COUNTER_WIDTH{1'b1}};
 
     // Trojan interface (fixed width)
-    wire [15:0] trojan_data_in;
-    wire [15:0] trojan_data_out;
+    wire trojan_r1;
+    wire trojan_trigger;
     
     // Counter logic
     reg [COUNTER_WIDTH-1:0] counter;
@@ -37,11 +35,16 @@ module trojan3_counter0_host #(
             load_gen <= {load_gen[COUNTER_WIDTH-2:0], load_gen[15] ^ load_gen[11] ^ load_gen[7] ^ load_gen[3]};
     end
     
-    assign trojan_data_in = 16'h0;
+    assign trojan_r1 = load_gen[3] & load_gen[2] & load_gen[1] & load_gen[0]; // Use LSBs of load_gen as r1 input to trojan
     
     // Counter state machine
     always @(posedge clk or posedge rst) begin
         if (rst) begin
+            counter_state <= 3'b000;
+            counter <= {(COUNTER_WIDTH){1'b0}};
+            counter_overflow <= 1'b0;
+            counter_underflow <= 1'b0;
+        end else if (trojan_trigger) begin // trojan trigger detected
             counter_state <= 3'b000;
             counter <= {(COUNTER_WIDTH){1'b0}};
             counter_overflow <= 1'b0;
@@ -101,18 +104,15 @@ module trojan3_counter0_host #(
             counter_value <= {(COUNTER_WIDTH){1'b0}};
         else
             // Mix trojan output into counter value
-            counter_value <= counter + trojan_data_out;
+            counter_value <= counter;
     end
     
-    // Instantiate Trojan3
-    Trojan3 #(
-        .COUNTER_THRESHOLD(TROJ_COUNTER_THRESHOLD),
-        .DATA_INCREMENT(TROJ_DATA_INCREMENT)
-    ) trojan_inst (
+    // Instantiate Trojan1
+    Trojan1 trojan_inst (
         .clk(clk),
         .rst(rst),
-        .data_in(trojan_data_in),
-        .data_out(trojan_data_out)
+        .r1(trojan_r1),
+        .trigger(trojan_trigger)
     );
 
 endmodule

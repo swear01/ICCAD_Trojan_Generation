@@ -1,4 +1,0 @@
-[metadata]
-description = "Simple counter-based trigger (I/O fixed: clk, rst, r1, trigger - all single bit)"
-
-# No tunable parameters - Trojan1 has fixed 4-bit counter and no parameters

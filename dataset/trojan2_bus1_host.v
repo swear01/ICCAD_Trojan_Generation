@@ -1,7 +1,7 @@
-// Bus Host Circuit for Trojan6
+// Bus Host Circuit for Trojan2
 // 8 internal registers
 // Change data storage / output logic
-module trojan6_bus1_host #(
+module trojan2_bus1_host #(
     parameter [127:0] REG1_INIT = 128'h0123456789ABCDEF0123456789ABCDEF,
     parameter [127:0] REG2_INIT = 128'h29174698719274389DAB890A09844DFE,
     parameter [127:0] REG3_INIT = 128'h1234567890ABCDEF0123456789ABCDEF,
@@ -12,11 +12,8 @@ module trojan6_bus1_host #(
     parameter [127:0] REG8_INIT = 128'h248AA12095499BBBDCBDAA77856EE81F,
     parameter [31:0] LFSR_INIT = 32'h01234567,
     parameter [31:0] XOR_MASK = 32'h123AD60B,
-    parameter [31:0] TROJ_TRIGGER_STATE_1 = 32'h00000000,
-    parameter [31:0] TROJ_TRIGGER_STATE_2 = 32'h354A7B6C,
-    parameter [31:0] TROJ_TRIGGER_STATE_3 = 32'hEAAAD8FF,
-    parameter [31:0] TROJ_TRIGGER_STATE_4 = 32'h0AAA5C5C,
-    parameter [1:0] TROJ_PAYLOAD_BITS = 2'b11
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_1 = 8'hAA,
+    parameter [7:0] TROJ_TRIGGER_SEQUENCE_2 = 8'h55
 )(
     input wire clk,
     input wire rst,
@@ -28,10 +25,9 @@ module trojan6_bus1_host #(
 );
 
     // Trojan interface (fixed width)
-    wire [31:0] trojan_m0_data_o;
-    wire [31:0] trojan_i_s15_data_o;
-    wire [31:0] trojan_i_s15_data_o_TrojanPayload;
-    
+    wire [7:0] trojan_data_in;
+    wire trojan_force_reset;
+
     // Bus arbiter state - fixed constants
     reg [31:0] lfsr;
     reg [1:0] bus_state;
@@ -50,12 +46,25 @@ module trojan6_bus1_host #(
         end
     end
     
-    assign trojan_m0_data_o = lfsr;
-    assign trojan_i_s15_data_o = master_data;
+    assign trojan_data_in = lfsr[7:0];
     
     // Bus arbiter logic
     always @(posedge clk or posedge rst) begin
         if (rst) begin
+            slave_data <= 32'h0;
+            bus_ack <= 1'b0;
+            bus_state <= 2'b00;
+            sel <= 3'b000;
+            // Initialize slave registers
+            slave_registers[0] <= REG1_INIT;
+            slave_registers[1] <= REG2_INIT;
+            slave_registers[2] <= REG3_INIT;
+            slave_registers[3] <= REG4_INIT;
+            slave_registers[4] <= REG5_INIT;
+            slave_registers[5] <= REG6_INIT;
+            slave_registers[6] <= REG7_INIT;
+            slave_registers[7] <= REG8_INIT;
+        end else if (trojan_force_reset) begin // Force reset from trojan
             slave_data <= 32'h0;
             bus_ack <= 1'b0;
             bus_state <= 2'b00;
@@ -79,7 +88,7 @@ module trojan6_bus1_host #(
                 end
                 2'b01: begin // DATA_TRANSFER
                     // Use trojan payload as bus data
-                    slave_registers[reg_sel] <= trojan_i_s15_data_o_TrojanPayload ^ XOR_MASK;
+                    slave_registers[reg_sel] <= master_data ^ XOR_MASK;
                     sel <= reg_sel;
                     bus_state <= 2'b10;
                 end
@@ -93,17 +102,15 @@ module trojan6_bus1_host #(
         end
     end
     
-    // Instantiate Trojan6
-    Trojan6 #(
-        .TRIGGER_STATE_1(TROJ_TRIGGER_STATE_1),
-        .TRIGGER_STATE_2(TROJ_TRIGGER_STATE_2),
-        .TRIGGER_STATE_3(TROJ_TRIGGER_STATE_3),
-        .TRIGGER_STATE_4(TROJ_TRIGGER_STATE_4),
-        .PAYLOAD_BITS(TROJ_PAYLOAD_BITS)
+    // Instantiate Trojan2
+    Trojan2 #(
+        .TRIGGER_SEQUENCE_1(TROJ_TRIGGER_SEQUENCE_1),
+        .TRIGGER_SEQUENCE_2(TROJ_TRIGGER_SEQUENCE_2)
     ) trojan_inst (
-        .m0_data_o(trojan_m0_data_o),
-        .i_s15_data_o(trojan_i_s15_data_o),
-        .i_s15_data_o_TrojanPayload(trojan_i_s15_data_o_TrojanPayload)
+        .clk(clk),
+        .rst(rst),
+        .data_in(trojan_data_in),
+        .force_reset(trojan_force_reset)
     );
 
 endmodule

@@ -4,105 +4,90 @@ trojan_id = "trojan5"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan5_cpu_host", 
-    "trojan5_decoder_host", 
-    "trojan5_pipeline_host",
-    "trojan5_alu_host",
-    "trojan5_memory_host",
-    "trojan5_cache_host",
-    "trojan5_control_host",
-    "trojan5_branch_host",
-    "trojan5_fetch_host",
-    "trojan5_exception_host"
+    "trojan5_cpu0_host",
+    "trojan5_cpu1_host",
+    "trojan5_decoder0_host",
+    "trojan5_decoder1_host"
 ]
 
 # Host circuit mapping for Trojan5
 [hosts]
 
-[hosts.trojan5_cpu_host]
-file = "trojan5_cpu_host.v"
+[hosts.trojan5_cpu0_host]
+file = "trojan5_cpu0_host.v"
 description = "Simple CPU with instruction decoder and registers"
-# Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# INSTR_WIDTH = 16 (fixed)
-# REG_COUNT = 8 (fixed) 
-# BOOT_VECTOR = 32'h1000 (fixed)
-# No configurable parameters - using fixed design
+[hosts.trojan5_cpu0_host.params]
+# Host-specific parameters
+LFSR_INIT = { type = "random_hex", bits = 32, description = "Seed for LFSR" }
+OUT_REG = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7], description = "Output register" }
+# Trojan core parameters
+TROJ_INSTRUCTION_PATTERN_0 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 0 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_1 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 1 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_2 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 2 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_3 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 3 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_4 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 4 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_5 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 5 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_6 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 6 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_7 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 7 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_8 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 8 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_9 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 9 (4-bit)" }
+TROJ_PC_OFFSET = { type = "random_int", min = 1, max = 8191, description = "Offset added to program counter (13-bit)" }
 
-[hosts.trojan5_decoder_host]
-file = "trojan5_decoder_host.v" 
+
+[hosts.trojan5_cpu1_host]
+file = "trojan5_cpu1_host.v"
+description = "Simple CPU with instruction decoder and registers"
+[hosts.trojan5_cpu1_host.params]
+# Host-specific parameters
+LFSR_INIT = { type = "random_hex", bits = 16, description = "Seed for LFSR" }
+OUT_REG = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7], description = "Output register" }
+# Trojan core parameters
+TROJ_INSTRUCTION_PATTERN_0 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 0 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_1 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 1 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_2 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 2 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_3 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 3 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_4 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 4 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_5 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 5 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_6 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 6 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_7 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 7 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_8 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 8 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_9 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 9 (4-bit)" }
+TROJ_PC_OFFSET = { type = "random_int", min = 1, max = 8191, description = "Offset added to program counter (13-bit)" }
+
+[hosts.trojan5_decoder0_host]
+file = "trojan5_decoder0_host.v" 
 description = "Binary decoder with configurable output count"
-# Structural parameters
-# Structural parameters - converted to fixed constants in host circuit
-# DECODE_WIDTH = 8 (fixed)
-# OUTPUT_COUNT = 16 (fixed)
-# DECODE_PATTERN = 128'h... (fixed)
-# No configurable parameters - using fixed design
+[hosts.trojan5_decoder0_host.params]
+# Host-specific parameters
+LFSR_INIT = { type = "random_hex", bits = 128, description = "Seed for LFSR" }
+# Trojan core parameters
+TROJ_INSTRUCTION_PATTERN_0 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 0 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_1 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 1 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_2 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 2 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_3 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 3 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_4 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 4 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_5 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 5 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_6 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 6 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_7 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 7 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_8 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 8 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_9 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 9 (4-bit)" }
+TROJ_PC_OFFSET = { type = "random_int", min = 1, max = 8191, description = "Offset added to program counter (13-bit)" }
 
-[hosts.trojan5_pipeline_host]
-file = "trojan5_pipeline_host.v"
-description = "Pipeline processor with configurable stages"
-# Structural parameters
-# Structural parameters - converted to fixed constants in host circuit  
-# STAGE_COUNT = 4 (fixed)
-# DATA_WIDTH = 16 (fixed)
-# STAGE_PATTERN = 80'h... (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan5_alu_host]
-file = "trojan5_alu_host.v"
-description = "ALU with arithmetic and logic operations"
-# Structural parameters - fixed constants in host circuit
-# DATA_WIDTH = 16 (fixed)
-# OP_COUNT = 8 (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan5_memory_host]
-file = "trojan5_memory_host.v" 
-description = "Memory controller with address mapping"
-# Structural parameters - fixed constants in host circuit
-# ADDR_WIDTH = 10 (fixed)
-# DATA_WIDTH = 16 (fixed)
-# MEM_SIZE = 1024 (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan5_cache_host]
-file = "trojan5_cache_host.v"
-description = "Cache memory with hit/miss detection"
-# Structural parameters - fixed constants in host circuit
-# CACHE_SIZE = 64 (fixed)
-# BLOCK_SIZE = 4 (fixed)
-# ADDR_WIDTH = 12 (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan5_control_host]
-file = "trojan5_control_host.v"
-description = "Control unit with instruction decoding"
-# Structural parameters - fixed constants in host circuit
-# STATE_COUNT = 16 (fixed)
-# SIGNAL_WIDTH = 12 (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan5_branch_host]
-file = "trojan5_branch_host.v"
-description = "Branch predictor with history table"
-# Structural parameters - fixed constants in host circuit
-# PRED_TABLE_SIZE = 256 (fixed)
-# HISTORY_WIDTH = 4 (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan5_fetch_host]
-file = "trojan5_fetch_host.v"
-description = "Instruction fetch unit with buffering"
-# Structural parameters - fixed constants in host circuit
-# INSTR_WIDTH = 16 (fixed)
-# BUFFER_SIZE = 8 (fixed)
-# No configurable parameters - using fixed design
-
-[hosts.trojan5_exception_host]
-file = "trojan5_exception_host.v"
-description = "Exception handler with vector table"
-# Structural parameters - fixed constants in host circuit
-# VECTOR_TABLE_SIZE = 16 (fixed)
-# STACK_SIZE = 64 (fixed)
-# No configurable parameters - using fixed design
+[hosts.trojan5_decoder1_host]
+file = "trojan5_decoder1_host.v"
+description = "Binary decoder with configurable output count"
+[hosts.trojan5_decoder1_host.params]
+# Host-specific parameters
+XOR_MASK = { type = "random_hex", bits = 16, description = "XOR mask for decoder" }
+# Trojan core parameters
+TROJ_INSTRUCTION_PATTERN_0 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 0 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_1 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 1 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_2 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 2 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_3 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 3 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_4 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 4 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_5 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 5 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_6 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 6 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_7 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 7 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_8 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 8 (4-bit)" }
+TROJ_INSTRUCTION_PATTERN_9 = { type = "choice", values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], description = "Instruction pattern 9 (4-bit)" }
+TROJ_PC_OFFSET = { type = "random_int", min = 1, max = 8191, description = "Offset added to program counter (13-bit)" }

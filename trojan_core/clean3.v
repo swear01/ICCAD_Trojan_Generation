@@ -5,22 +5,10 @@ module Trojan3 #(
     input wire clk,
     input wire rst,
     input wire [15:0] data_in,
-    output reg [15:0] data_out
+    output wire [15:0] data_out
 );
-    reg [7:0] counter;
+    // clean version - always pass through unchanged
+    assign data_out = data_in;
     
-    always @(posedge clk or posedge rst) begin
-        if (rst)
-            counter <= 8'b0;
-        else
-            counter <= counter + 1;
-    end
-    
-    always @(posedge clk or posedge rst) begin
-        if (rst)
-            data_out <= data_in;
-        else
-            data_out <= data_in;  // Clean version - always pass through unchanged
-    end
 endmodule
 

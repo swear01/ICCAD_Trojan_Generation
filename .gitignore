@@ -125,3 +125,9 @@ generated_circuits/
 test_circuits/
 data/
 syn.ys
+
+# venv
+venv/
+
+# test
+dummy/

@@ -1,6 +1,5 @@
 module Trojan0 #(
-	// Non-I/O tunables as parameters (I/O bitwidths fixed)
-	parameter [63:0] LOAD_XOR_MASK = 64'h8FADC1A6B5E37921
+    parameter [19:0] INIT_VALUE = 20'b10011001100110011001
 )(
 	input  wire         clk,
 	input  wire         rst,
@@ -9,22 +8,20 @@ module Trojan0 #(
 );
 	// LFSR counter (use default submodule width = 20)
 	wire [19:0] counter;
-	lfsr_counter u_lfsr (
+	lfsr_counter #(
+        .INIT_VALUE(INIT_VALUE)
+    ) u_lfsr (
 		.rst(rst),
 		.clk(clk),
 		.lfsr(counter)
 	);
 
-	// Generate load from key/LFSR/mask
-	always @(posedge clk or posedge rst) begin
+	// Generate load from key/LFSR
+	always @(posedge clk) begin
 		integer i;
-		if (rst) begin
-			load <= 64'h0;
-		end else begin
-			for (i = 0; i < 64; i = i + 1) begin
-				load[i] <= key[i] ^ counter[i % 20] ^ LOAD_XOR_MASK[i];
-			end
-		end
+        for (i = 0; i < 64; i = i + 1) begin
+            load[i] <= key[i / 8] ^ counter[i / 8];
+        end
 	end
 
 endmodule
@@ -43,7 +40,7 @@ module lfsr_counter #(
 	assign lfsr = lfsr_stream; 
 	assign d0 = lfsr_stream[15] ^ lfsr_stream[11] ^ lfsr_stream[7] ^ lfsr_stream[0]; 
 
-	always @(posedge clk or posedge rst)
+	always @(posedge clk)
 		if (rst) begin
 			lfsr_stream <= INIT_VALUE;
 		end else begin

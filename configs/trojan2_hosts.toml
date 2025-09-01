@@ -4,116 +4,67 @@ trojan_id = "trojan2"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan2_processor_host", 
-    "trojan2_fifo_host", 
-    "trojan2_uart_host",
-    "trojan2_counter_host",
-    "trojan2_spi_host",
-    "trojan2_alu_host",
-    "trojan2_timer_host",
-    "trojan2_pwm_host",
-    "trojan2_dsp_host"
+    "trojan2_bus0_host",
+    "trojan2_bus1_host",
+    "trojan2_decoder0_host",
+    "trojan2_decoder1_host"
 ]
 
 # Host circuit mapping for Trojan2
 [hosts]
 
-[hosts.trojan2_processor_host]
-file = "trojan2_processor_host.v"
-description = "Simple processor with ALU operations and program counter"
-# Structural parameters
-[hosts.trojan2_processor_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "Processor data width" }
-ADDR_WIDTH = { type = "choice", values = [6, 7, 8, 9], description = "Address bus width" }
-# Crypto parameters
-[hosts.trojan2_processor_host.crypto_vars]
-DATA_PATTERN = { type = "random_hex", bits = 16, description = "Pattern for trojan data generation" }
-
-[hosts.trojan2_fifo_host]
-file = "trojan2_fifo_host.v" 
-description = "FIFO buffer with configurable depth and data width"
-# Structural parameters
-[hosts.trojan2_fifo_host.params]
-DATA_WIDTH = { type = "choice", values = [8, 12, 16, 20], description = "FIFO data width" }
-DEPTH = { type = "choice", values = [8, 16, 32, 64], description = "FIFO depth (number of entries)" }
-# Crypto parameters
-[hosts.trojan2_fifo_host.crypto_vars]
-SEQUENCE_SEED = { type = "random_hex", bits = 24, description = "Seed for data sequence generation" }
-
-[hosts.trojan2_uart_host]
-file = "trojan2_uart_host.v"
-description = "UART transceiver with configurable baud rate"
-# Structural parameters
-[hosts.trojan2_uart_host.params]
-BAUD_DIV = { type = "choice", values = [52, 104, 208, 416], description = "Baud rate divisor (higher = slower)" }
-DATA_BITS = { type = "choice", values = [7, 8, 9], description = "Number of data bits per frame" }
-# Crypto parameters
-[hosts.trojan2_uart_host.crypto_vars]
-TX_PATTERN = { type = "random_hex", bits = 32, description = "Pattern for transmission data generation" }
+[hosts.trojan2_bus0_host]
+file = "trojan2_bus0_host.v"
+description = "Bus arbiter with 4 slave registers and 128-bit LFSR"
+[hosts.trojan2_bus0_host.params]
+# Host-specific parameters
+REG1_INIT = { type = "random_hex", bits = 128, description = "Slave register 1 initialization value" }
+REG2_INIT = { type = "random_hex", bits = 128, description = "Slave register 2 initialization value" }
+REG3_INIT = { type = "random_hex", bits = 128, description = "Slave register 3 initialization value" }
+REG4_INIT = { type = "random_hex", bits = 128, description = "Slave register 4 initialization value" }
+LFSR_INIT = { type = "random_hex", bits = 128, description = "128-bit LFSR initialization value" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First trigger sequence" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second trigger sequence" }
 
 
-[hosts.trojan2_counter_host]
-file = "trojan2_counter_host.v"
-description = "Configurable up/down counter with overflow detection"
-# Structural parameters
-[hosts.trojan2_counter_host.params]
-COUNTER_WIDTH = { type = "choice", values = [8, 10, 12, 16], description = "Counter bit width" }
-COUNT_MAX = { type = "range", min = 1024, max = 8192, description = "Maximum count value" }
-# Crypto parameters
-[hosts.trojan2_counter_host.crypto_vars]
-COUNT_PATTERN = { type = "random_hex", bits = 28, description = "Pattern for trojan data generation" }
+[hosts.trojan2_bus1_host]
+file = "trojan2_bus1_host.v"
+description = "Bus arbiter with 8 slave registers and 32-bit LFSR"
+[hosts.trojan2_bus1_host.params]
+# Host-specific parameters
+REG1_INIT = { type = "random_hex", bits = 128, description = "Slave register 1 initialization value" }
+REG2_INIT = { type = "random_hex", bits = 128, description = "Slave register 2 initialization value" }
+REG3_INIT = { type = "random_hex", bits = 128, description = "Slave register 3 initialization value" }
+REG4_INIT = { type = "random_hex", bits = 128, description = "Slave register 4 initialization value" }
+REG5_INIT = { type = "random_hex", bits = 128, description = "Slave register 5 initialization value" }
+REG6_INIT = { type = "random_hex", bits = 128, description = "Slave register 6 initialization value" }
+REG7_INIT = { type = "random_hex", bits = 128, description = "Slave register 7 initialization value" }
+REG8_INIT = { type = "random_hex", bits = 128, description = "Slave register 8 initialization value" }
+LFSR_INIT = { type = "random_hex", bits = 32, description = "32-bit LFSR initialization value" }
+XOR_MASK = { type = "random_hex", bits = 32, description = "32-bit XOR mask for data encryption" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First trigger sequence" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second trigger sequence" }
 
-[hosts.trojan2_spi_host]
-file = "trojan2_spi_host.v"
-description = "SPI master controller with configurable frame width"
-# Structural parameters
-[hosts.trojan2_spi_host.params]
-DATA_WIDTH = { type = "choice", values = [8, 12, 16], description = "SPI data frame width" }
-CLK_DIV = { type = "choice", values = [8, 16, 32, 64], description = "SPI clock divider" }
-# Crypto parameters
-[hosts.trojan2_spi_host.crypto_vars]
-SPI_PATTERN = { type = "random_hex", bits = 24, description = "Pattern for trojan data generation" }
 
-[hosts.trojan2_alu_host]
-file = "trojan2_alu_host.v"
-description = "Arithmetic Logic Unit with multiple operations and flags"
-# Structural parameters
-[hosts.trojan2_alu_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20], description = "ALU operand width" }
-# Crypto parameters
-[hosts.trojan2_alu_host.crypto_vars]
-ALU_SEED = { type = "random_hex", bits = 20, description = "Seed for trojan data generation" }
+[hosts.trojan2_decoder0_host]
+file = "trojan2_decoder0_host.v" 
+description = "Binary decoder with configurable output count"
+[hosts.trojan2_decoder0_host.params]
+# Host-specific parameters
+LFSR_INIT = { type = "random_hex", bits = 128, description = "Seed for LFSR" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First trigger sequence" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second trigger sequence" }
 
-[hosts.trojan2_timer_host]
-file = "trojan2_timer_host.v"
-description = "Configurable timer with prescaler and compare match"
-# Structural parameters
-[hosts.trojan2_timer_host.params]
-TIMER_WIDTH = { type = "choice", values = [12, 16, 20], description = "Timer counter width" }
-PRESCALER = { type = "choice", values = [64, 128, 256, 512], description = "Clock prescaler value" }
-# Crypto parameters
-[hosts.trojan2_timer_host.crypto_vars]
-TIMER_SEED = { type = "random_hex", bits = 32, description = "Seed for trojan data generation" }
 
-[hosts.trojan2_pwm_host]
-file = "trojan2_pwm_host.v"
-description = "Multi-channel PWM generator with configurable resolution"
-# Structural parameters
-[hosts.trojan2_pwm_host.params]
-PWM_WIDTH = { type = "choice", values = [10, 12, 14, 16], description = "PWM counter resolution" }
-PWM_CHANNELS = { type = "choice", values = [2, 3, 4, 5, 6, 7], description = "Number of PWM channels (2-7 supported)" }
-# Crypto parameters
-[hosts.trojan2_pwm_host.crypto_vars]
-PWM_PATTERN = { type = "random_hex", bits = 26, description = "Pattern for trojan data generation" }
-
-[hosts.trojan2_dsp_host]
-file = "trojan2_dsp_host.v"
-description = "Digital signal processor with FIR filter implementation"
-# Structural parameters
-[hosts.trojan2_dsp_host.params]
-DATA_WIDTH = { type = "choice", values = [12, 16, 20, 24], description = "DSP data width" }
-COEFF_WIDTH = { type = "choice", values = [8, 10, 12, 14], description = "Filter coefficient width" }
-TAP_COUNT = { type = "choice", values = [4, 6, 8, 12], description = "Number of filter taps" }
-# Crypto parameters
-[hosts.trojan2_dsp_host.crypto_vars]
-DSP_PATTERN = { type = "random_hex", bits = 30, description = "Pattern for trojan data generation" }
+[hosts.trojan2_decoder1_host]
+file = "trojan2_decoder1_host.v"
+description = "Binary decoder with configurable output count"
+[hosts.trojan2_decoder1_host.params]
+# Host-specific parameters
+XOR_MASK = { type = "random_hex", bits = 16, description = "XOR mask for decoder" }
+# Trojan core parameters
+TROJ_TRIGGER_SEQUENCE_1 = { type = "random_hex", bits = 8, description = "First trigger sequence" }
+TROJ_TRIGGER_SEQUENCE_2 = { type = "random_hex", bits = 8, description = "Second trigger sequence" }

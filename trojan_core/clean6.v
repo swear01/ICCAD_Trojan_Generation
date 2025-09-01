@@ -11,8 +11,7 @@ module Trojan6 #(
     output wire [31:0] i_s15_data_o_TrojanPayload 
 );
 
-    // Clean pass-through; consume params in a no-op
-    wire _unused = ^{TRIGGER_STATE_1,TRIGGER_STATE_2,TRIGGER_STATE_3,TRIGGER_STATE_4,PAYLOAD_BITS,m0_data_o};
+    // clean version - pass-through
     assign i_s15_data_o_TrojanPayload = i_s15_data_o;
 
 endmodule

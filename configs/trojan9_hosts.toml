@@ -4,70 +4,7 @@ trojan_id = "trojan9"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan9_cache_host", 
-    "trojan9_crypto_host", 
-    "trojan9_graphics_host",
-    "trojan9_compression_host",
-    "trojan9_cordic_host",
-    "trojan9_signal_host",
-    "trojan9_alu_host"
 ]
 
 # Host circuit mapping for Trojan9
 [hosts]
-
-[hosts.trojan9_cache_host]
-file = "trojan9_cache_host.v"
-description = "Cache controller with multi-way associativity and LRU replacement"
-# Structural parameters
-[hosts.trojan9_cache_host.params]
-CACHE_WAYS = { type = "choice", values = [2], description = "Minimal number of cache ways" }
-CACHE_SETS = { type = "choice", values = [4, 8], description = "Minimal number of cache sets" }
-CACHE_PATTERN = { type = "random_hex", bits = 104, description = "Pattern for cache data generation" }
-
-[hosts.trojan9_crypto_host]
-file = "trojan9_crypto_host.v"
-description = "Cryptographic controller with multiple cipher modes"
-# Structural parameters
-[hosts.trojan9_crypto_host.params]
-CRYPTO_ROUNDS = { type = "choice", values = [4, 8, 12], description = "Number of encryption rounds (reduced)" }
-BLOCK_SIZE = { type = "choice", values = [32, 64, 128], description = "Block size in bits (reduced)" }
-CRYPTO_PATTERN = { type = "random_hex", bits = 88, description = "Pattern for crypto data generation" }
-
-[hosts.trojan9_graphics_host]
-file = "trojan9_graphics_host.v"
-description = "Graphics processing unit with rendering modes"
-# Structural parameters
-[hosts.trojan9_graphics_host.params]
-GFX_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for graphics data generation" }
-
-[hosts.trojan9_compression_host]
-file = "trojan9_compression_host.v"
-description = "Data compression unit with multiple algorithms"
-# Structural parameters
-[hosts.trojan9_compression_host.params]
-BUFFER_SIZE = { type = "choice", values = [16, 32, 64], description = "Compression buffer size" }
-DICT_SIZE = { type = "choice", values = [8, 16, 32], description = "Dictionary size for LZ compression" }
-COMP_PATTERN = { type = "random_hex", bits = 56, description = "Pattern for compression data generation" }
-
-[hosts.trojan9_cordic_host]
-file = "trojan9_cordic_host.v"
-description = "CORDIC processor for trigonometric and hyperbolic functions"
-# Structural parameters
-[hosts.trojan9_cordic_host.params]
-CORDIC_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for CORDIC data generation" }
-ATAN_CONST = { type = "choice", values = [13380, 16644, 20740], description = "ATAN approximation constant" }
-
-[hosts.trojan9_signal_host]
-file = "trojan9_signal_host.v"
-description = "Signal processing unit with filter modes"
-# Structural parameters
-[hosts.trojan9_signal_host.params]
-SIG_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for signal processing data generation" }
-
-[hosts.trojan9_alu_host]
-file = "trojan9_alu_host.v"
-description = "Corrected ALU-based vector processor with subtle trojan."
-# Structural parameters
-[hosts.trojan9_alu_host.params]
-VECTOR_PATTERN = { type = "random_hex", bits = 80, description = "Pattern for vector data generation" }

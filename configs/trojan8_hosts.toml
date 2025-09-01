@@ -4,99 +4,34 @@ trojan_id = "trojan8"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan8_processor_host", 
-    "trojan8_memory_host", 
-    "trojan8_io_host",
-    "trojan8_timer_host",
-    "trojan8_dma_host",
-    "trojan8_uart_host",
-    "trojan8_spi_host",
-    "trojan8_dsp_host",
-    "trojan8_matrix_host",
-    "trojan8_vector_host"
+    "trojan8_dsp0_host"
 ]
 
 # Host circuit mapping for Trojan8
 [hosts]
 
-[hosts.trojan8_processor_host]
-file = "trojan8_processor_host.v"
-description = "Processor with cache and ALU operations"
-# Structural parameters
-[hosts.trojan8_processor_host.params]
-CACHE_LINES = { type = "choice", values = [32, 64, 128], description = "Number of cache lines" }
-ALU_OPS = { type = "choice", values = [4, 8, 16], description = "Number of ALU operations" }
-PROC_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for processor data generation" }
-
-[hosts.trojan8_memory_host]
-file = "trojan8_memory_host.v"
-description = "Memory controller with banking and caching"
-# Structural parameters
-[hosts.trojan8_memory_host.params]
-MEM_DEPTH = { type = "choice", values = [32, 64], description = "Minimal memory depth in words" }
-BANK_COUNT = { type = "choice", values = [2], description = "Minimal number of memory banks" }
-MEM_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for memory access generation" }
-
-[hosts.trojan8_io_host]
-file = "trojan8_io_host.v"
-description = "I/O controller with GPIO and FIFO buffering"
-# Structural parameters
-[hosts.trojan8_io_host.params]
-IO_PORTS = { type = "choice", values = [8, 16], description = "Number of I/O ports (reduced)" }
-FIFO_DEPTH = { type = "choice", values = [8, 16, 32], description = "FIFO buffer depth (reduced)" }
-IO_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for I/O data generation" }
-
-[hosts.trojan8_timer_host]
-file = "trojan8_timer_host.v"
-description = "Timer/counter with prescaler and compare"
-# Structural parameters
-[hosts.trojan8_timer_host.params]
-TIMER_COUNT = { type = "choice", values = [4, 8], description = "Number of timer channels (reduced)" }
-PRESCALE_BITS = { type = "choice", values = [4, 8], description = "Prescaler width (reduced)" }
-TIMER_PATTERN = { type = "random_hex", bits = 80, description = "Pattern for timer generation" }
-
-[hosts.trojan8_dma_host]
-file = "trojan8_dma_host.v"
-description = "DMA controller with multi-channel support"
-# Structural parameters
-[hosts.trojan8_dma_host.params]
-DMA_CHANNELS = { type = "choice", values = [2, 4, 8], description = "Number of DMA channels" }
-BUFFER_SIZE = { type = "choice", values = [128, 256, 512], description = "DMA buffer size" }
-DMA_PATTERN = { type = "random_hex", bits = 112, description = "Pattern for DMA transfer generation" }
-
-[hosts.trojan8_uart_host]
-file = "trojan8_uart_host.v"
-description = "UART controller with FIFO and baud control"
-# Structural parameters
-[hosts.trojan8_uart_host.params]
-BAUD_DIV = { type = "choice", values = [434, 868, 1736], description = "Baud rate divisor (115200/57600/28800)" }
-FIFO_DEPTH = { type = "choice", values = [8, 16, 32], description = "UART FIFO depth" }
-UART_PATTERN = { type = "random_hex", bits = 88, description = "Pattern for UART data generation" }
-
-[hosts.trojan8_spi_host]
-file = "trojan8_spi_host.v"
-description = "SPI controller with multi-slave support"
-# Structural parameters
-[hosts.trojan8_spi_host.params]
-SPI_SLAVES = { type = "choice", values = [2, 4, 8], description = "Number of SPI slave selects" }
-CLK_DIV = { type = "choice", values = [4, 8, 16], description = "SPI clock divisor" }
-SPI_PATTERN = { type = "random_hex", bits = 72, description = "Pattern for SPI data generation" }
-
-[hosts.trojan8_dsp_host]
-file = "trojan8_dsp_host.v"
+[hosts.trojan8_dsp0_host]
+file = "trojan8_dsp0_host.v"
 description = "DSP processor with signal processing operations"
-# No configurable structural parameters for this host
+[hosts.trojan8_dsp0_host.params]
+# Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [4, 6, 8, 12], description = "Input width"}
+PIPELINE_STAGES = { type = "choice", values = [3, 4, 5, 6, 7], description = "Number of pipeline stages"}
+DSP_SEED = { type = "random_hex", bits = "INPUT_WIDTH", description = "DSP key generator seed" }
+# Trojan core parameters
+TROJ_MASK1 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 1"}
+TROJ_MASK2 = { type = "random_hex", bits = "INPUT_WIDTH", description = "Trojan mask 2"}
+TROJ_MASK3 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 3"}
 
-[hosts.trojan8_matrix_host]
-file = "trojan8_matrix_host.v"
-description = "Matrix processor with linear algebra operations"
-# Structural parameters
-[hosts.trojan8_matrix_host.params]
-MAT_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for matrix data generation" }
-
-[hosts.trojan8_vector_host]
-file = "trojan8_vector_host.v"
-description = "Vector processor with parallel operations"
-# Structural parameters
-[hosts.trojan8_vector_host.params]
-VEC_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for vector data generation" }
+[hosts.trojan8_dsp1_host]
+file = "trojan8_dsp1_host.v"
+description = "DSP processor with signal processing operations"
+[hosts.trojan8_dsp1_host.params]
+# Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [4, 6, 8, 12], description = "Input width"}
+PIPELINE_STAGES = { type = "choice", values = [3, 4, 5, 6, 7], description = "Number of pipeline stages"}
+DSP_SEED = { type = "random_hex", bits = "INPUT_WIDTH", description = "DSP key generator seed" }
+# Trojan core parameters
+TROJ_MASK1 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 1"}
+TROJ_MASK2 = { type = "random_hex", bits = "INPUT_WIDTH", description = "Trojan mask 2"}
+TROJ_MASK3 = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Trojan mask 3"}

@@ -4,103 +4,34 @@ trojan_id = "trojan7"
 
 # List of host files for this trojan (for iteration)
 host_files = [
-    "trojan7_dsp_host", 
-    "trojan7_crypto_host", 
-    "trojan7_network_host",
-    "trojan7_graphics_host",
-    "trojan7_audio_host",
-    "trojan7_fpga_host",
-    "trojan7_storage_host",
-    "trojan7_axi_host",
-    "trojan7_interconnect_host",
-    "trojan7_wishbone_host"
+    "trojan7_wishbone0_host",
+    "trojan7_wishbone1_host"
 ]
 
 # Host circuit mapping for Trojan7
 [hosts]
 
-[hosts.trojan7_dsp_host]
-file = "trojan7_dsp_host.v"
-description = "DSP processor with filter stages and coefficient control"
-# Structural parameters
-[hosts.trojan7_dsp_host.params]
-DSP_STAGES = { type = "choice", values = [2, 4, 8], description = "Number of DSP pipeline stages" }
-FILTER_TAPS = { type = "choice", values = [4, 8, 16], description = "Number of filter taps" }
-DSP_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for DSP data generation" }
-
-[hosts.trojan7_crypto_host]
-file = "trojan7_crypto_host.v"
-description = "Cryptographic processor with configurable rounds and S-box"
-# Structural parameters
-[hosts.trojan7_crypto_host.params]
-KEY_ROUNDS = { type = "choice", values = [8, 10, 12, 16], description = "Number of encryption rounds" }
-SBOX_SIZE = { type = "choice", values = [128, 256, 512], description = "S-box size" }
-CRYPTO_PATTERN = { type = "random_hex", bits = 256, description = "Pattern for crypto data generation" }
-
-[hosts.trojan7_network_host]
-file = "trojan7_network_host.v"
-description = "Network packet processor with routing and buffering"
-# Structural parameters
-[hosts.trojan7_network_host.params]
-PORT_COUNT = { type = "choice", values = [4, 8, 16], description = "Number of network ports" }
-PACKET_SIZE = { type = "choice", values = [32, 64, 128, 256], description = "Maximum packet size in bytes" }
-NET_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for network data generation" }
-
-[hosts.trojan7_graphics_host]
-file = "trojan7_graphics_host.v"
-description = "Graphics processor with frame buffer and display control"
-# Structural parameters
-[hosts.trojan7_graphics_host.params]
-FRAME_WIDTH = { type = "choice", values = [16, 32], description = "Minimal frame buffer width" }
-FRAME_HEIGHT = { type = "choice", values = [12, 24], description = "Minimal frame buffer height" }
-GFX_PATTERN = { type = "random_hex", bits = 160, description = "Pattern for graphics data generation" }
-
-[hosts.trojan7_audio_host]
-file = "trojan7_audio_host.v"
-description = "Audio processor with sample rate control and filtering"
-# Structural parameters
-[hosts.trojan7_audio_host.params]
-SAMPLE_RATE = { type = "choice", values = [500, 1000], description = "Minimal audio sample rate" }
-BUFFER_DEPTH = { type = "choice", values = [8, 16], description = "Minimal audio buffer depth" }
-AUDIO_PATTERN = { type = "random_hex", bits = 96, description = "Pattern for audio data generation" }
-
-[hosts.trojan7_fpga_host]
-file = "trojan7_fpga_host.v"
-description = "FPGA configuration and logic processor"
-# Structural parameters
-[hosts.trojan7_fpga_host.params]
-LUT_COUNT = { type = "choice", values = [32, 64, 128], description = "Number of lookup tables" }
-ROUTING_MATRIX = { type = "choice", values = [8, 16, 32], description = "Routing matrix size" }
-FPGA_PATTERN = { type = "random_hex", bits = 128, description = "Pattern for FPGA data generation" }
-
-[hosts.trojan7_storage_host]
-file = "trojan7_storage_host.v"
-description = "Storage controller with caching and block management"
-# Structural parameters
-[hosts.trojan7_storage_host.params]
-BLOCK_SIZE = { type = "choice", values = [64, 128, 256], description = "Storage block size in bytes (reduced)" }
-CACHE_WAYS = { type = "choice", values = [2, 4], description = "Number of cache ways (reduced)" }
-STORAGE_PATTERN = { type = "random_hex", bits = 64, description = "Pattern for storage data generation" }
-
-[hosts.trojan7_axi_host]
-file = "trojan7_axi_host.v"
-description = "AXI4 interconnect with address decoding"
-# No configurable structural parameters for this host
-
-[hosts.trojan7_interconnect_host]
-file = "trojan7_interconnect_host.v"
-description = "NoC interconnect with packet routing"
-# Structural parameters
-[hosts.trojan7_interconnect_host.params]
-NODE_COUNT = { type = "choice", values = [4, 6, 8], description = "Number of interconnect nodes" }
-PACKET_SIZE = { type = "choice", values = [4, 8, 16], description = "Packet size in words" }
-IC_PATTERN = { type = "random_hex", bits = 224, description = "Pattern for interconnect data generation" }
-
-[hosts.trojan7_wishbone_host]
-file = "trojan7_wishbone_host.v"
-description = "Wishbone bus arbiter with slave selection"
-# Structural parameters
-[hosts.trojan7_wishbone_host.params]
-SLAVE_COUNT = { type = "choice", values = [4, 8, 16], description = "Number of wishbone slaves" }
-TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32], description = "Timeout for transactions" }
+[hosts.trojan7_wishbone0_host]
+file = "trojan7_wishbone0_host.v"
+description = "Wishbone bus arbiter with slave selection (192-bit pattern)"
+[hosts.trojan7_wishbone0_host.params]
+# Host-specific parameters
+TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32, 64], description = "Timeout for transactions" }
 WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }
+# Trojan core parameters
+TROJ_WB_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Wishbone data trigger pattern (wb_data_i)" }
+TROJ_S0_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Slave 0 data trigger pattern (s0_data_i)" }
+TROJ_XOR_MASK = { type = "random_hex", bits = 4, description = "XOR mask applied to slave select when triggered" }
+
+
+[hosts.trojan7_wishbone1_host]
+file = "trojan7_wishbone1_host.v"
+description = "Wishbone bus arbiter with modified access logic (192-bit pattern)"
+[hosts.trojan7_wishbone1_host.params]
+# Host-specific parameters
+TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32, 64], description = "Timeout for transactions" }
+WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }
+# Trojan core parameters
+TROJ_WB_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Wishbone data trigger pattern (wb_data_i)" }
+TROJ_S0_DATA_TRIGGER = { type = "random_hex", bits = 32, description = "Slave 0 data trigger pattern (s0_data_i)" }
+TROJ_XOR_MASK = { type = "random_hex", bits = 4, description = "XOR mask applied to slave select when triggered" }

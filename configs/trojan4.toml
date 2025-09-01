@@ -1,8 +1,0 @@
-[metadata]
-description = "LFSR-based key leakage (I/O fixed: key[63:0], leak[63:0])"
-
-# Crypto variables with parameter injection
-[crypto_vars.SECRET_KEY]
-type = "random_hex"
-bits = 16
-description = "Secret key for LFSR initialization"

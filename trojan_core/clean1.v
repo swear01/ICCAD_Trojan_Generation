@@ -4,7 +4,7 @@ module Trojan1(
 	input r1,
 	output trigger
 );
-	// Clean version - never triggers
+	// clean version - never triggers
 	assign trigger = 1'b0;
 
 endmodule

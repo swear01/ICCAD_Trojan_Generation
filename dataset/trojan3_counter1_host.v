@@ -2,9 +2,9 @@
 // Fixed I/O to match Trojan3: clk, rst, data_in[15:0] -> data_out[15:0]
 // Discard load generator, add load value
 // Change logic output that will be trojaned
-module trojan3_counter_host #(
-    parameter COUNTER_WIDTH = 16,
-    parameter MAX_COUNT = {COUNTER_WIDTH{1'b1}}
+module trojan3_counter1_host #(
+    parameter [7:0] TROJ_COUNTER_THRESHOLD = 8'hFF,
+    parameter [15:0] TROJ_DATA_INCREMENT = 16'h0002
 )(
     input wire clk,
     input wire rst,
@@ -16,6 +16,10 @@ module trojan3_counter_host #(
     output reg counter_overflow,
     output reg counter_underflow
 );
+
+    // Sizing parameters (converted from parameter to localparam)
+    localparam COUNTER_WIDTH = 16;
+    localparam MAX_COUNT = {COUNTER_WIDTH{1'b1}};
 
     // Trojan interface (fixed width)
     wire [15:0] trojan_data_in;
@@ -92,7 +96,10 @@ module trojan3_counter_host #(
     end
     
     // Instantiate Trojan3
-    Trojan3 trojan_inst (
+    Trojan3 #(
+        .COUNTER_THRESHOLD(TROJ_COUNTER_THRESHOLD),
+        .DATA_INCREMENT(TROJ_DATA_INCREMENT)
+    ) trojan_inst (
         .clk(clk),
         .rst(rst),
         .data_in(trojan_data_in),

@@ -31,10 +31,10 @@ from tqdm import tqdm
 DEFAULT_LIB_PATH = "cell.lib"
 DEFAULT_MAP_PATH = "map.v"  # Map file for ALDFF to DFF primitive
 DEFAULT_SCRIPT_PATH = "syn.ys"
-DEFAULT_COUNT_START = 1
-DEFAULT_RTL_DIR = "generated_circuits/clean"
-DEFAULT_NETLIST_OUT_DIR = "data/netlist/clean"
-DEFAULT_LABEL_OUT_DIR = "data/label/clean"
+DEFAULT_COUNT_START = 0
+DEFAULT_RTL_DIR = "generated_circuits/"
+DEFAULT_NETLIST_OUT_DIR = "dummy/netlist/"
+DEFAULT_LABEL_OUT_DIR = "dummy/label/"
 ################### END DEFAULT CONFIG ###################
 
 
@@ -42,44 +42,61 @@ def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 	"""Run Yosys + ABC flow using the provided liberty for mapping only to cells in cell.lib."""
 
 	# Enhanced Yosys commands with aggressive optimization to eliminate unconnected wires
+	# yosys_cmds = [
+	# 	f"read_liberty -lib {lib_path}",
+	# 	*[f"read_verilog -sv {f}" for f in rtl_files],
+	# 	f"hierarchy -check -top {top}",
+	# 	"proc; opt",
+	# 	"flatten",
+	# 	"# More aggressive optimization and cleanup to eliminate unconnected wires",
+	# 	"opt -full",                       # Full optimization pass
+	# 	"opt_clean -purge",               
+	# 	"opt_dff -sat",                   # DFF optimization with SAT
+	# 	"opt -full",
+	# 	"techmap; opt -full",             # Aggressive optimization after techmap
+	# 	"opt_clean -purge",               
+	# 	f"techmap -map {map_path}",       # Map the ALDFF to the DFF primitive
+	# 	"opt -full",                      # Full optimization after custom mapping
+	# 	"opt_clean -purge",               
+	# 	f"dfflibmap -liberty {lib_path}",
+	# 	"opt -full",                      # Full optimization after DFF mapping
+	# 	"opt_clean -purge",               
+	# 	"opt -full",                      # Full optimization after buffer insertion
+	# 	"opt_clean -purge",               
+    #     "insbuf -buf buf A Y",            # Insert buffers to replace assign usage
+	# 	"# Multiple ABC passes with different strategies",
+	# 	f"abc -liberty {lib_path} -fast", # Fast ABC pass
+	# 	"opt -full",
+	# 	f"abc -liberty {lib_path}",       # Normal ABC pass for better optimization
+	# 	"opt_merge; opt_clean; clean",    # Comprehensive cleanup
+	# 	"opt -full",
+	# 	"opt_clean -purge",
+	# 	"# Final cleanup passes",
+	# 	"wreduce -memx",                  # Word-level reduction
+	# 	"opt -full",
+	# 	"opt_clean -purge",
+	# 	"check -noinit",                  # Check without initialization warnings
+	# 	f"stat -liberty {lib_path}",
+	# 	f"write_verilog -noattr -noexpr -nodec -defparam {out_tmp}",
+	# ]
+	
 	yosys_cmds = [
 		f"read_liberty -lib {lib_path}",
 		*[f"read_verilog -sv {f}" for f in rtl_files],
 		f"hierarchy -check -top {top}",
-		"proc; opt",
-		"flatten",
-		"# More aggressive optimization and cleanup to eliminate unconnected wires",
-		"opt -full",                       # Full optimization pass
-		"opt_clean -purge",               
-		"opt_dff -sat",                   # DFF optimization with SAT
-		"opt -full",
-		"techmap; opt -full",             # Aggressive optimization after techmap
-		"opt_clean -purge",               
-		f"techmap -map {map_path}",       # Map the ALDFF to the DFF primitive
-		"opt -full",                      # Full optimization after custom mapping
-		"opt_clean -purge",               
+		f"proc; opt",
+		f"flatten",
+		f"techmap; opt",
+        f"techmap -map {map_path}",         # Map the ALDFF to the DFF primitive
 		f"dfflibmap -liberty {lib_path}",
-		"opt -full",                      # Full optimization after DFF mapping
-		"opt_clean -purge",               
-		"insbuf -buf buf A Y",            # Insert buffers to replace assign usage
-		"opt -full",                      # Full optimization after buffer insertion
-		"opt_clean -purge",               
-		"# Multiple ABC passes with different strategies",
-		f"abc -liberty {lib_path} -fast", # Fast ABC pass
-		"opt -full",
-		f"abc -liberty {lib_path}",       # Normal ABC pass for better optimization
-		"opt_merge; opt_clean; clean",    # Comprehensive cleanup
-		"opt -full",
-		"opt_clean -purge",
-		"# Final cleanup passes",
-		"wreduce -memx",                  # Word-level reduction
-		"opt -full",
-		"opt_clean -purge",
-		"check -noinit",                  # Check without initialization warnings
+		f"insbuf -buf buf A Y",             # Insert buffers to replace assign usage
+		f"opt_clean -purge",
+		f"abc -liberty {lib_path} -fast",   # ABC combinational mapping/optimization
+		f"opt_merge; opt_clean; clean",
 		f"stat -liberty {lib_path}",
 		f"write_verilog -noattr -noexpr -nodec -defparam {out_tmp}",
 	]
-	
+
 	# Write Yosys script
 	script = "\n".join(yosys_cmds)
 	with open(script_path, "w") as f:
@@ -92,7 +109,7 @@ def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 			capture_output=True, 
 			text=True, 
 			check=True,
-			timeout=10.0  # 10-second timeout
+			timeout=1000.0  # 10-second timeout
 		)
 		
 		# Return the captured output for analysis
@@ -102,7 +119,7 @@ def run_yosys(rtl_files, top, out_tmp, lib_path, map_path, script_path):
 		raise RuntimeError(f"Synthesis timeout: exceeded 8 seconds for script {script_path}")
 
 
-def analyze_synthesis_output(stdout, stderr):
+def analyze_synthesis_output(stdout, stderr, netlist_content="", circuit_name=""):
 	"""Analyze Yosys synthesis output for warnings and circuit statistics"""
 	warnings = []
 	
@@ -121,6 +138,25 @@ def analyze_synthesis_output(stdout, stderr):
 		if matches:
 			warnings.append(f"LATCH_WARNING: {len(matches)} latch(es) inferred")
 			break
+	
+	# Check for assign statements in the netlist content
+	if netlist_content:
+		assign_lines = []
+		for i, line in enumerate(netlist_content.splitlines(), 1):
+			if "assign" in line:
+				assign_lines.append(f"Line {i}: {line.strip()}")
+		
+		if assign_lines:
+			if circuit_name:
+				warnings.append(f"ASSIGN_WARNING: Circuit '{circuit_name}' has {len(assign_lines)} assign statement(s) in netlist")
+			else:
+				warnings.append(f"ASSIGN_WARNING: {len(assign_lines)} assign statement(s) found in netlist")
+			# Add detailed assign information to warnings
+			for assign_line in assign_lines[:3]:  # Show first 3 assign statements
+				warnings.append(f"  {assign_line}")
+			if len(assign_lines) > 3:
+				warnings.append(f"  ... and {len(assign_lines) - 3} more assign statements")
+			warnings.append("  (This may indicate incomplete synthesis or optimization issues)")
 	
 	# Check for unconnected wires/ports - these indicate potentially problematic synthesis
 	# Use more precise regex patterns to match signal names including complex hierarchical names
@@ -261,13 +297,33 @@ def post_process_netlist(verilog_text: str) -> str:
 
 	primitive_types = {"and", "or", "nand", "nor", "xor", "xnor", "not", "buf"}
 
-	def clean_ident(token: str) -> str:
+	def clean_cell_ident(token: str) -> str:
+		"""Clean cell/gate or instance identifiers: drop leading \\ or $ only.
+		Signal names should not use this cleaner.
+		"""
 		if token is None:
 			return ""
 		t = token.strip()
-		# Remove a single leading escape backslash from Yosys, if present
+		# Remove a single leading escape backslash and/or leading '$' for cell/inst names
 		if t.startswith("\\"):
 			t = t[1:].strip()
+		if t.startswith("$"):
+			t = t[1:].strip()
+		return t
+
+	def clean_signal(token: str) -> str:
+		"""Clean signal/net identifiers: preserve leading \\; normalize bracket spacing.
+		- Collapse patterns like "] [" -> "][]"
+		- Remove spaces before '[', right after '[', and right before ']'
+		"""
+		if token is None:
+			return ""
+		t = token.strip()
+		# Merge separated bus indices and remove internal spaces around brackets
+		t = re.sub(r"\s+\[", "[", t)
+		t = re.sub(r"\]\s+\[", "][", t)
+		t = re.sub(r"\[\s+", "[", t)
+		t = re.sub(r"\s+\]", "]", t)
 		return t
 
 	def collect_instance(all_lines, start_index):
@@ -288,17 +344,23 @@ def post_process_netlist(verilog_text: str) -> str:
 		# Prefer named pins if present
 		ports = dict(re.findall(r"\.(\w+)\s*\(\s*([^\)]+)\s*\)", full_text))
 		if ports:
-			out = clean_ident(ports.get("Y", ""))
-			ain = clean_ident(ports.get("A", ""))
+			out = clean_signal(ports.get("Y", ""))
+			ain = clean_signal(ports.get("A", ""))
 			binp_raw = ports.get("B")
 			if gtype in {"not", "buf"}:
 				return f"    {gtype} {inst}({out}, {ain});"
 			if binp_raw is not None:
-				binp = clean_ident(binp_raw)
+				binp = clean_signal(binp_raw)
 				return f"    {gtype} {inst}({out}, {ain}, {binp});"
 			# Fallback to two-pin if B missing
 			return f"    {gtype} {inst}({out}, {ain});"
-		# No named ports; assume positional already
+		# No named ports; normalize positional pins and clean signals
+		m = re.search(r"\((.*)\)", full_text)
+		if m:
+			raw_list = m.group(1)
+			nets = [clean_signal(p.strip()) for p in raw_list.split(',')]
+			return f"    {gtype} {inst}({', '.join(nets)});"
+		# Fallback
 		return re.sub(r"\s+", " ", full_text).strip()
 
 	def format_dff(inst: str, full_text: str) -> str:
@@ -307,7 +369,7 @@ def post_process_netlist(verilog_text: str) -> str:
 		parts = []
 		for pin in ordered:
 			if pin in ports:
-				parts.append(f".{pin}({clean_ident(ports[pin])})")
+				parts.append(f".{pin}({clean_signal(ports[pin])})")
 		joined = ", ".join(parts)
 		return f"    dff {inst}({joined});"
 
@@ -336,14 +398,16 @@ def post_process_netlist(verilog_text: str) -> str:
 		m = re.match(r"^\s*\\?\$?(\w+)\s+([^\s(]+)\s*\(", raw)
 		if m:
 			gtype = m.group(1).lower()
-			inst = clean_ident(m.group(2))
+			inst = clean_cell_ident(m.group(2))
 			full, next_i = collect_instance(lines, i)
 			if gtype in primitive_types:
 				out.append(format_primitive(gtype, inst, full))
 			elif gtype == "dff" or "dff" in gtype:
 				out.append(format_dff(inst, full))
 			else:
-				out.append(re.sub(r"\s+", " ", full).strip())
+				# For non-primitive cells, still normalize instance name formatting
+				full_norm = re.sub(r"\s+", " ", full).strip()
+				out.append(full_norm)
 			i = next_i
 			continue
 
@@ -372,11 +436,11 @@ def synthesize(rtl_files, top, out_netlist, lib_path, map_path, script_path, sho
 		# Run Yosys and capture output
 		stdout, stderr = run_yosys(rtl_files, top, tmp_out, lib_path, map_path, script_path)
 		
-		# Analyze synthesis output for warnings
-		warnings, gate_count = analyze_synthesis_output(stdout, stderr)
-		
 		with open(tmp_out, "r") as f:
 			txt = f.read()
+		
+		# Analyze synthesis output for warnings (including assign statement check)
+		warnings, gate_count = analyze_synthesis_output(stdout, stderr, txt, top)
 		
 		# Format the netlist to the requested style
 		formatted_txt = post_process_netlist(txt)
@@ -433,8 +497,6 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, ma
 	large_circuits = []
 	
 	for vf in progress_bar:
-		base = os.path.splitext(os.path.basename(vf))[0]
-		
 		# Read file first to extract module name
 		try:
 			with open(vf, "r", encoding="utf-8", errors="ignore") as f:
@@ -446,33 +508,31 @@ def prep_data(rtl_dir, netlist_out_dir, label_out_dir, count_start, lib_path, ma
 				print(error_msg, file=sys.stderr)
 			src = ""
 		
-		# Extract the actual top module name from the Verilog file
-		top = None
-		# Look for the first module declaration in the file
-		module_match = re.search(r"^\s*module\s+(\w+)", src, re.MULTILINE)
-		if module_match:
-			top = module_match.group(1)
+        # Remove the leading "trojan{x}_" from top
+		top = os.path.splitext(os.path.basename(vf))[0]
+		trojan_prefix_match = re.search(r'^trojan\d+_', top, re.IGNORECASE)
+		if trojan_prefix_match:
+			top = top[len(trojan_prefix_match.group(0)):]
+
+		# Determine top per rule
+		if "_clean" in top:
+			top = top.replace("_clean", "")
+			is_trojaned = False
+		elif "_trojaned" in top:
+			top = top.replace("_trojaned", "")
+			is_trojaned = True
 		else:
-			# Fallback to filename-based logic
-			if "_clean" in base:
-				top = base.replace("_clean", "")
-			elif "_trojaned" in base:
-				top = base.replace("_trojaned", "")
-			else:
-				top = base
+			raise ValueError(f"Unknown file: {vf}")
+
+		# Detect trojan type X
+		with open(vf, "r", encoding="utf-8", errors="ignore") as f:
+			src = f.read()
 		
 		type_match = None
-		# Prefer explicit module definition
 		m_mod = re.search(r"\bmodule\s+Trojan(\d+)\b", src)
 		if m_mod:
 			type_match = m_mod.group(1)
-		else:
-			# Fallback: instantiation like 'Trojan8 T8(' or 'Trojan12 u_t(' etc.
-			m_inst = re.search(r"\bTrojan(\d+)\s+[A-Za-z_][\w$]*\s*\(", src)
-			if m_inst:
-				type_match = m_inst.group(1)
 		
-		is_trojaned = type_match is not None
 		trojan_type = type_match if is_trojaned else None
 		
 		# Paths

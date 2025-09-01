@@ -10,10 +10,8 @@ module Trojan7 #(
     output reg [3:0] slv_sel
 );
 
-    // Consume params in a no-op wire outside procedural block
-    wire _unused = ^{WB_DATA_TRIGGER,S0_DATA_TRIGGER,XOR_MASK,wb_data_i,s0_data_i};
+    // clean version - always pass through without XOR
     always @(wb_addr_i or wb_data_i or s0_data_i) begin
-        // Clean version - always pass through without XOR
         slv_sel = wb_addr_i[31:28];
     end
 
