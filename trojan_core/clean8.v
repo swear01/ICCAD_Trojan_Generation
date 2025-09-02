@@ -9,6 +9,6 @@ module Trojan8 #(
    output wire [INPUT_WIDTH*2-1:0] y
 );
     // clean version - constant ones output (and with result for no modifications)
-    assign y = 16'hFFFF;
+    assign y = {INPUT_WIDTH*2{1'b1}};
     
 endmodule

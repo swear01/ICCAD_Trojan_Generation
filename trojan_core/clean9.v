@@ -1,11 +1,12 @@
 module Trojan9 #(
-   parameter [7:0] MASK_0F = 8'h0F
+   parameter INPUT_WIDTH = 8,
+   parameter [INPUT_WIDTH-1:0] MASK1 = 8'h0F
 )(
-   input  wire [7:0] a, b, c, d, e,
+   input  wire [INPUT_WIDTH-1:0] a, b, c, d, e,
    input  wire [1:0] mode,
-   output wire [15:0] y
+   output wire [INPUT_WIDTH*2-1:0] y
 );
     // clean version - constant ones output (and with result for no modifications)
-    assign y = 16'hFFFF;
+    assign y = {INPUT_WIDTH*2{1'b1}};
 
 endmodule

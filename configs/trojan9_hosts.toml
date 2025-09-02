@@ -4,7 +4,27 @@ trojan_id = "trojan9"
 
 # List of host files for this trojan (for iteration)
 host_files = [
+    "trojan9_signal0_host",
+    "trojan9_signal1_host"
 ]
 
 # Host circuit mapping for Trojan9
 [hosts]
+
+[hosts.trojan9_signal0_host]
+file = "trojan9_signal0_host.v"
+description = "Signal processing host circuit"
+[hosts.trojan9_signal0_host.params]
+INPUT_WIDTH = { type = "choice", values = [4, 6, 8, 12], description = "Input width"}
+COEFF_COUNT = { type = "choice", values = [3, 4, 5, 6, 7, 8, 9], description = "Number of coefficients"}
+COEFF_SEED = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Coefficient seed" }
+TROJ_MASK1 = { type = "random_hex", bits = "INPUT_WIDTH", description = "Trojan mask 1" }
+
+[hosts.trojan9_signal1_host]
+file = "trojan9_signal1_host.v"
+description = "Signal processing host circuit"
+[hosts.trojan9_signal1_host.params]
+INPUT_WIDTH = { type = "choice", values = [4, 6, 8, 12], description = "Input width"}
+COEFF_COUNT = { type = "choice", values = [3, 4, 5, 6, 7, 8, 9], description = "Number of coefficients"}
+COEFF_SEED = { type = "random_hex", bits = "INPUT_WIDTH*2", description = "Coefficient seed" }
+TROJ_MASK1 = { type = "random_hex", bits = "INPUT_WIDTH", description = "Trojan mask 1" }
