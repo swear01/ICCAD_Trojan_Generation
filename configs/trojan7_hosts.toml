@@ -16,6 +16,7 @@ file = "trojan7_wishbone0_host.v"
 description = "Wishbone bus arbiter with slave selection (192-bit pattern)"
 [hosts.trojan7_wishbone0_host.params]
 # Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [8, 16, 32], description = "Input width" }
 TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32, 64], description = "Timeout for transactions" }
 WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }
 # Trojan core parameters
@@ -29,6 +30,7 @@ file = "trojan7_wishbone1_host.v"
 description = "Wishbone bus arbiter with modified access logic (192-bit pattern)"
 [hosts.trojan7_wishbone1_host.params]
 # Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [8, 16, 32], description = "Input width" }
 TIMEOUT_CYCLES = { type = "choice", values = [8, 16, 32, 64], description = "Timeout for transactions" }
 WB_PATTERN = { type = "random_hex", bits = 192, description = "Pattern for wishbone data generation" }
 # Trojan core parameters
