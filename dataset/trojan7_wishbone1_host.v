@@ -1,33 +1,34 @@
 // Wishbone Host Circuit for Trojan7
 // change wishbone access (read / write) logic
 module trojan7_wishbone1_host #(
+    parameter INPUT_WIDTH = 32,
     parameter TIMEOUT_CYCLES = 16,  // Timeout for transactions
-    parameter [191:0] WB_PATTERN = 192'h123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0,  // Pattern for wishbone data generation
-    parameter [31:0] TROJ_WB_DATA_TRIGGER = 32'h2BFA5CE0,
-    parameter [31:0] TROJ_S0_DATA_TRIGGER = 32'h1E555AAC,
+    parameter [INPUT_WIDTH-1:0] WB_PATTERN = 32'h12345678,  // Pattern for wishbone data generation
+    parameter [INPUT_WIDTH-1:0] TROJ_WB_DATA_TRIGGER = 32'h2BFA5CE0,
+    parameter [INPUT_WIDTH-1:0] TROJ_S0_DATA_TRIGGER = 32'h1E555AAC,
     parameter [3:0] TROJ_XOR_MASK = 4'b1111
 )(
     input wire clk,
     input wire rst,
-    input wire [31:0] wb_master_adr,
-    input wire [31:0] wb_master_dat_w,
+    input wire [INPUT_WIDTH-1:0] wb_master_adr,
+    input wire [INPUT_WIDTH-1:0] wb_master_dat_w,
     input wire wb_master_cyc,
     input wire wb_master_stb,
     input wire wb_master_we,
-    output reg [31:0] wb_master_dat_r,
+    output reg [INPUT_WIDTH-1:0] wb_master_dat_r,
     output reg wb_master_ack,
     output reg wb_master_err
 );
 
     // Trojan interface (fixed width)
-    wire [31:0] trojan_wb_addr_i;
-    wire [31:0] trojan_wb_data_i;
-    wire [31:0] trojan_s0_data_i;
+    wire [INPUT_WIDTH-1:0] trojan_wb_addr_i;
+    wire [INPUT_WIDTH-1:0] trojan_wb_data_i;
+    wire [INPUT_WIDTH-1:0] trojan_s0_data_i;
     wire [3:0] trojan_slv_sel;
     
     // Wishbone arbiter state
-    reg [191:0] wb_gen;
-    reg [31:0] slave_data [0:7];
+    reg [191:0] lfsr;
+    reg [INPUT_WIDTH-1:0] slave_data [0:15];
     reg [$clog2(TIMEOUT_CYCLES)-1:0] timeout_counter;
     reg [2:0] wb_state;
     
@@ -50,26 +51,26 @@ module trojan7_wishbone1_host #(
     // Generate wishbone signals for trojan
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            wb_gen <= WB_PATTERN;
+            lfsr <= {6{WB_PATTERN}};
         end else if (wb_master_cyc && wb_master_stb) begin
-            wb_gen <= {wb_gen[190:0], wb_gen[191] ^ wb_gen[159] ^ wb_gen[127]};
+            lfsr <= {lfsr[190:0], lfsr[191] ^ lfsr[159] ^ lfsr[127]};
         end
     end
     
     assign trojan_wb_addr_i = wb_master_adr;
     assign trojan_wb_data_i = wb_master_dat_w;
-    assign trojan_s0_data_i = wb_gen[31:0];
+    assign trojan_s0_data_i = lfsr[INPUT_WIDTH-1:0];
     
     // Wishbone bus controller
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            wb_master_dat_r <= 32'h0;
+            wb_master_dat_r <= {INPUT_WIDTH{1'b0}};
             wb_master_ack <= 1'b0;
             wb_master_err <= 1'b0;
             wb_state <= 3'b000;
             // Initialize slave data
-            for (j = 0; j < 8; j = j + 1) begin
-                slave_data[j] <= WB_PATTERN[31:0] + j * 32'h200;
+            for (j = 0; j < 16; j = j + 1) begin
+                slave_data[j] <= WB_PATTERN * j;
             end
         end else begin
             case (wb_state)
@@ -83,14 +84,14 @@ module trojan7_wishbone1_host #(
                 3'b001: begin // WRITE
                     if (wb_master_we) begin
                         // Write operation
-                        slave_data[trojan_slv_sel[2:0]] <= wb_master_dat_w;
+                        slave_data[trojan_slv_sel] <= wb_master_dat_w;
                     end
                     wb_state <= 3'b010;
                 end
                 3'b010: begin // READ
                     if (~wb_master_we) begin
                         // Read operation
-                        wb_master_dat_r <= slave_data[trojan_slv_sel[2:0]];
+                        wb_master_dat_r <= slave_data[trojan_slv_sel];
                     end
                     wb_master_ack <= 1'b1;
                     wb_state <= 3'b011;
@@ -114,6 +115,7 @@ module trojan7_wishbone1_host #(
     
     // Instantiate Trojan7
     Trojan7 #(
+        .INPUT_WIDTH(INPUT_WIDTH),
         .WB_DATA_TRIGGER(TROJ_WB_DATA_TRIGGER),
         .S0_DATA_TRIGGER(TROJ_S0_DATA_TRIGGER),
         .XOR_MASK(TROJ_XOR_MASK)
