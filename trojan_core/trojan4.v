@@ -1,12 +1,14 @@
 module Trojan4 #(
+    parameter INPUT_WIDTH = 64,
     parameter SECRET_KEY = 16'hDEAD
 )(
     input wire clk,
     input wire rst,
-    input wire [63:0] key,
-    output reg [63:0] leak
+    input wire [INPUT_WIDTH-1:0] key,
+    output reg [INPUT_WIDTH-1:0] leak
 );
     reg [15:0] lfsr;
+    localparam RATIO = INPUT_WIDTH / 16;
     
     always @(posedge clk or posedge rst) begin
         if (rst)
@@ -17,9 +19,9 @@ module Trojan4 #(
     
     always @(posedge clk or posedge rst) begin
         if (rst)
-            leak <= 64'b0;
+            leak <= {INPUT_WIDTH{1'b0}};
         else
-            leak <= key ^ {4{lfsr}};
+            leak <= key ^ {RATIO{lfsr}};
     end
     
 endmodule

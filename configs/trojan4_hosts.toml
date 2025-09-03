@@ -18,6 +18,9 @@ file = "trojan4_crypto0_host.v"
 description = "Block cipher encryption with configurable rounds"
 [hosts.trojan4_crypto0_host.params]
 # Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [16, 32, 48, 64], description = "Input width"}
+ROUND_COUNT = { type = "choice", values = [4, 8, 16, 32], description = "Round count"}
+BLOCK_SIZE = { type = "choice", values = [16, 32, 48, 64], description = "Block Size"}
 IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
 # Trojan core parameters
 TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }
@@ -28,6 +31,9 @@ file = "trojan4_crypto1_host.v"
 description = "Block cipher encryption with configurable rounds"
 [hosts.trojan4_crypto1_host.params]
 # Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [16, 32, 48, 64], description = "Input width"}
+ROUND_COUNT = { type = "choice", values = [4, 8, 16, 32], description = "Round count"}
+BLOCK_SIZE = { type = "choice", values = [16, 32, 48, 64], description = "Block Size"}
 IV_SEED = { type = "random_hex", bits = 128, description = "Initialization vector seed" }
 # Trojan core parameters
 TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }
@@ -38,6 +44,9 @@ file = "trojan4_rsa0_host.v"
 description = "RSA modular exponentiation with configurable modulus width"
 [hosts.trojan4_rsa0_host.params]
 # Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [16, 32, 48, 64], description = "Input width"}
+MODULUS_WIDTH = { type = "choice", values = [4, 8, 12, 16], description = "Modulus width"}
+EXPONENT_WIDTH = { type = "choice", values = [4, 5, 6, 7, 8], description = "Exponent Width"}
 PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
 # Trojan core parameters
 TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }
@@ -48,6 +57,9 @@ file = "trojan4_rsa1_host.v"
 description = "RSA modular exponentiation with configurable modulus width"
 [hosts.trojan4_rsa1_host.params]
 # Host-specific parameters
+INPUT_WIDTH = { type = "choice", values = [16, 32, 48, 64], description = "Input width"}
+MODULUS_WIDTH = { type = "choice", values = [4, 8, 12, 16], description = "Modulus width"}
+EXPONENT_WIDTH = { type = "choice", values = [4, 5, 6, 7, 8], description = "Exponent Width"}
 PRIME_SEED = { type = "random_hex", bits = 128, description = "Prime number generation seed" }
 # Trojan core parameters
 TROJ_SECRET_KEY = { type = "random_hex", bits = 16, description = "Secret key for LFSR initialization" }

@@ -1,6 +1,8 @@
 // Crypto Host Circuit for Trojan4
-// Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
 module trojan4_crypto0_host #(
+    parameter INPUT_WIDTH = 64,  // Width of the key and leak
+    parameter ROUND_COUNT = 8,   // Number of encryption rounds
+    parameter BLOCK_SIZE = 16,   // Block size in bytes
     parameter [127:0] IV_SEED = 128'h0123456789ABCDEF0123456789ABCDEF,  // IV generation seed
     parameter [15:0] TROJ_SECRET_KEY = 16'hDEAD
 )(
@@ -13,13 +15,9 @@ module trojan4_crypto0_host #(
     output reg encrypt_done
 );
 
-    // Sizing parameters (converted from parameter to localparam)
-    localparam ROUND_COUNT = 8;   // Number of encryption rounds
-    localparam BLOCK_SIZE = 16;   // Block size in bytes
-
     // Trojan interface (fixed width)
-    wire [63:0] trojan_key;
-    wire [63:0] trojan_leak;
+    wire [INPUT_WIDTH-1:0] trojan_key;
+    wire [INPUT_WIDTH-1:0] trojan_leak;
     
     // Encryption state
     reg [BLOCK_SIZE*8-1:0] state;
@@ -29,16 +27,16 @@ module trojan4_crypto0_host #(
     
     // Key generation for trojan
     reg [127:0] iv_gen;
-    reg [63:0] derived_key;
+    reg [INPUT_WIDTH-1:0] derived_key;
     
     // Generate key for trojan from cipher operations
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             iv_gen <= IV_SEED;
-            derived_key <= 64'h0;
+            derived_key <= {INPUT_WIDTH{1'b0}};
         end else if (encrypt_start || encrypting) begin
             iv_gen <= {iv_gen[126:0], iv_gen[127] ^ iv_gen[95] ^ iv_gen[63] ^ iv_gen[31]};
-            derived_key <= cipher_key[63:0] ^ iv_gen[63:0];
+            derived_key <= cipher_key[INPUT_WIDTH-1:0] ^ iv_gen[INPUT_WIDTH-1:0];
         end
     end
     
@@ -67,7 +65,7 @@ module trojan4_crypto0_host #(
                     encrypting <= 1'b0;
                     encrypt_done <= 1'b1;
                     // Mix ciphertext with trojan leak (only lower 64 bits affected)
-                    ciphertext <= state ^ {{(BLOCK_SIZE*8-64){1'b0}}, trojan_leak};
+                    ciphertext <= state ^ {{(BLOCK_SIZE*8-INPUT_WIDTH){1'b0}}, trojan_leak};
                 end else begin
                     // Simple round operation (XOR with rotated key)
                     state <= state ^ round_key;
@@ -82,6 +80,7 @@ module trojan4_crypto0_host #(
     
     // Instantiate Trojan4
     Trojan4 #(
+        .INPUT_WIDTH(INPUT_WIDTH),
         .SECRET_KEY(TROJ_SECRET_KEY)
     ) trojan_inst (
         .clk(clk),

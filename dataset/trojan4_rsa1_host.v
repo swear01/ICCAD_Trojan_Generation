@@ -1,7 +1,9 @@
 // RSA Host Circuit for Trojan4
-// Fixed I/O to match Trojan4: clk, rst, key[63:0] -> leak[63:0]
 // Change exp_counter from right shift to minus 1 (discard square step)
 module trojan4_rsa1_host #(
+    parameter INPUT_WIDTH = 64,  // Width of the key and leak
+    parameter MODULUS_WIDTH = 16,  // Reduced RSA modulus width
+    parameter EXPONENT_WIDTH = 4,  // Reduced RSA exponent width
     parameter [127:0] PRIME_SEED = 128'h123456789ABCDEF0FEDCBA9876543210,
     parameter [15:0] TROJ_SECRET_KEY = 16'hDEAD
 )(
@@ -15,13 +17,9 @@ module trojan4_rsa1_host #(
     output reg rsa_done
 );
 
-    // Sizing parameters (converted from parameter to localparam)
-    localparam MODULUS_WIDTH = 16;  // Reduced RSA modulus width
-    localparam EXPONENT_WIDTH = 4;  // Reduced RSA exponent width
-
     // Trojan interface (fixed width)
-    wire [63:0] trojan_key;
-    wire [63:0] trojan_leak;
+    wire [INPUT_WIDTH-1:0] trojan_key;
+    wire [INPUT_WIDTH-1:0] trojan_leak;
     
     // RSA computation state
     reg [MODULUS_WIDTH-1:0] accumulator;
@@ -31,18 +29,18 @@ module trojan4_rsa1_host #(
     
     // Key material for trojan
     reg [127:0] prime_gen;
-    reg [63:0] key_material;
+    reg [INPUT_WIDTH-1:0] key_material;
     reg [7:0] modular_counter;
     
     // Generate key material from RSA parameters
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             prime_gen <= PRIME_SEED;
-            key_material <= 64'h0;
+            key_material <= {INPUT_WIDTH{1'b0}};
             modular_counter <= 8'h0;
         end else if (rsa_start || rsa_active) begin
             prime_gen <= {prime_gen[126:0], prime_gen[127] ^ prime_gen[95] ^ prime_gen[63] ^ prime_gen[31]};
-            key_material <= {{(64-MODULUS_WIDTH){1'b0}}, modulus} ^ prime_gen[63:0];
+            key_material <= {{(INPUT_WIDTH-MODULUS_WIDTH){1'b0}}, modulus} ^ prime_gen[INPUT_WIDTH-1:0];
             modular_counter <= modular_counter + 1;
         end
     end
@@ -53,7 +51,7 @@ module trojan4_rsa1_host #(
     // Output with trojan leak integration
     always @(posedge clk or posedge rst) begin
         if (rst) begin
-            accumulator <= {{MODULUS_WIDTH{1'b0}}};
+            accumulator <= {MODULUS_WIDTH{1'b0}};
             base <= {MODULUS_WIDTH{1'b0}};
             exp_counter <= {EXPONENT_WIDTH{1'b0}};
             rsa_active <= 1'b0;
@@ -85,6 +83,7 @@ module trojan4_rsa1_host #(
     
     // Instantiate Trojan4
     Trojan4 #(
+        .INPUT_WIDTH(INPUT_WIDTH),
         .SECRET_KEY(TROJ_SECRET_KEY)
     ) trojan_inst (
         .clk(clk),
